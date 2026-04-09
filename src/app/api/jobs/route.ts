@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ApifyClient } from 'apify-client';
 import { createClient } from '@/lib/supabase/server';
 
-const ACTOR_ID = 'curious_coder~linkedin-jobs-scraper';
+const ACTOR_ID = 'cheap_scraper/linkedin-job-scraper';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,93 +26,92 @@ export async function POST(request: NextRequest) {
 
     // Get search params from request body or auto-generate from profile
     const body = await request.json().catch(() => ({}));
-    let searchUrl = body.searchUrl as string | undefined;
 
-    if (!searchUrl) {
-      // Auto-generate search URL from profile skills and goals
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('skills, preferred_role, preferred_locations, experience_level')
-        .eq('id', user.id)
-        .single();
+    // Fetch profile for auto-generating search params
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('skills, preferred_role, preferred_locations, experience_level')
+      .eq('id', user.id)
+      .single();
 
-      if (!profile) {
-        return NextResponse.json(
-          { success: false, error: { code: 'no_profile', message: 'Complete your profile first' } },
-          { status: 400 }
-        );
-      }
-
-      // Build LinkedIn search URL from profile data
-      const keywords = profile.preferred_role || profile.skills?.slice(0, 3).join(' ') || 'software engineer';
-      const location = profile.preferred_locations?.[0] || 'India';
-      
-      // LinkedIn public jobs search URL format
-      const params = new URLSearchParams({
-        keywords: keywords,
-        location: location,
-        f_TPR: 'r604800', // Past week
-        f_E: getExperienceFilter(profile.experience_level),
-      });
-      
-      searchUrl = `https://www.linkedin.com/jobs/search/?${params.toString()}`;
+    if (!profile) {
+      return NextResponse.json(
+        { success: false, error: { code: 'no_profile', message: 'Complete your profile first' } },
+        { status: 400 }
+      );
     }
 
-    // Initialize Apify client
+    // Build search input for cheap_scraper/linkedin-job-scraper
+    const keywords = body.keywords || profile.preferred_role || profile.skills?.slice(0, 3).join(' ') || 'software engineer';
+    const location = body.location || profile.preferred_locations?.[0] || 'India';
+    const experienceLevel = getExperienceFilter(profile.experience_level);
+
+    const actorInput: Record<string, unknown> = {
+      keyword: Array.isArray(keywords) ? keywords : [keywords],
+      location,
+      publishedAt: 'r604800', // Past 7 days
+      experienceLevel: experienceLevel,
+      jobType: ['full-time'],
+      maxItems: 15,
+      saveOnlyUniqueItems: true,
+      enrichCompanyData: false, // Faster without company enrichment
+    };
+
+    // If user provided a direct URL, use that instead
+    if (body.searchUrl) {
+      actorInput.startUrls = [{ url: body.searchUrl }];
+    }
+
+    // Initialize Apify client and run the actor
     const client = new ApifyClient({ token: apiToken });
 
-    // Run the LinkedIn jobs scraper actor
-    const run = await client.actor(ACTOR_ID).call({
-      startUrls: [{ url: searchUrl }],
-      maxItems: 15,
-      scrapeCompany: true,
-    }, {
-      timeout: 120, // 2 minute timeout
+    const run = await client.actor(ACTOR_ID).call(actorInput, {
+      timeout: 120,
       memory: 256,
     });
 
     // Fetch results from the dataset
     const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
-    // Transform Apify output to our format
+    // Transform cheap_scraper output to our frontend format
     const jobs = items.map((item: Record<string, unknown>) => ({
-      id: item.id as string,
-      title: item.title as string,
-      companyName: item.companyName as string,
+      id: item.jobId as string || String(Math.random()),
+      title: item.jobTitle as string || 'Untitled',
+      companyName: item.companyName as string || 'Unknown',
       companyLogo: item.companyLogo as string || null,
-      companyUrl: item.companyLinkedinUrl as string || null,
-      companyWebsite: item.companyWebsite as string || null,
-      companyDescription: typeof item.companyDescription === 'string' 
-        ? item.companyDescription.substring(0, 200) 
+      companyUrl: item.companyUrl as string || null,
+      companyWebsite: (item.companyWebsite as string) || null,
+      companyDescription: typeof item.companyDescription === 'string'
+        ? item.companyDescription.substring(0, 200)
         : null,
-      companyEmployeesCount: item.companyEmployeesCount as number || null,
-      location: item.location as string,
+      companyEmployeesCount: item.companyEmployeeCount as number || null,
+      location: item.location as string || '',
       salaryInfo: item.salaryInfo as string[] || [],
-      postedAt: item.postedAt as string,
-      benefits: item.benefits as string[] || [],
-      applyUrl: item.applyUrl as string || item.link as string,
-      link: item.link as string,
-      description: typeof item.descriptionText === 'string'
-        ? (item.descriptionText as string).substring(0, 500)
+      postedAt: item.postedTime as string || item.publishedAt as string || '',
+      benefits: [],
+      applyUrl: item.applyUrl as string || item.jobUrl as string || '',
+      link: item.jobUrl as string || '',
+      description: typeof item.jobDescription === 'string'
+        ? (item.jobDescription as string).substring(0, 500)
         : '',
-      seniorityLevel: item.seniorityLevel as string || null,
-      employmentType: item.employmentType as string || null,
-      jobFunction: item.jobFunction as string || null,
-      industries: item.industries as string || null,
-      applicantsCount: item.applicantsCount as string || null,
-      recruiter: item.jobPosterName ? {
-        name: item.jobPosterName as string,
-        title: item.jobPosterTitle as string || '',
-        photo: item.jobPosterPhoto as string || null,
-        profileUrl: item.jobPosterProfileUrl as string || null,
+      seniorityLevel: item.experienceLevel as string || null,
+      employmentType: item.contractType as string || null,
+      jobFunction: item.workType as string || null,
+      industries: item.sector as string || null,
+      applicantsCount: item.applicationsCount as string || null,
+      applyType: item.applyType as string || null,
+      recruiter: item.posterFullName ? {
+        name: item.posterFullName as string,
+        title: '',
+        photo: null,
+        profileUrl: item.posterProfileUrl as string || null,
       } : null,
     }));
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data: {
         jobs,
-        searchUrl,
         total: jobs.length,
         source: 'linkedin',
         scrapedAt: new Date().toISOString(),
@@ -120,12 +119,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error('LinkedIn scraping failed, falling back to AI suggestions:', err);
-    
+
     // === FALLBACK: Use Gemini to generate job suggestions ===
     try {
       const supabaseFallback = await createClient();
       const { data: { user: fallbackUser } } = await supabaseFallback.auth.getUser();
-      
+
       if (!fallbackUser) {
         return NextResponse.json(
           { success: false, error: { code: 'unauthorized', message: 'Not authenticated' } },
@@ -178,13 +177,13 @@ Use REAL companies: TCS, Infosys, Google India, Microsoft, Amazon, Flipkart, Raz
   }
 }
 
-function getExperienceFilter(level?: string): string {
+function getExperienceFilter(level?: string): string[] {
   switch (level) {
-    case 'fresher': return '1'; // Internship
-    case 'intern': return '1'; // Internship
-    case '0-1': return '2'; // Entry level
-    case '1-3': return '3'; // Associate
-    case '3+': return '4'; // Mid-Senior
-    default: return '1,2'; // Internship + Entry
+    case 'fresher': return ['internship', 'entry-level'];
+    case 'intern': return ['internship'];
+    case '0-1': return ['entry-level'];
+    case '1-3': return ['associate', 'mid-senior'];
+    case '3+': return ['mid-senior', 'director'];
+    default: return ['internship', 'entry-level'];
   }
 }
