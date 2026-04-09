@@ -114,16 +114,67 @@ export async function POST(request: NextRequest) {
         jobs,
         searchUrl,
         total: jobs.length,
+        source: 'linkedin',
         scrapedAt: new Date().toISOString(),
       }
     });
   } catch (err) {
-    console.error('LinkedIn jobs scraping error:', err);
-    const message = err instanceof Error ? err.message : 'Failed to fetch LinkedIn jobs';
-    return NextResponse.json(
-      { success: false, error: { code: 'scrape_error', message } },
-      { status: 500 }
-    );
+    console.error('LinkedIn scraping failed, falling back to AI suggestions:', err);
+    
+    // === FALLBACK: Use Gemini to generate job suggestions ===
+    try {
+      const supabaseFallback = await createClient();
+      const { data: { user: fallbackUser } } = await supabaseFallback.auth.getUser();
+      
+      if (!fallbackUser) {
+        return NextResponse.json(
+          { success: false, error: { code: 'unauthorized', message: 'Not authenticated' } },
+          { status: 401 }
+        );
+      }
+
+      const { data: profile } = await supabaseFallback
+        .from('profiles')
+        .select('skills, preferred_role, experience_level, goals')
+        .eq('id', fallbackUser.id)
+        .single();
+
+      const skills = profile?.skills?.join(', ') || 'software development';
+      const role = profile?.preferred_role || 'Software Engineer';
+      const level = profile?.experience_level || 'fresher';
+
+      const { callGemini } = await import('@/lib/agents/gemini');
+      const result = await callGemini<{ jobs: Array<{
+        id: string; title: string; companyName: string; location: string;
+        employmentType: string; salaryInfo: string[]; description: string;
+        applyUrl: string; postedAt: string; seniorityLevel: string;
+      }> }>({
+        systemPrompt: 'You are a job market expert for the Indian tech industry. Generate realistic job listings from REAL companies hiring in India.',
+        userPrompt: `Generate 10 realistic job listings for a ${level} with skills: ${skills}, targeting ${role} roles. Goals: ${(profile?.goals || []).join(', ')}.
+
+Return JSON: { "jobs": [{ "id": "1", "title": "...", "companyName": "Real Indian company", "location": "City, India", "employmentType": "Full-time", "salaryInfo": ["₹X-Y LPA"], "description": "2-3 sentences", "applyUrl": "https://careers.company.com", "postedAt": "2 days ago", "seniorityLevel": "Entry level" }] }
+
+Use REAL companies: TCS, Infosys, Google India, Microsoft, Amazon, Flipkart, Razorpay, CRED, PhonePe, Swiggy, etc.`,
+        jsonMode: true,
+        temperature: 0.8,
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          jobs: (result.jobs || []).map(j => ({ ...j, link: j.applyUrl, companyLogo: null, companyUrl: null, companyWebsite: null, companyDescription: null, companyEmployeesCount: null, benefits: [], recruiter: null, jobFunction: null, industries: null, applicantsCount: null })),
+          total: result.jobs?.length || 0,
+          source: 'ai',
+          generatedAt: new Date().toISOString(),
+        },
+      });
+    } catch (fallbackErr) {
+      console.error('AI fallback also failed:', fallbackErr);
+      return NextResponse.json(
+        { success: false, error: { code: 'scrape_error', message: 'Job search temporarily unavailable. Please try again.' } },
+        { status: 500 }
+      );
+    }
   }
 }
 
