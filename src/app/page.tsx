@@ -29,42 +29,42 @@ const features = [
     title: "AI Profile Analysis",
     description:
       "Upload your resume or enter skills manually. Our AI analyzes your strengths, weaknesses, and generates a readiness score.",
-    color: "from-indigo-500 to-violet-500",
+    color: "bg-primary/15 text-primary",
   },
   {
     icon: Building2,
     title: "Company Recommendations",
     description:
       "Get matched with companies based on your current skills. See target companies and what skills you need to reach them.",
-    color: "from-emerald-500 to-teal-500",
+    color: "bg-emerald-500/10 text-emerald-400",
   },
   {
     icon: Target,
     title: "Personalized Task Plans",
     description:
       "AI generates daily and weekly tasks tailored to your skill gaps. DSA, web dev, system design — all covered.",
-    color: "from-amber-500 to-orange-500",
+    color: "bg-amber-500/10 text-amber-400",
   },
   {
     icon: BarChart3,
     title: "Progress Tracking",
     description:
       "Track your completion rate, maintain streaks, and watch your readiness score improve over time.",
-    color: "from-rose-500 to-pink-500",
+    color: "bg-rose-500/10 text-rose-400",
   },
   {
     icon: Mic,
     title: "Mock Interviews",
     description:
       "Practice with AI-generated interview questions. Get instant scoring and detailed feedback on your answers.",
-    color: "from-cyan-500 to-blue-500",
+    color: "bg-cyan-500/10 text-cyan-400",
   },
   {
     icon: MessageSquare,
     title: "AI Mentor Chat",
     description:
       "Chat with your AI mentor anytime for career guidance, doubt solving, and personalized advice.",
-    color: "from-purple-500 to-fuchsia-500",
+    color: "bg-violet-500/10 text-violet-400",
   },
 ];
 
@@ -142,9 +142,8 @@ export default function LandingPage() {
       <section className="relative pt-32 pb-20 px-6">
         {/* Background effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] animate-float" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-[120px] animate-float" style={{ animationDelay: "3s" }} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[150px]" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[150px]" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/3 rounded-full blur-[150px]" />
         </div>
 
         <div className="max-w-7xl mx-auto relative">
@@ -180,7 +179,7 @@ export default function LandingPage() {
               <Link href={isLoggedIn ? "/dashboard" : "/auth"}>
                 <Button
                   size="lg"
-                  className="gradient-primary text-white border-0 text-lg px-8 py-6 hover:opacity-90 transition-all glow"
+                  className="gradient-primary text-white border-0 text-lg px-8 py-6 hover:opacity-90 transition-all"
                 >
                   {isLoggedIn ? "Go to Dashboard" : "Start Your Journey"}
                   <ArrowRight className="w-5 h-5 ml-2" />
@@ -251,9 +250,9 @@ export default function LandingPage() {
                 className="group relative p-6 rounded-2xl glass hover:glass-strong transition-all duration-300 cursor-default"
               >
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+                  className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-200`}
                 >
-                  <feature.icon className="w-6 h-6 text-white" />
+                  <feature.icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground leading-relaxed">
@@ -364,7 +363,7 @@ export default function LandingPage() {
             <Link href={isLoggedIn ? "/dashboard" : "/auth"}>
               <Button
                 size="lg"
-                className="gradient-primary text-white border-0 text-lg px-10 py-6 hover:opacity-90 glow"
+                className="gradient-primary text-white border-0 text-lg px-10 py-6 hover:opacity-90"
               >
                 {isLoggedIn ? "Go to Dashboard" : "Get Started — It's Free"}
                 <Sparkles className="w-5 h-5 ml-2" />

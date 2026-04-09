@@ -135,7 +135,7 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold mb-1">
-            Welcome back, {data.profile?.full_name?.split(" ")[0] || "Student"} 👋
+            Welcome back, {data.profile?.full_name?.split(" ")[0] || "Student"}
           </h1>
           <p className="text-muted-foreground">
             Here&apos;s your career preparation overview
@@ -143,12 +143,12 @@ export default function DashboardPage() {
         </div>
         {data.streakInfo && (
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass border border-orange-500/20">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent border border-border">
               <Flame className="w-4 h-4 text-orange-400" />
               <span className="text-sm font-bold text-orange-400">{data.streakInfo.streak.current}</span>
               <span className="text-xs text-muted-foreground">day streak</span>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass border border-violet-500/20">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent border border-border">
               <Star className="w-4 h-4 text-violet-400" />
               <span className="text-sm font-bold text-violet-400">Lvl {data.streakInfo.xp.level}</span>
             </div>
@@ -472,7 +472,7 @@ function GettingStarted({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-1">
-          Welcome, {name?.split(" ")[0] || "Student"} 👋
+          Welcome, {name?.split(" ")[0] || "Student"}
         </h1>
         <p className="text-muted-foreground">
           {onboardingComplete
@@ -526,7 +526,7 @@ function GettingStarted({
           className="p-5 rounded-2xl glass border border-primary/20"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0 animate-pulse-glow">
+            <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">

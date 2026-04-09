@@ -10,18 +10,14 @@ import {
   Building2,
   Mic,
   MessageSquare,
-  TrendingUp,
   LogOut,
-  Sparkles,
   Menu,
-  X,
-  Bell,
   User,
   Flame,
   Map,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
@@ -48,7 +44,6 @@ export default function AppLayout({
 
   useEffect(() => {
     const getUser = async () => {
-      // getSession reads from cookies — instant, no network call
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUserName(session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User");
@@ -64,16 +59,16 @@ export default function AppLayout({
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-2 px-4 py-6 hover:opacity-80 transition-opacity">
-        <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
-          <Sparkles className="w-5 h-5 text-white" />
+      {/* Brand */}
+      <Link href="/" className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
+        <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0">
+          <span className="text-white text-sm font-bold">C</span>
         </div>
-        <span className="text-lg font-bold gradient-text">CareerAI</span>
+        <span className="text-base font-semibold tracking-tight text-foreground">CareerAI</span>
       </Link>
 
-      {/* Nav Items */}
-      <nav className="flex-1 px-3 space-y-1">
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -81,36 +76,38 @@ export default function AppLayout({
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+              className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors duration-150 ${
                 isActive
-                  ? "bg-primary/15 text-primary border border-primary/20"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
               }`}
             >
-              <item.icon className={`w-5 h-5 ${isActive ? "text-primary" : ""}`} />
-              {item.title}
+              <item.icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+              <span className="flex-1">{item.title}</span>
+              {isActive && <ChevronRight className="w-3.5 h-3.5 text-primary/50" />}
             </Link>
           );
         })}
       </nav>
 
-      {/* User section */}
-      <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-full gradient-accent flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+      {/* User Footer */}
+      <div className="p-3 border-t border-border">
+        <div className="flex items-center gap-2.5 px-3 py-2.5">
+          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-foreground text-xs font-semibold flex-shrink-0">
             {userName.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{userName}</p>
-            <p className="text-xs text-muted-foreground">Student</p>
+            <p className="text-[13px] font-medium truncate">{userName}</p>
+            <p className="text-[11px] text-muted-foreground">Student</p>
           </div>
         </div>
         <Button
           variant="ghost"
-          className="w-full justify-start text-muted-foreground hover:text-destructive"
+          size="sm"
+          className="w-full justify-start text-muted-foreground hover:text-destructive text-xs mt-1 h-8"
           onClick={handleLogout}
         >
-          <LogOut className="w-4 h-4 mr-2" />
+          <LogOut className="w-3.5 h-3.5 mr-2" />
           Sign Out
         </Button>
       </div>
@@ -125,34 +122,38 @@ export default function AppLayout({
   return (
     <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-sidebar fixed inset-y-0 left-0 z-30">
+      <aside className="hidden lg:flex w-[240px] flex-col border-r border-border bg-sidebar fixed inset-y-0 left-0 z-30">
         <SidebarContent />
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64">
-        {/* Top Bar (mobile + notifications) */}
-        <header className="sticky top-0 z-20 glass-strong border-b border-border px-4 py-3 flex items-center justify-between lg:justify-end">
+      <main className="flex-1 lg:ml-[240px]">
+        {/* Top Bar */}
+        <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm border-b border-border px-5 py-3 flex items-center justify-between lg:justify-end">
           {/* Mobile menu */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger className="lg:hidden inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+            <SheetTrigger className="lg:hidden inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 hover:bg-accent transition-colors cursor-pointer">
               <Menu className="w-5 h-5" />
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0 bg-sidebar">
+            <SheetContent side="left" className="w-[240px] p-0 bg-sidebar border-r border-border">
               <SidebarContent />
             </SheetContent>
           </Sheet>
 
-          {/* Right side */}
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-            </Button>
+          {/* Breadcrumb-style page title */}
+          <div className="hidden lg:flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">CareerAI</span>
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
+            <span className="font-medium">{navItems.find(n => n.href === pathname)?.title || "Page"}</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {/* Minimal — no bell icon clutter */}
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="p-5 lg:p-8 max-w-[1200px] mx-auto">
           {children}
         </div>
       </main>
