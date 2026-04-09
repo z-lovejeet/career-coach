@@ -15,7 +15,7 @@ import {
   User,
   Flame,
   Map,
-  ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -60,15 +60,15 @@ export default function AppLayout({
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Brand */}
-      <Link href="/" className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
+      <Link href="/" className="flex items-center gap-2.5 px-5 h-16 border-b border-border/50 hover:opacity-80 transition-opacity">
         <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-sm font-bold">C</span>
+          <Sparkles className="w-4 h-4 text-white" />
         </div>
-        <span className="text-base font-semibold tracking-tight text-foreground">CareerAI</span>
+        <span className="text-base font-bold tracking-tight">CareerAI</span>
       </Link>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -76,35 +76,34 @@ export default function AppLayout({
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
-              className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors duration-150 ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
                 isActive
                   ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/[0.03]"
               }`}
             >
-              <item.icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
-              <span className="flex-1">{item.title}</span>
-              {isActive && <ChevronRight className="w-3.5 h-3.5 text-primary/50" />}
+              <item.icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? "text-primary" : ""}`} />
+              {item.title}
             </Link>
           );
         })}
       </nav>
 
-      {/* User Footer */}
-      <div className="p-3 border-t border-border">
-        <div className="flex items-center gap-2.5 px-3 py-2.5">
-          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-foreground text-xs font-semibold flex-shrink-0">
+      {/* User */}
+      <div className="p-4 border-t border-border/50">
+        <div className="flex items-center gap-3 mb-3 px-1">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
             {userName.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium truncate">{userName}</p>
+            <p className="text-sm font-medium truncate">{userName}</p>
             <p className="text-[11px] text-muted-foreground">Student</p>
           </div>
         </div>
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-destructive text-xs mt-1 h-8"
+          className="w-full justify-start text-muted-foreground hover:text-destructive text-xs h-8"
           onClick={handleLogout}
         >
           <LogOut className="w-3.5 h-3.5 mr-2" />
@@ -114,7 +113,6 @@ export default function AppLayout({
     </div>
   );
 
-  // Don't show sidebar for onboarding
   if (pathname === "/onboarding") {
     return <>{children}</>;
   }
@@ -122,38 +120,39 @@ export default function AppLayout({
   return (
     <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-[240px] flex-col border-r border-border bg-sidebar fixed inset-y-0 left-0 z-30">
+      <aside className="hidden lg:flex w-[240px] flex-col bg-sidebar border-r border-border/50 fixed inset-y-0 left-0 z-30">
         <SidebarContent />
       </aside>
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="flex-1 lg:ml-[240px]">
         {/* Top Bar */}
-        <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm border-b border-border px-5 py-3 flex items-center justify-between lg:justify-end">
-          {/* Mobile menu */}
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger className="lg:hidden inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 hover:bg-accent transition-colors cursor-pointer">
-              <Menu className="w-5 h-5" />
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[240px] p-0 bg-sidebar border-r border-border">
-              <SidebarContent />
-            </SheetContent>
-          </Sheet>
-
-          {/* Breadcrumb-style page title */}
-          <div className="hidden lg:flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">CareerAI</span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
-            <span className="font-medium">{navItems.find(n => n.href === pathname)?.title || "Page"}</span>
+        <header className="sticky top-0 z-20 backdrop-blur-md bg-background/70 border-b border-border/50 h-16 px-6 flex items-center justify-between">
+          {/* Mobile */}
+          <div className="flex items-center gap-3">
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger className="lg:hidden inline-flex items-center justify-center rounded-lg h-9 w-9 hover:bg-accent transition-colors cursor-pointer">
+                <Menu className="w-5 h-5" />
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[240px] p-0 bg-sidebar border-r border-border/50">
+                <SidebarContent />
+              </SheetContent>
+            </Sheet>
+            <h1 className="text-sm font-semibold">
+              {navItems.find(n => n.href === pathname)?.title || ""}
+            </h1>
           </div>
 
-          <div className="flex items-center gap-1">
-            {/* Minimal — no bell icon clutter */}
+          {/* Right side minimal */}
+          <div className="flex items-center">
+            <span className="text-xs text-muted-foreground hidden sm:block">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </span>
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="p-5 lg:p-8 max-w-[1200px] mx-auto">
+        <div className="p-6 lg:p-8 max-w-[1200px] mx-auto">
           {children}
         </div>
       </main>

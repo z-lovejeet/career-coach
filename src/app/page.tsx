@@ -10,83 +10,23 @@ import {
   BarChart3,
   MessageSquare,
   Building2,
-  CheckCircle2,
   ArrowRight,
   Sparkles,
-  Zap,
-  Shield,
-  TrendingUp,
-  Users,
-  BookOpen,
   Mic,
   LayoutDashboard,
+  CheckCircle2,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const features = [
-  {
-    icon: Brain,
-    title: "AI Profile Analysis",
-    description:
-      "Upload your resume or enter skills manually. Our AI analyzes your strengths, weaknesses, and generates a readiness score.",
-    color: "bg-primary/15 text-primary",
-  },
-  {
-    icon: Building2,
-    title: "Company Recommendations",
-    description:
-      "Get matched with companies based on your current skills. See target companies and what skills you need to reach them.",
-    color: "bg-emerald-500/10 text-emerald-400",
-  },
-  {
-    icon: Target,
-    title: "Personalized Task Plans",
-    description:
-      "AI generates daily and weekly tasks tailored to your skill gaps. DSA, web dev, system design — all covered.",
-    color: "bg-amber-500/10 text-amber-400",
-  },
-  {
-    icon: BarChart3,
-    title: "Progress Tracking",
-    description:
-      "Track your completion rate, maintain streaks, and watch your readiness score improve over time.",
-    color: "bg-rose-500/10 text-rose-400",
-  },
-  {
-    icon: Mic,
-    title: "Mock Interviews",
-    description:
-      "Practice with AI-generated interview questions. Get instant scoring and detailed feedback on your answers.",
-    color: "bg-cyan-500/10 text-cyan-400",
-  },
-  {
-    icon: MessageSquare,
-    title: "AI Mentor Chat",
-    description:
-      "Chat with your AI mentor anytime for career guidance, doubt solving, and personalized advice.",
-    color: "bg-violet-500/10 text-violet-400",
-  },
+  { icon: Brain, title: "AI Profile Analysis", desc: "Upload your resume. AI extracts skills, rates readiness, identifies gaps automatically." },
+  { icon: Building2, title: "Company Matching", desc: "Get matched with companies that fit your skillset. See exactly what you need to reach each one." },
+  { icon: Target, title: "Smart Task Plans", desc: "Daily and weekly tasks calibrated to your skill gaps — DSA, dev, system design, all covered." },
+  { icon: BarChart3, title: "Progress Tracking", desc: "Streaks, XP system, readiness scores. Watch yourself improve with visual analytics." },
+  { icon: Mic, title: "Mock Interviews", desc: "AI-generated interview questions with instant scoring, feedback, and improvement tips." },
+  { icon: MessageSquare, title: "AI Mentor", desc: "Chat with your personal AI career mentor anytime for guidance and doubt solving." },
 ];
-
-const stats = [
-  { value: "6", label: "AI Agents" },
-  { value: "100+", label: "Skill Categories" },
-  { value: "Real-time", label: "Adaptation" },
-  { value: "∞", label: "Mock Interviews" },
-];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
 
 export default function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -100,295 +40,222 @@ export default function LandingPage() {
     checkAuth();
   }, []);
 
+  const cta = isLoggedIn ? "/dashboard" : "/auth";
+  const ctaText = isLoggedIn ? "Go to Dashboard" : "Start Free";
+
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
+    <div className="min-h-screen bg-background text-foreground">
+      {/* ─── Nav ─── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-background/70 border-b border-white/[0.06]">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-bold gradient-text">CareerAI</span>
+            <span className="text-lg font-bold tracking-tight">CareerAI</span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <Link href="/dashboard">
-                <Button className="gradient-primary text-white border-0 hover:opacity-90 transition-opacity gap-2">
-                  <LayoutDashboard className="w-4 h-4" />
-                  Go to Dashboard
+                <Button className="gradient-primary text-white border-0 gap-2 h-9 px-4 text-sm hover:opacity-90">
+                  <LayoutDashboard className="w-4 h-4" /> Dashboard
                 </Button>
               </Link>
             ) : (
               <>
-                <Link href="/auth">
-                  <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/auth">
-                  <Button className="gradient-primary text-white border-0 hover:opacity-90 transition-opacity">
-                    Get Started
-                    <ArrowRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </Link>
+                <Link href="/auth"><Button variant="ghost" className="text-muted-foreground text-sm h-9">Sign in</Button></Link>
+                <Link href="/auth"><Button className="gradient-primary text-white border-0 h-9 px-4 text-sm hover:opacity-90">Get started <ArrowRight className="w-3.5 h-3.5 ml-1" /></Button></Link>
               </>
             )}
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6">
-        {/* Background effects */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[150px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/3 rounded-full blur-[150px]" />
-        </div>
+      {/* ─── Hero ─── */}
+      <section className="relative pt-36 pb-24 px-6 overflow-hidden">
+        {/* Background glow — subtle, single, centered */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-primary/[0.07] rounded-full blur-[120px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto relative">
+        <div className="max-w-4xl mx-auto text-center relative">
           <motion.div
-            className="text-center max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.5 }}
           >
-            <motion.div
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-sm mb-8"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Zap className="w-4 h-4" />
-              Powered by 6 Specialized AI Agents
-            </motion.div>
-
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-              <span className="text-foreground">Your AI-Powered</span>
-              <br />
-              <span className="gradient-text">Career Coach</span>
-            </h1>
-
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              Get personalized career roadmaps, smart task plans, mock interviews
-              with feedback, and company recommendations — all powered by
-              intelligent AI agents that adapt to your progress.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href={isLoggedIn ? "/dashboard" : "/auth"}>
-                <Button
-                  size="lg"
-                  className="gradient-primary text-white border-0 text-lg px-8 py-6 hover:opacity-90 transition-all"
-                >
-                  {isLoggedIn ? "Go to Dashboard" : "Start Your Journey"}
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-lg px-8 py-6 border-border hover:bg-accent"
-                onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
-              >
-                See How It Works
-              </Button>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-sm mb-8">
+              <Zap className="w-3.5 h-3.5" />
+              Powered by 6 AI Agents
             </div>
           </motion.div>
 
-          {/* Stats */}
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 max-w-3xl mx-auto"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+          <motion.h1
+            className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.08] mb-6"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
-            {stats.map((stat, i) => (
-              <motion.div
-                key={i}
-                variants={itemVariants}
-                className="text-center p-4 rounded-2xl glass"
-              >
-                <div className="text-3xl font-bold gradient-text">{stat.value}</div>
-                <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+            Your placement prep,{" "}
+            <span className="gradient-text">reimagined.</span>
+          </motion.h1>
 
-      {/* Features Section */}
-      <section id="features" className="py-24 px-6">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <motion.p
+            className="text-lg text-muted-foreground max-w-xl mx-auto mb-10 leading-relaxed"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <h2 className="text-4xl font-bold mb-4">
-              Everything You Need to{" "}
-              <span className="gradient-text">Land Your Dream Job</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Six specialized AI agents work together to analyze your profile,
-              plan your preparation, and guide you to placement success.
-            </p>
-          </motion.div>
+            Personalized roadmaps, skill analysis, mock interviews, and company recommendations — adapting to your progress in real time.
+          </motion.p>
 
           <motion.div
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            className="flex flex-col sm:flex-row gap-3 justify-center"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
           >
-            {features.map((feature, i) => (
-              <motion.div
-                key={i}
-                variants={itemVariants}
-                className="group relative p-6 rounded-2xl glass hover:glass-strong transition-all duration-300 cursor-default"
-              >
-                <div
-                  className={`w-12 h-12 rounded-xl ${feature.color} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-200`}
-                >
-                  <feature.icon className="w-5 h-5" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-              </motion.div>
-            ))}
+            <Link href={cta}>
+              <Button size="lg" className="gradient-primary text-white border-0 text-base px-8 h-12 hover:opacity-90 transition-all">
+                {ctaText} <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-base px-8 h-12 border-border/80 hover:bg-accent"
+              onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+            >
+              See features
+            </Button>
           </motion.div>
-        </div>
-      </section>
 
-      {/* How It Works */}
-      <section className="py-24 px-6 relative">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-500/5 rounded-full blur-[150px]" />
-        </div>
-
-        <div className="max-w-5xl mx-auto relative">
+          {/* Stat chips */}
           <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            className="flex flex-wrap justify-center gap-3 mt-14"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
           >
-            <h2 className="text-4xl font-bold mb-4">
-              How <span className="gradient-text">CareerAI</span> Works
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Four simple steps to accelerate your placement preparation
-            </p>
-          </motion.div>
-
-          <div className="space-y-8">
             {[
-              {
-                step: "01",
-                icon: Users,
-                title: "Complete Your Profile",
-                description:
-                  "Upload your resume, add your skills with self-ratings, list your projects, and set your career goals. Our onboarding captures everything our AI needs.",
-              },
-              {
-                step: "02",
-                icon: Brain,
-                title: "AI Analyzes Your Profile",
-                description:
-                  "Six specialized agents evaluate your strengths, identify skill gaps, calculate your readiness score, and match you with suitable companies.",
-              },
-              {
-                step: "03",
-                icon: BookOpen,
-                title: "Follow Your Personalized Plan",
-                description:
-                  "Get daily and weekly tasks calibrated to your level. Practice with mock interviews. The AI adapts your plan based on your progress.",
-              },
-              {
-                step: "04",
-                icon: TrendingUp,
-                title: "Track Progress & Improve",
-                description:
-                  "Watch your readiness score climb as you complete tasks. Get real-time alerts, streak tracking, and AI-powered course corrections.",
-              },
-            ].map((item, i) => (
+              { label: "6 AI Agents", color: "text-primary border-primary/20" },
+              { label: "100+ Skills", color: "text-emerald-400 border-emerald-500/20" },
+              { label: "Real-time Adaptation", color: "text-amber-400 border-amber-500/20" },
+              { label: "Unlimited Interviews", color: "text-rose-400 border-rose-500/20" },
+            ].map((s, i) => (
+              <span key={i} className={`px-3 py-1 rounded-full border text-xs ${s.color}`}>{s.label}</span>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── Features ─── */}
+      <section id="features" className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+              Everything you need to <span className="gradient-text">land your dream job</span>
+            </h2>
+            <p className="text-muted-foreground max-w-lg mx-auto">
+              Six specialized AI agents work together to get you placement-ready.
+            </p>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map((f, i) => (
               <motion.div
                 key={i}
-                className="flex gap-6 items-start p-6 rounded-2xl glass"
-                initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                className="group p-6 rounded-xl glass hover:border-primary/20 transition-all duration-300"
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
+                transition={{ delay: i * 0.07 }}
               >
-                <div className="flex-shrink-0 w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center text-xl font-bold text-white">
-                  {item.step}
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors">
+                  <f.icon className="w-5 h-5 text-primary" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2 flex items-center gap-2">
-                    <item.icon className="w-5 h-5 text-indigo-400" />
-                    {item.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
+                <h3 className="font-semibold mb-1.5">{f.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* ─── How It Works ─── */}
+      <section className="py-24 px-6 border-t border-border/50">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-14 tracking-tight">How it works</h2>
+          <div className="relative">
+            {/* Vertical line */}
+            <div className="absolute left-[19px] top-0 bottom-0 w-px bg-border hidden sm:block" />
+            <div className="space-y-8">
+              {[
+                { num: "1", title: "Complete your profile", desc: "Upload your resume, add skills with self-ratings, set career goals. Our onboarding captures everything." },
+                { num: "2", title: "AI analyzes everything", desc: "Six agents evaluate strengths, identify gaps, calculate readiness, and match you with companies." },
+                { num: "3", title: "Follow your plan", desc: "Get daily tasks, practice with mock interviews, chat with your AI mentor. Plans adapt to your progress." },
+                { num: "4", title: "Track & improve", desc: "Watch your score climb. Get streaks, XP, and proactive alerts when you fall behind." },
+              ].map((item, i) => (
+                <motion.div
+                  key={i}
+                  className="flex gap-5 items-start"
+                  initial={{ opacity: 0, x: -16 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-sm font-semibold text-primary flex-shrink-0 z-10">
+                    {item.num}
+                  </div>
+                  <div className="pb-6">
+                    <h3 className="font-semibold mb-1">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA ─── */}
       <section className="py-24 px-6">
         <motion.div
-          className="max-w-4xl mx-auto text-center p-12 rounded-3xl glass-strong relative overflow-hidden"
-          initial={{ opacity: 0, scale: 0.95 }}
+          className="max-w-2xl mx-auto text-center p-10 rounded-2xl glass-strong relative overflow-hidden"
+          initial={{ opacity: 0, scale: 0.97 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
         >
-          <div className="absolute inset-0 gradient-primary opacity-10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] to-transparent pointer-events-none" />
           <div className="relative">
-            <Shield className="w-12 h-12 text-indigo-400 mx-auto mb-6" />
-            <h2 className="text-4xl font-bold mb-4">
-              Ready to Accelerate Your Career?
-            </h2>
-            <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto">
-              Join thousands of students using AI-powered guidance to prepare
-              smarter and land their dream placements.
-            </p>
-            <Link href={isLoggedIn ? "/dashboard" : "/auth"}>
-              <Button
-                size="lg"
-                className="gradient-primary text-white border-0 text-lg px-10 py-6 hover:opacity-90"
-              >
-                {isLoggedIn ? "Go to Dashboard" : "Get Started — It's Free"}
-                <Sparkles className="w-5 h-5 ml-2" />
+            <h2 className="text-3xl font-bold mb-3 tracking-tight">Ready to accelerate your career?</h2>
+            <p className="text-muted-foreground mb-8">Free to use. Start in under 2 minutes.</p>
+            <Link href={cta}>
+              <Button size="lg" className="gradient-primary text-white border-0 text-base px-8 h-12 hover:opacity-90">
+                {ctaText} <Sparkles className="w-4 h-4 ml-2" />
               </Button>
             </Link>
           </div>
         </motion.div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      {/* ─── Footer ─── */}
+      <footer className="border-t border-border/50 py-8 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="w-6 h-6 rounded gradient-primary flex items-center justify-center">
+              <Sparkles className="w-3 h-3 text-white" />
             </div>
-            <span className="font-semibold gradient-text">CareerAI</span>
+            <span className="font-semibold text-sm">CareerAI</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
             Built with AI for students, by students
           </div>
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} CareerAI. All rights reserved.
-          </p>
+          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} CareerAI</p>
         </div>
       </footer>
     </div>

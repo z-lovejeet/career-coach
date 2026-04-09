@@ -47,47 +47,50 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  --color-emerald: oklch(0.765 0.177 163.223);
-  --color-amber: oklch(0.82 0.169 83.727);
-  --color-violet: oklch(0.606 0.25 292.717);
-  --color-indigo: oklch(0.585 0.233 277.117);
-  --color-rose: oklch(0.645 0.246 16.439);
+  --color-emerald: #34d399;
+  --color-amber: #fbbf24;
+  --color-violet: #8b5cf6;
+  --color-indigo: #6366f1;
+  --color-rose: #fb7185;
 }
 
-/* ── Professional Dark Theme ── */
+/* ═══════════════════════════════════════════
+   Premium Dark — inspired by Raycast + Apple
+   Warm charcoal base, purple accent, real depth
+   ═══════════════════════════════════════════ */
 :root {
-  --background: oklch(0.09 0.005 260);
-  --foreground: oklch(0.93 0.005 260);
-  --card: oklch(0.13 0.005 260);
-  --card-foreground: oklch(0.93 0.005 260);
-  --popover: oklch(0.13 0.005 260);
-  --popover-foreground: oklch(0.93 0.005 260);
-  --primary: oklch(0.7 0.14 250);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.18 0.008 260);
-  --secondary-foreground: oklch(0.88 0.005 260);
-  --muted: oklch(0.16 0.006 260);
-  --muted-foreground: oklch(0.55 0.01 260);
-  --accent: oklch(0.17 0.01 260);
-  --accent-foreground: oklch(0.93 0.005 260);
-  --destructive: oklch(0.6 0.2 25);
-  --border: oklch(0.2 0.008 260);
-  --input: oklch(0.18 0.008 260);
-  --ring: oklch(0.7 0.14 250);
-  --chart-1: oklch(0.7 0.14 250);
-  --chart-2: oklch(0.72 0.14 163);
-  --chart-3: oklch(0.75 0.12 83);
-  --chart-4: oklch(0.62 0.18 293);
-  --chart-5: oklch(0.65 0.18 16);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.11 0.005 260);
-  --sidebar-foreground: oklch(0.93 0.005 260);
-  --sidebar-primary: oklch(0.7 0.14 250);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.16 0.008 260);
-  --sidebar-accent-foreground: oklch(0.93 0.005 260);
-  --sidebar-border: oklch(0.18 0.006 260);
-  --sidebar-ring: oklch(0.7 0.14 250);
+  --background: #0d0d11;
+  --foreground: #ededf0;
+  --card: #16161b;
+  --card-foreground: #ededf0;
+  --popover: #16161b;
+  --popover-foreground: #ededf0;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #1e1e24;
+  --secondary-foreground: #a0a0b0;
+  --muted: #1a1a20;
+  --muted-foreground: #6e6e80;
+  --accent: #1e1e26;
+  --accent-foreground: #ededf0;
+  --destructive: #ef4444;
+  --border: #2a2a35;
+  --input: #1e1e26;
+  --ring: #3b82f6;
+  --chart-1: #3b82f6;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #8b5cf6;
+  --chart-5: #fb7185;
+  --radius: 0.75rem;
+  --sidebar: #111115;
+  --sidebar-foreground: #ededf0;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e1e26;
+  --sidebar-accent-foreground: #ededf0;
+  --sidebar-border: #222230;
+  --sidebar-ring: #3b82f6;
 }
 
 @layer base {
@@ -102,53 +105,57 @@
   }
 }
 
-/* ── Utilities ── */
+/* ═══════════════════════════════════════════
+   Card surfaces with real depth
+   ═══════════════════════════════════════════ */
 @layer utilities {
-  /* Subtle card surfaces — no blur, just layered backgrounds */
   .glass {
-    background: oklch(0.13 0.005 260 / 90%);
-    border: 1px solid oklch(1 0 0 / 5%);
+    background: #16161b;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3),
+                0 0 1px rgba(255,255,255,0.05);
   }
 
   .glass-strong {
-    background: oklch(0.14 0.005 260 / 95%);
-    border: 1px solid oklch(1 0 0 / 7%);
+    background: #1a1a20;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4),
+                0 0 1px rgba(255,255,255,0.06);
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, oklch(0.75 0.12 250), oklch(0.65 0.1 220));
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Muted, professional gradient — no neon */
   .gradient-primary {
-    background: linear-gradient(135deg, oklch(0.55 0.14 250), oklch(0.50 0.16 265));
+    background: linear-gradient(135deg, #60a5fa, #2563eb);
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.25);
+  }
+  .gradient-primary:hover {
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
   }
 
   .gradient-accent {
-    background: linear-gradient(135deg, oklch(0.55 0.14 250), oklch(0.6 0.1 220));
+    background: linear-gradient(135deg, #60a5fa, #2563eb);
   }
 
-  /* Subtle glow — barely visible, just depth */
   .glow {
-    box-shadow: 0 1px 3px oklch(0 0 0 / 30%),
-                0 0 16px oklch(0.55 0.14 250 / 8%);
+    box-shadow: 0 2px 20px rgba(59, 130, 246, 0.15);
   }
-
   .glow-sm {
-    box-shadow: 0 1px 2px oklch(0 0 0 / 20%);
+    box-shadow: 0 1px 8px rgba(59, 130, 246, 0.1);
   }
 
+  /* Kept for compat — subtle */
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float 8s ease-in-out infinite;
   }
-
   .animate-pulse-glow {
     animation: pulseGlow 3s ease-in-out infinite;
   }
-
   .animate-gradient {
     background-size: 200% 200%;
     animation: gradientShift 12s ease infinite;
@@ -157,12 +164,12 @@
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-8px); }
 }
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
+  0%, 100% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.15); }
+  50% { box-shadow: 0 0 24px rgba(59, 130, 246, 0.3); }
 }
 
 @keyframes gradientShift {
@@ -171,7 +178,9 @@
   100% { background-position: 0% 50%; }
 }
 
-/* ── Scrollbar ── */
+/* ═══════════════════════════════════════════
+   Scrollbar
+   ═══════════════════════════════════════════ */
 ::-webkit-scrollbar {
   width: 5px;
 }
@@ -179,9 +188,9 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.25 0.008 260);
+  background: #2a2a35;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.35 0.008 260);
+  background: #3a3a48;
 }
