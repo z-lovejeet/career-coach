@@ -206,7 +206,38 @@ export default function RoadmapPage() {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error?.message);
-      setRoadmap(data.data);
+      
+      // Normalize: ensure all expected fields have defaults
+      const raw = data.data;
+      const normalized: Roadmap = {
+        overview: {
+          feasibility: raw.overview?.feasibility || 'ambitious',
+          feasibilityNote: raw.overview?.feasibilityNote || '',
+          alternativeCompanies: raw.overview?.alternativeCompanies || [],
+          currentReadiness: raw.overview?.currentReadiness || 0,
+          targetReadiness: raw.overview?.targetReadiness || 80,
+          estimatedFinalReadiness: raw.overview?.estimatedFinalReadiness || 0,
+        },
+        phases: (raw.phases || []).map((p: Phase) => ({
+          ...p,
+          resources: p.resources || [],
+          weeks: (p.weeks || []).map((w: Week) => ({
+            ...w,
+            tasks: w.tasks || [],
+            dailyHoursBreakdown: w.dailyHoursBreakdown || { theory: 1, practice: 2, projects: 0 },
+          })),
+        })),
+        keySkillsToAcquire: raw.keySkillsToAcquire || [],
+        interviewPrep: {
+          dsaProblemsTarget: raw.interviewPrep?.dsaProblemsTarget || 0,
+          systemDesignTopics: raw.interviewPrep?.systemDesignTopics || [],
+          mockInterviewsTarget: raw.interviewPrep?.mockInterviewsTarget || 0,
+          companySpecificTips: raw.interviewPrep?.companySpecificTips || [],
+        },
+        warnings: raw.warnings || [],
+      };
+      
+      setRoadmap(normalized);
       setExpandedPhase(0);
       toast.success("✅ Roadmap generated! Scroll down to explore.");
     } catch (err) {
@@ -533,7 +564,7 @@ export default function RoadmapPage() {
             <div>
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Map className="w-5 h-5 text-primary" />
-                Week-by-Week Roadmap — {roadmap.phases.length} Phases
+                Week-by-Week Roadmap — {roadmap.phases?.length || 0} Phases
               </h2>
 
               <div className="relative">
@@ -541,7 +572,7 @@ export default function RoadmapPage() {
                 <div className="absolute left-[22px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-primary/10 hidden sm:block" />
 
                 <div className="space-y-4">
-                  {roadmap.phases.map((phase, pi) => {
+                  {(roadmap.phases || []).map((phase, pi) => {
                     const isExpanded = expandedPhase === pi;
                     return (
                       <motion.div
