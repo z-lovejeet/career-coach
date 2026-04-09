@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import {
   Brain,
@@ -49,8 +50,8 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-background/70 border-b border-white/[0.06]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+              <Image src="/logo.png" alt="CareerAI Logo" fill className="object-cover" />
             </div>
             <span className="text-lg font-bold tracking-tight">CareerAI</span>
           </Link>
@@ -246,8 +247,8 @@ export default function LandingPage() {
       <footer className="border-t border-border/50 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded gradient-primary flex items-center justify-center">
-              <Sparkles className="w-3 h-3 text-white" />
+            <div className="relative w-6 h-6 rounded overflow-hidden">
+              <Image src="/logo.png" alt="CareerAI Logo" fill className="object-cover" />
             </div>
             <span className="font-semibold text-sm">CareerAI</span>
           </div>

@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import {
@@ -61,8 +62,8 @@ export default function AppLayout({
     <div className="flex flex-col h-full">
       {/* Brand */}
       <Link href="/" className="flex items-center gap-2.5 px-5 h-16 border-b border-border/50 hover:opacity-80 transition-opacity">
-        <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0">
-          <Sparkles className="w-4 h-4 text-white" />
+        <div className="relative w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+          <Image src="/logo.png" alt="CareerAI Logo" fill className="object-cover" />
         </div>
         <span className="text-base font-bold tracking-tight">CareerAI</span>
       </Link>
