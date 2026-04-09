@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CareerAI — Project Documentation</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap');
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --text: #e0e0e8;
+      --text-muted: #8888a0;
+      --primary: #7c5cfc;
+      --primary-glow: rgba(124, 92, 252, 0.15);
+      --accent-green: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-rose: #f43f5e;
+      --accent-blue: #60a5fa;
+      --accent-cyan: #22d3ee;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    /* ── Cover Page ── */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4rem 2rem;
+      background: radial-gradient(ellipse at 50% 30%, rgba(124,92,252,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 80%, rgba(52,211,153,0.06) 0%, transparent 50%);
+      page-break-after: always;
+    }
+    .cover .logo {
+      width: 90px; height: 90px; border-radius: 24px;
+      background: linear-gradient(135deg, #7c5cfc, #a855f7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px; margin-bottom: 2rem;
+      box-shadow: 0 0 60px rgba(124,92,252,0.3);
+    }
+    .cover h1 {
+      font-size: 3.5rem; font-weight: 900;
+      background: linear-gradient(135deg, #7c5cfc, #a855f7, #ec4899);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .cover .subtitle { font-size: 1.3rem; color: var(--text-muted); margin-bottom: 3rem; }
+    .cover .meta { color: var(--text-muted); font-size: 0.85rem; line-height: 2.2; }
+    .cover .meta strong { color: var(--text); }
+
+    /* ── Layout ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 2rem 6rem; }
+
+    /* ── Typography ── */
+    h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 1rem; color: #fff; }
+    h2 {
+      font-size: 1.6rem; font-weight: 700; color: #fff;
+      margin: 3rem 0 1.2rem; padding-bottom: 0.6rem;
+      border-bottom: 2px solid var(--border);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    h2 .emoji { font-size: 1.5rem; }
+    h3 { font-size: 1.15rem; font-weight: 600; color: #ddd; margin: 1.8rem 0 0.8rem; }
+    h4 { font-size: 1rem; font-weight: 600; color: var(--primary); margin: 1.2rem 0 0.5rem; }
+    p { margin-bottom: 1rem; }
+    strong { color: #fff; }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin: 2rem 0 3rem;
+    }
+    .toc h3 { margin-top: 0; color: #fff; font-size: 1.2rem; }
+    .toc ol { padding-left: 1.5rem; }
+    .toc li { margin: 0.5rem 0; }
+    .toc a { color: var(--text); font-weight: 500; }
+    .toc a:hover { color: var(--primary); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .card-accent {
+      border-left: 3px solid var(--primary);
+    }
+
+    /* Agent Cards */
+    .agent-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.8rem;
+      margin: 1.2rem 0;
+    }
+    .agent-header {
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+    }
+    .agent-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .agent-name { font-size: 1.1rem; font-weight: 700; color: #fff; }
+    .agent-file { font-size: 0.75rem; font-family: 'Fira Code', monospace; color: var(--text-muted); }
+
+    .io-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .io-box {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+    .io-box h5 {
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 0.5rem;
+    }
+    .io-box.input h5 { color: var(--accent-blue); }
+    .io-box.output h5 { color: var(--accent-green); }
+    .io-box ul { padding-left: 1rem; font-size: 0.85rem; color: var(--text-muted); }
+    .io-box li { margin: 0.3rem 0; }
+
+    /* ── Code blocks ── */
+    code {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85em;
+      background: var(--surface2);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      color: var(--accent-cyan);
+    }
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-size: 0.82rem;
+      line-height: 1.6;
+    }
+    pre code { background: none; padding: 0; color: var(--text); }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: var(--surface);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    tr:hover td { background: var(--surface); }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin-right: 0.4rem;
+      margin-bottom: 0.3rem;
+    }
+    .badge-purple { background: rgba(124,92,252,0.15); color: #a78bfa; }
+    .badge-green { background: rgba(52,211,153,0.15); color: #34d399; }
+    .badge-blue { background: rgba(96,165,250,0.15); color: #60a5fa; }
+    .badge-amber { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .badge-rose { background: rgba(244,63,94,0.15); color: #f43f5e; }
+    .badge-cyan { background: rgba(34,211,238,0.15); color: #22d3ee; }
+
+    /* ── Lists ── */
+    ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+    li { margin: 0.4rem 0; }
+
+    /* ── Mermaid ── */
+    .mermaid {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    /* ── Callouts ── */
+    .callout {
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      margin: 1.2rem 0;
+      border-left: 4px solid;
+    }
+    .callout-info { background: rgba(96,165,250,0.07); border-color: var(--accent-blue); }
+    .callout-success { background: rgba(52,211,153,0.07); border-color: var(--accent-green); }
+    .callout-warning { background: rgba(251,191,36,0.07); border-color: var(--accent-amber); }
+    .callout-title { font-weight: 700; margin-bottom: 0.3rem; color: #fff; font-size: 0.9rem; }
+
+    /* Print Styles */
+    @media print {
+      body { background: #fff; color: #111; font-size: 11pt; }
+      .cover { min-height: auto; padding: 3rem 2rem; background: none; }
+      .cover h1 { color: #111; -webkit-text-fill-color: #111; font-size: 2.5rem; }
+      .cover .subtitle { color: #555; }
+      h2 { color: #111; border-color: #ddd; }
+      h3, h4 { color: #333; }
+      .card, .agent-card, .toc, pre, .mermaid { border-color: #ddd; background: #f9f9f9; }
+      .io-box { background: #f0f0f0; }
+      code { background: #eee; color: #333; }
+      table th { background: #eee; }
+      .badge-purple, .badge-green, .badge-blue, .badge-amber, .badge-rose, .badge-cyan { background: #eee; color: #333; }
+      a { color: #333; }
+    }
+
+    /* ── Page Breaks ── */
+    .page-break { page-break-before: always; }
+
+    /* ── Tech Stack Grid ── */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .tech-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .tech-item .icon { font-size: 1.5rem; }
+    .tech-item .name { font-weight: 600; color: #fff; font-size: 0.95rem; }
+    .tech-item .desc { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── Separator ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- COVER PAGE -->
+<!-- ═══════════════════════════════════════ -->
+<div class="cover">
+  <div class="logo">✦</div>
+  <h1>CareerAI</h1>
+  <p class="subtitle">AI-Powered Career Coach for Tech Placements</p>
+  <div class="meta">
+    <strong>Project Documentation</strong><br>
+    Multi-Agent AI System · Hackathon Submission<br><br>
+    <strong>Tech Stack:</strong> Next.js 16 · Gemini 2.5 Flash · Supabase · Apify<br>
+    <strong>Architecture:</strong> 6 Specialized AI Agents · No LangChain<br>
+    <strong>Date:</strong> April 2026
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- MAIN CONTENT -->
+<!-- ═══════════════════════════════════════ -->
+<div class="container">
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <h3>📑 Table of Contents</h3>
+    <ol>
+      <li><a href="#problem">Problem Statement</a></li>
+      <li><a href="#approach">Our Approach & Solution</a></li>
+      <li><a href="#architecture">System Architecture</a></li>
+      <li><a href="#tech-stack">Tech Stack</a></li>
+      <li><a href="#no-langchain">Why Not LangChain?</a></li>
+      <li><a href="#agents">The 6 AI Agents — Deep Dive</a></li>
+      <li><a href="#live-jobs">Live Jobs (Apify LinkedIn Scraper)</a></li>
+      <li><a href="#database">Database Schema</a></li>
+      <li><a href="#gamification">Gamification System</a></li>
+      <li><a href="#roadmap">Interactive Roadmap Maker</a></li>
+      <li><a href="#security">Security & Auth</a></li>
+      <li><a href="#workflows">End-to-End User Workflows</a></li>
+      <li><a href="#api-routes">API Routes Reference</a></li>
+      <li><a href="#future">Future Scope</a></li>
+    </ol>
+  </div>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 1. PROBLEM STATEMENT -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="problem"><span class="emoji">🎯</span> 1. Problem Statement</h2>
+
+  <p>Engineering students in India face a <strong>fragmented, overwhelming, and generic</strong> placement preparation experience:</p>
+
+  <ul>
+    <li><strong>No personalized guidance</strong> — Students use the same YouTube playlists and roadmaps regardless of their current skill level, goals, or target companies.</li>
+    <li><strong>No self-awareness</strong> — Students don't know their actual strengths, weaknesses, or placement readiness.</li>
+    <li><strong>Disconnected tools</strong> — Resume analysis, mock interviews, task planning, and job search happen on separate platforms with no integration.</li>
+    <li><strong>No real-time job data</strong> — Students prepare blindly without knowing what companies are actually hiring right now.</li>
+    <li><strong>Inconsistent effort</strong> — Without accountability (streaks, tracking, gamification), motivation drops within weeks.</li>
+  </ul>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">⚠️ The Core Gap</div>
+    There is no single platform that combines AI-powered profile analysis, personalized task planning, real-time job matching, mock interviews with feedback, and career mentorship — all adapting to the student's progress in real time.
+  </div>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 2. APPROACH -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="approach"><span class="emoji">💡</span> 2. Our Approach & Solution</h2>
+
+  <p>CareerAI is a <strong>multi-agent AI platform</strong> where 6 specialized AI agents collaborate to provide an end-to-end career coaching experience. Each agent has a focused responsibility, a typed input/output schema, and communicates through a shared database.</p>
+
+  <h3>Key Design Principles</h3>
+  <ol>
+    <li><strong>Agent Specialization</strong> — Each AI agent has one job and does it expertly, rather than a single monolithic prompt doing everything.</li>
+    <li><strong>Real Data Pipeline</strong> — Profile → Analysis → Recommendations → Tasks → Interviews. Each agent's output feeds into the next.</li>
+    <li><strong>Hybrid Intelligence</strong> — AI-generated company matches + real-time LinkedIn job data from Apify.</li>
+    <li><strong>Honest AI</strong> — We instruct Gemini to be <em>brutally honest</em> about readiness, not sugarcoat assessments.</li>
+    <li><strong>Gamification</strong> — Streak tracking, XP, levels, achievements — all computed from real database activity (zero mock data).</li>
+  </ol>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 3. ARCHITECTURE -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="architecture"><span class="emoji">🏗️</span> 3. System Architecture</h2>
+
+  <h3>High-Level Architecture</h3>
+  <div class="mermaid">
+graph TB
+    subgraph "Frontend — Next.js App Router"
+        UI[React UI Components]
+        Pages[Pages: Dashboard, Profile, Tasks, Companies, Interview, Chat, Roadmap, Progress]
+    end
+
+    subgraph "API Layer — Next.js Route Handlers"
+        A1["/api/analyze"]
+        A2["/api/companies"]
+        A3["/api/tasks/generate"]
+        A4["/api/interview"]
+        A5["/api/chat"]
+        A6["/api/roadmap"]
+        A7["/api/jobs"]
+        A8["/api/streak"]
+    end
+
+    subgraph "AI Agents Layer"
+        AG1["🧠 Analyzer Agent"]
+        AG2["🏢 Recommendation Agent"]
+        AG3["📋 Planner Agent"]
+        AG4["🎤 Interview Agent"]
+        AG5["💬 Chat Agent"]
+        AG6["🗺️ Roadmap Agent"]
+    end
+
+    subgraph "External Services"
+        Gemini["☁️ Google Gemini 2.5 Flash API"]
+        Apify["🔍 Apify LinkedIn Scraper"]
+    end
+
+    subgraph "Database — Supabase"
+        DB[(PostgreSQL)]
+        Auth[Supabase Auth]
+        Storage[File Storage]
+    end
+
+    UI --> Pages
+    Pages --> A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8
+    A1 --> AG1
+    A2 --> AG2
+    A3 --> AG3
+    A4 --> AG4
+    A5 --> AG5
+    A6 --> AG6
+    A7 --> Apify
+    AG1 & AG2 & AG3 & AG4 & AG5 & AG6 --> Gemini
+    A1 & A2 & A3 & A4 & A5 & A8 --> DB
+    Pages --> Auth
+    A1 --> Storage
+  </div>
+
+  <h3>Agent Data Flow (Pipeline)</h3>
+  <div class="mermaid">
+flowchart LR
+    A["📝 Onboarding\n(Skills, Resume, Goals)"] --> B["🧠 Analyzer Agent\n(Profile Analysis)"]
+    B --> C["🏢 Recommendation Agent\n(Company Matching)"]
+    B --> D["📋 Planner Agent\n(Weekly Tasks)"]
+    C --> D
+    B --> E["🎤 Interview Agent\n(Mock Interviews)"]
+    B --> F["💬 Chat Agent\n(AI Mentor)"]
+    A --> G["🗺️ Roadmap Agent\n(Career Roadmap)"]
+    B --> G
+    D --> H["📊 Gamification\n(Streaks, XP, Achievements)"]
+    E --> H
+    
+    style A fill:#7c5cfc22,stroke:#7c5cfc
+    style B fill:#f43f5e22,stroke:#f43f5e
+    style C fill:#34d39922,stroke:#34d399
+    style D fill:#fbbf2422,stroke:#fbbf24
+    style E fill:#60a5fa22,stroke:#60a5fa
+    style F fill:#a855f722,stroke:#a855f7
+    style G fill:#22d3ee22,stroke:#22d3ee
+    style H fill:#f9731622,stroke:#f97316
+  </div>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 4. TECH STACK -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="tech-stack"><span class="emoji">🛠️</span> 4. Tech Stack</h2>
+
+  <table>
+    <thead>
+      <tr><th>Category</th><th>Technology</th><th>Why We Chose It</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Framework</td><td><strong>Next.js 16</strong> (App Router)</td><td>Server-side rendering, API routes in the same repo, React Server Components</td></tr>
+      <tr><td>AI Model</td><td><strong>Google Gemini 2.5 Flash</strong></td><td>Fast, 1M context window, native JSON mode, free tier available</td></tr>
+      <tr><td>AI SDK</td><td><strong>@google/genai</strong></td><td>Official Google SDK — lightweight, direct API calling (no LangChain overhead)</td></tr>
+      <tr><td>Database</td><td><strong>Supabase (PostgreSQL)</strong></td><td>Auth + DB + Storage in one service, Row-Level Security, real-time subscriptions</td></tr>
+      <tr><td>Auth</td><td><strong>Supabase Auth</strong></td><td>Google OAuth, magic links, session management — zero custom auth code</td></tr>
+      <tr><td>Job Data</td><td><strong>Apify</strong> (LinkedIn Scraper)</td><td>Real-time LinkedIn job scraping, no cookies needed, reliable API</td></tr>
+      <tr><td>Styling</td><td><strong>Tailwind CSS v4</strong></td><td>Utility-first CSS, dark mode, rapid prototyping</td></tr>
+      <tr><td>UI Library</td><td><strong>shadcn/ui + Radix</strong></td><td>Accessible, composable, styled with Tailwind</td></tr>
+      <tr><td>Animations</td><td><strong>Framer Motion</strong></td><td>Declarative animations, AnimatePresence for page transitions</td></tr>
+      <tr><td>Charts</td><td><strong>Recharts</strong></td><td>React-native charting for progress visualizations</td></tr>
+      <tr><td>PDF Parsing</td><td><strong>pdf-parse</strong></td><td>Extracts text from uploaded resume PDFs for AI analysis</td></tr>
+      <tr><td>Language</td><td><strong>TypeScript</strong></td><td>Type-safe agent I/O schemas, catches errors at compile time</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 5. WHY NOT LANGCHAIN -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="no-langchain"><span class="emoji">🚫</span> 5. Why Not LangChain?</h2>
+
+  <p>This is a common question from judges. Here's our <strong>deliberate technical reasoning</strong>:</p>
+
+  <div class="card-grid">
+    <div class="card card-accent">
+      <h4>❌ LangChain Problems</h4>
+      <ul>
+        <li><strong>Massive bundle</strong> — adds 2-5MB+ to server, significant cold start penalty on serverless (Vercel)</li>
+        <li><strong>Abstraction overhead</strong> — chains, agents, tools, memory managers — we don't need 90% of it</li>
+        <li><strong>Opaque debugging</strong> — when a chain fails, you're debugging 5 layers of abstraction</li>
+        <li><strong>Version instability</strong> — frequent breaking API changes</li>
+        <li><strong>Vendor lock-in</strong> — LangChain's abstractions make it harder to switch models</li>
+      </ul>
+    </div>
+    <div class="card card-accent">
+      <h4>✅ Our Approach Instead</h4>
+      <ul>
+        <li><strong>Direct API calls</strong> — <code>@google/genai</code> SDK, ~50KB, zero cold start</li>
+        <li><strong>Single shared function</strong> — <code>callGemini()</code> — all 6 agents call through one 40-line function</li>
+        <li><strong>TypeScript-typed I/O</strong> — each agent has a defined <code>Input</code>/<code>Output</code> type</li>
+        <li><strong>JSON mode</strong> — Gemini's native <code>responseMimeType: 'application/json'</code>, no parsing hacks</li>
+        <li><strong>Agent = function</strong> — each agent is just an exported <code>async function</code> with a system prompt</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The Core: <code>callGemini()</code> — Our "Framework"</h3>
+  <p>Instead of LangChain's 100+ classes, we have one 40-line function that every agent calls through:</p>
+
+  <pre><code>// src/lib/agents/gemini.ts — The ENTIRE "framework"
+export async function callGemini&lt;T&gt;({
+  systemPrompt,     // Agent's role & rules
+  userPrompt,       // Context + question
+  jsonMode = true,  // Gemini native JSON output
+  temperature = 0.7,
+  maxTokens = 8192,
+}: GeminiCallOptions): Promise&lt;T&gt; {
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: userPrompt,
+    config: {
+      temperature,
+      maxOutputTokens: maxTokens,
+      responseMimeType: jsonMode ? 'application/json' : undefined,
+      systemInstruction: systemPrompt,
+    },
+  });
+  return jsonMode ? JSON.parse(response.text) : response.text;
+}</code></pre>
+
+  <div class="callout callout-success">
+    <div class="callout-title">✅ Result</div>
+    6 specialized agents, zero external framework dependencies. Total agent layer code: ~500 lines. A LangChain equivalent would be 2000+ lines with 15+ imported classes.
+  </div>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 6. THE 6 AI AGENTS -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="agents" class="page-break"><span class="emoji">🤖</span> 6. The 6 AI Agents — Deep Dive</h2>
+
+  <p>Each agent follows the same pattern: <strong>System Prompt + Typed Input → Gemini API → Typed Output</strong>.</p>
+
+  <div class="mermaid">
+flowchart LR
+    A["Typed Input\n(TypeScript Interface)"] --> B["System Prompt\n(Agent Role + Rules)"]
+    B --> C["callGemini()"]
+    C --> D["Gemini 2.5 Flash\n(JSON Mode)"]
+    D --> E["Typed Output\n(TypeScript Interface)"]
+    
+    style C fill:#7c5cfc22,stroke:#7c5cfc
+    style D fill:#60a5fa22,stroke:#60a5fa
+  </div>
+
+  <!-- Agent 1: Analyzer -->
+  <div class="agent-card">
+    <div class="agent-header">
+      <div class="agent-icon" style="background: rgba(244,63,94,0.15);">🧠</div>
+      <div>
+        <div class="agent-name">Agent 1: Profile Analyzer</div>
+        <div class="agent-file">src/lib/agents/analyzer.ts → /api/analyze</div>
+      </div>
+    </div>
+    <p><strong>Purpose:</strong> Analyzes a student's complete profile (skills, resume, projects, education) and produces a placement readiness assessment.</p>
+    <p><strong>Temperature:</strong> 0.4 (low — we want consistent, factual analysis, not creative output)</p>
+    <div class="io-grid">
+      <div class="io-box input">
+        <h5>📥 Input</h5>
+        <ul>
+          <li>Skills list + self-ratings (1-10)</li>
+          <li>Projects (name, tech stack, description)</li>
+          <li>Education level & field</li>
+          <li>Experience level (fresher/intern/1-3yr)</li>
+          <li>Career goals</li>
+          <li>Resume text (extracted from PDF)</li>
+        </ul>
+      </div>
+      <div class="io-box output">
+        <h5>📤 Output</h5>
+        <ul>
+          <li><code>extracted_skills[]</code> — name, level, confidence</li>
+          <li><code>strengths[]</code> — skill + evidence</li>
+          <li><code>weaknesses[]</code> — skill + reason</li>
+          <li><code>missing_skills[]</code> — skill + importance</li>
+          <li><code>readiness_score</code> — 0-100</li>
+          <li><code>summary</code> — 2-3 sentence assessment</li>
+        </ul>
+      </div>
+    </div>
+    <p><strong>Storage:</strong> Output is saved to the <code>analyses</code> table in Supabase for historical tracking.</p>
+  </div>
+
+  <!-- Agent 2: Recommendation -->
+  <div class="agent-card">
+    <div class="agent-header">
+      <div class="agent-icon" style="background: rgba(52,211,153,0.15);">🏢</div>
+      <div>
+        <div class="agent-name">Agent 2: Company Recommender</div>
+        <div class="agent-file">src/lib/agents/recommendation.ts → /api/companies</div>
+      </div>
+    </div>
+    <p><strong>Purpose:</strong> Matches the student with REAL Indian tech companies based on their analysis results. Split into "Current Fit" (hire-ready now) and "Target" (aspirational).</p>
+    <p><strong>Temperature:</strong> 0.5 (balanced — needs to know real companies but also personalize)</p>
+    <div class="io-grid">
+      <div class="io-box input">
+        <h5>📥 Input (from Analyzer output)</h5>
+        <ul>
+          <li>Readiness score</li>
+          <li>Extracted skills + strengths + weaknesses</li>
+          <li>Missing skills + importance</li>
+          <li>Career goals + experience level</li>
+          <li>Preferred locations</li>
+        </ul>
+      </div>
+      <div class="io-box output">
+        <h5>📤 Output</h5>
+        <ul>
+          <li><code>current_fit_companies[]</code> — name, role, match%, skills</li>
+          <li><code>target_companies[]</code> — name, gap skills, timeline</li>
+          <li><code>skill_gaps[]</code> — current vs required level</li>
+          <li><code>roadmap_to_target[]</code> — month-by-month plan</li>
+        </ul>
+      </div>
+    </div>
+    <p><strong>Key Constraint:</strong> System prompt mandates ONLY real Indian-market companies (Google, Flipkart, TCS, Razorpay, etc.) — no fictional companies.</p>
+  </div>
+
+  <!-- Agent 3: Planner -->
+  <div class="agent-card">
+    <div class="agent-header">
+      <div class="agent-icon" style="background: rgba(251,191,36,0.15);">📋</div>
+      <div>
+        <div class="agent-name">Agent 3: Task Planner</div>
+        <div class="agent-file">src/lib/agents/planner.ts → /api/tasks/generate</div>
+      </div>
+    </div>
+    <p><strong>Purpose:</strong> Generates a personalized weekly task plan based on the analysis + company recommendations. Tasks reference real platforms (LeetCode, GFG) and real problem names.</p>
+    <p><strong>Temperature:</strong> 0.6 (creative enough for varied tasks, structured enough for actionable plans)</p>
+    <div class="io-grid">
+      <div class="io-box input">
+        <h5>📥 Input (from Analyzer + Recommender)</h5>
+        <ul>
+          <li>Analysis results (score, skills, weaknesses)</li>
+          <li>Recommendation results (target companies, gaps)</li>
+          <li>Current week number</li>
+          <li>Available hours/day</li>
+          <li>Career goals</li>
+        </ul>
+      </div>
+      <div class="io-box output">
+        <h5>📤 Output</h5>
+        <ul>
+          <li><code>weekly_plan.theme</code> — week's focus area</li>
+          <li><code>tasks[]</code> — title, description, category</li>
+          <li>Each task: difficulty, type (daily/weekly/milestone)</li>
+          <li>Day assignment (1-7), priority, estimated minutes</li>
+          <li>Categories: dsa, web_dev, system_design, soft_skills</li>
+        </ul>
+      </div>
+    </div>
+    <p><strong>Storage:</strong> Tasks saved to <code>tasks</code> table. Completion tracked with timestamps for streak calculation.</p>
+  </div>
+
+  <!-- Agent 4: Interview -->
+  <div class="agent-card">
+    <div class="agent-header">
+      <div class="agent-icon" style="background: rgba(96,165,250,0.15);">🎤</div>
+      <div>
+        <div class="agent-name">Agent 4: Interview Conductor</div>
+        <div class="agent-file">src/lib/agents/interview.ts → /api/interview</div>
+      </div>
+    </div>
+    <p><strong>Purpose:</strong> Two sub-functions: (1) <strong>Generate</strong> interview questions by topic + difficulty, and (2) <strong>Evaluate</strong> student answers with scoring and feedback.</p>
+    <p><strong>Temperatures:</strong> Generation = 0.6 (creative questions), Evaluation = 0.3 (consistent scoring)</p>
+    <div class="io-grid">
+      <div class="io-box input">
+        <h5>📥 Generate Input</h5>
+        <ul>
+          <li>Topic (DSA, System Design, etc.)</li>
+          <li>Difficulty (easy/medium/hard)</li>
+          <li>Student level</li>
+          <li>Number of questions</li>
+        </ul>
+      </div>
+      <div class="io-box output">
+        <h5>📤 Evaluate Output</h5>
+        <ul>
+          <li><code>score</code> — 0-10 per question</li>
+          <li><code>feedback</code> — detailed review</li>
+          <li><code>topics_covered[]</code> + <code>topics_missed[]</code></li>
+          <li><code>improvement_tip</code> — actionable advice</li>
+        </ul>
+      </div>
+    </div>
+    <p><strong>Storage:</strong> Questions, answers, and evaluations stored in <code>interviews</code> table. Overall score computed and saved.</p>
+  </div>
+
+  <!-- Agent 5: Chat -->
+  <div class="agent-card">
+    <div class="agent-header">
+      <div class="agent-icon" style="background: rgba(168,85,247,0.15);">💬</div>
+      <div>
+        <div class="agent-name">Agent 5: AI Mentor (Chat)</div>
+        <div class="agent-file">src/lib/agents/chat.ts → /api/chat</div>
+      </div>
+    </div>
+    <p><strong>Purpose:</strong> Conversational AI mentor with personality. Knows the student's skills, goals, and readiness score. Provides career advice, doubt solving, and encouragement.</p>
+    <p><strong>Temperature:</strong> 0.7 (conversational, friendly, but accurate)</p>
+    <div class="io-grid">
+      <div class="io-box input">
+        <h5>📥 Input</h5>
+        <ul>
+          <li>Student message</li>
+          <li>Last 10 chat messages (context window)</li>
+          <li>Student context: skills, readiness score, goals</li>
+        </ul>
+      </div>
+      <div class="io-box output">
+        <h5>📤 Output</h5>
+        <ul>
+          <li><code>response</code> — markdown-formatted reply</li>
+          <li><code>suggested_actions[]</code> — follow-up buttons</li>
+        </ul>
+      </div>
+    </div>
+    <p><strong>Storage:</strong> Full chat history in <code>chat_messages</code> table. Loaded on page open, persists across sessions.</p>
+  </div>
+
+  <!-- Agent 6: Roadmap -->
+  <div class="agent-card">
+    <div class="agent-header">
+      <div class="agent-icon" style="background: rgba(34,211,238,0.15);">🗺️</div>
+      <div>
+        <div class="agent-name">Agent 6: Roadmap Architect</div>
+        <div class="agent-file">src/app/api/roadmap/route.ts → /api/roadmap</div>
+      </div>
+    </div>
+    <p><strong>Purpose:</strong> Generates a brutally honest, week-by-week career preparation roadmap based on the student's dream company, timeline, and current skills. Includes feasibility assessment and skill gap analysis.</p>
+    <p><strong>Temperature:</strong> 0.6 · <strong>Max tokens:</strong> 16,000 (large output for detailed weekly plans)</p>
+    <div class="io-grid">
+      <div class="io-box input">
+        <h5>📥 Input</h5>
+        <ul>
+          <li>Dream company + target role</li>
+          <li>Timeline (1-12 months)</li>
+          <li>Available hours/day</li>
+          <li>Focus areas selected by user</li>
+          <li>Full profile + latest AI analysis + project count</li>
+        </ul>
+      </div>
+      <div class="io-box output">
+        <h5>📤 Output</h5>
+        <ul>
+          <li><code>overview</code> — feasibility, readiness projection</li>
+          <li><code>phases[]</code> — each with weeks, each week with tasks</li>
+          <li><code>keySkillsToAcquire[]</code> — priority-ranked gaps</li>
+          <li><code>interviewPrep</code> — DSA target, system design topics</li>
+          <li><code>warnings[]</code> — honest challenges</li>
+        </ul>
+      </div>
+    </div>
+    <p><strong>Key Feature:</strong> If the dream is unrealistic in the timeframe, the AI says so and suggests alternative companies.</p>
+  </div>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 7. LIVE JOBS (APIFY) -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="live-jobs" class="page-break"><span class="emoji">🔍</span> 7. Live Jobs — Apify LinkedIn Scraper</h2>
+
+  <h3>Why Apify?</h3>
+  <p>Our AI agents generate <em>predicted</em> company matches, but students also need <strong>actual, live job listings</strong> to apply to. We integrated Apify's LinkedIn scraper to provide real-time job data.</p>
+
+  <h3>Actor Used</h3>
+  <table>
+    <thead>
+      <tr><th>Property</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Actor ID</td><td><code>curious_coder/linkedin-jobs-scraper</code></td></tr>
+      <tr><td>Total Users</td><td>44,000+</td></tr>
+      <tr><td>Rating</td><td>4.9 ⭐ (67 reviews)</td></tr>
+      <tr><td>Pricing</td><td>$1.00 / 1,000 results (pay-per-use)</td></tr>
+      <tr><td>Cookies Required</td><td><strong>No</strong> — scrapes public LinkedIn data</td></tr>
+      <tr><td>LinkedIn Account Risk</td><td><strong>Zero</strong> — no login needed</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Why This Actor Over Others?</h3>
+  <p>We evaluated multiple LinkedIn scrapers on Apify:</p>
+  <table>
+    <thead>
+      <tr><th>Actor</th><th>Cost</th><th>Cookies?</th><th>Users</th><th>Rating</th><th>Decision</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>curious_coder/linkedin-jobs-search-scraper</code></td><td>$30/month</td><td>Yes ⚠️</td><td>3.6K</td><td>3.7</td><td>❌ Expensive + risky</td></tr>
+      <tr><td><code>bebity/linkedin-jobs-scraper</code></td><td>Varies</td><td>No</td><td>28K</td><td>4.2</td><td>❌ Lower accuracy</td></tr>
+      <tr><td style="color: var(--accent-green);"><strong>curious_coder/linkedin-jobs-scraper</strong></td><td><strong>$1/1K</strong></td><td><strong>No ✅</strong></td><td><strong>44K</strong></td><td><strong>4.9</strong></td><td><strong>✅ Best value + quality</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h3>How It Works</h3>
+  <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant FE as Frontend
+    participant API as /api/jobs
+    participant DB as Supabase
+    participant AP as Apify Actor
+    participant LI as LinkedIn
+
+    U->>FE: Clicks "Live Jobs" tab
+    FE->>API: POST /api/jobs
+    API->>DB: Fetch user profile (skills, role, location)
+    DB-->>API: Profile data
+    API->>API: Build LinkedIn search URL from profile
+    API->>AP: Run actor with search URL
+    AP->>LI: Scrape public job listings
+    LI-->>AP: Raw HTML data
+    AP-->>API: Structured JSON (15 jobs)
+    API->>API: Normalize data schema
+    API-->>FE: Jobs with company, salary, recruiter, apply URL
+    FE->>U: Display job cards with "Apply" buttons
+  </div>
+
+  <h3>Auto-Generated Search URL</h3>
+  <p>The API route automatically builds a LinkedIn search URL from the user's profile:</p>
+  <pre><code>// Inputs from Supabase profile
+const keywords = profile.preferred_role || skills.slice(0,3).join(' ');
+const location = profile.preferred_locations?.[0] || 'India';
+const experience = getExperienceFilter(profile.experience_level);
+
+// Generated URL
+https://www.linkedin.com/jobs/search/?keywords=Software+Engineer&location=Bangalore&f_TPR=r604800&f_E=1,2</code></pre>
+
+  <h3>Data Returned Per Job</h3>
+  <p>Each job card displays: title, company name + logo, location, salary range, employment type (full-time/contract), seniority level, post date, description preview, applicant count, recruiter name + photo + LinkedIn profile, and a direct <strong>Apply</strong> link.</p>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 8. DATABASE -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="database"><span class="emoji">🗄️</span> 8. Database Schema</h2>
+
+  <div class="mermaid">
+erDiagram
+    PROFILES ||--o{ ANALYSES : has
+    PROFILES ||--o{ TASKS : has
+    PROFILES ||--o{ INTERVIEWS : has
+    PROFILES ||--o{ CHAT_MESSAGES : has
+    PROFILES ||--o{ COMPANY_RECOMMENDATIONS : has
+    PROFILES ||--o{ PROGRESS_SNAPSHOTS : has
+    PROFILES ||--o{ ALERTS : has
+    ANALYSES ||--o{ COMPANY_RECOMMENDATIONS : references
+
+    PROFILES {
+        uuid id PK
+        text full_name
+        text[] skills
+        jsonb skill_ratings
+        text[] goals
+        text education_level
+        text experience_level
+        text resume_url
+        text resume_text
+        jsonb projects
+        text preferred_role
+        text[] preferred_locations
+        boolean onboarding_complete
+    }
+
+    ANALYSES {
+        uuid id PK
+        uuid profile_id FK
+        jsonb extracted_skills
+        jsonb strengths
+        jsonb weaknesses
+        jsonb missing_skills
+        int readiness_score
+        text summary
+    }
+
+    TASKS {
+        uuid id PK
+        uuid profile_id FK
+        text title
+        text category
+        text difficulty
+        boolean completed
+        timestamptz completed_at
+        int priority
+    }
+
+    INTERVIEWS {
+        uuid id PK
+        uuid profile_id FK
+        text topic
+        text difficulty
+        jsonb questions
+        jsonb answers
+        jsonb evaluations
+        int overall_score
+        text status
+    }
+  </div>
+
+  <p><strong>8 tables total:</strong> profiles, analyses, company_recommendations, tasks, progress_snapshots, interviews, chat_messages, alerts.</p>
+  <p><strong>Security:</strong> All tables have Row-Level Security (RLS) enabled. Users can only read/write their own data via <code>auth.uid() = profile_id</code> policies.</p>
+  <p><strong>Auto-provisioning:</strong> A PostgreSQL trigger auto-creates a profile row when a new user signs up via Supabase Auth.</p>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 9. GAMIFICATION -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="gamification"><span class="emoji">🎮</span> 9. Gamification System</h2>
+
+  <p>All gamification data is computed in <strong>real-time from the database</strong> — zero hardcoded or mock values.</p>
+
+  <div class="mermaid">
+flowchart TB
+    A["Tasks Table\n(completed, completed_at)"] --> D["Streak Calculator"]
+    B["Interviews Table\n(status, created_at)"] --> D
+    C["Analyses Table\n(created_at)"] --> D
+    
+    D --> E["Current Streak\n(consecutive days)"]
+    D --> F["Longest Streak"]
+    D --> G["XP Calculation"]
+    D --> H["Level System"]
+    D --> I["12 Achievements"]
+    D --> J["90-Day Heatmap"]
+    
+    G --> K["Tasks: 10 XP each\nInterviews: 25 XP each\nAnalyses: 50 XP each\nStreak bonus: +30-100 XP"]
+    H --> L["Level = floor(sqrt(XP / 50)) + 1"]
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Metric</th><th>Source</th><th>Calculation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Current Streak</td><td><code>tasks.completed_at</code>, <code>interviews.created_at</code></td><td>Count consecutive days with activity (today/yesterday as anchor)</td></tr>
+      <tr><td>XP</td><td>All 3 tables</td><td>Tasks × 10 + Interviews × 25 + Analyses × 50 + streak bonus</td></tr>
+      <tr><td>Level</td><td>Total XP</td><td><code>floor(sqrt(totalXP / 50)) + 1</code> (exponential curve)</td></tr>
+      <tr><td>Heatmap</td><td>Activity dates</td><td>Last 90 days, count per day</td></tr>
+      <tr><td>Achievements</td><td>Milestone counts</td><td>12 achievements (First Step, Task Master, Grinder, On Fire, Week Warrior, etc.)</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 10. ROADMAP MAKER -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="roadmap"><span class="emoji">🗺️</span> 10. Interactive Roadmap Maker</h2>
+
+  <h3>User Input Form</h3>
+  <ul>
+    <li><strong>Dream Company</strong> — free text + 16 quick-select chips (Google, Amazon, Flipkart, TCS, etc.)</li>
+    <li><strong>Target Role</strong> — Software Engineer, Frontend Dev, Data Analyst, etc.</li>
+    <li><strong>Timeline</strong> — slider from 1 to 12 months</li>
+    <li><strong>Hours/Day</strong> — slider from 1h (casual) to 10h (intense)</li>
+    <li><strong>Focus Areas</strong> — multi-select: DSA, Web Dev, System Design, Projects, Soft Skills, Mock Interviews</li>
+  </ul>
+
+  <h3>AI Input Context</h3>
+  <p>The Gemini prompt includes the student's <strong>full profile + latest AI analysis + completed task count</strong> to ensure the roadmap accounts for <em>what they already know</em>.</p>
+
+  <h3>Generated Roadmap Structure</h3>
+  <div class="mermaid">
+graph TB
+    subgraph "Overview"
+        F["Feasibility Assessment\n(Realistic / Ambitious / Unrealistic)"]
+        R["Readiness Projection\nCurrent → After → Target"]
+        W["Honest Warnings"]
+    end
+    
+    subgraph "Skill Gap Analysis"
+        S["Skills to Acquire\nCurrent Level → Target Level\nPriority + Estimated Weeks"]
+    end
+    
+    subgraph "Week-by-Week Plan"
+        P1["Phase 1: Foundations\nWeeks 1-4"]
+        P2["Phase 2: Deep Practice\nWeeks 5-8"]
+        P3["Phase 3: Interview Ready\nWeeks 9-12"]
+        P1 --> P2 --> P3
+    end
+    
+    subgraph "Each Week Contains"
+        T["Tasks with:\n• Type (DSA/WebDev/etc)\n• Description\n• Deliverable\n• Resources"]
+    end
+    
+    subgraph "Interview Prep"
+        I["DSA Problems Target\nSystem Design Topics\nMock Interviews Target\nCompany-Specific Tips"]
+    end
+  </div>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 11. SECURITY -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="security"><span class="emoji">🔒</span> 11. Security & Authentication</h2>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4>Authentication</h4>
+      <ul>
+        <li><strong>Provider:</strong> Supabase Auth (Google OAuth)</li>
+        <li><strong>Session:</strong> HTTP-only cookies via <code>@supabase/ssr</code></li>
+        <li><strong>Middleware:</strong> Next.js middleware protects all <code>/dashboard</code>, <code>/profile</code>, <code>/roadmap</code>, etc. routes</li>
+        <li><strong>API Auth:</strong> Every API route calls <code>supabase.auth.getUser()</code> and returns 401 if missing</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Data Security</h4>
+      <ul>
+        <li><strong>RLS:</strong> Row-Level Security on ALL 8 tables</li>
+        <li><strong>Policy:</strong> <code>auth.uid() = profile_id</code> — users see only their own data</li>
+        <li><strong>API Keys:</strong> <code>GEMINI_API_KEY</code> and <code>APIFY_API_TOKEN</code> are server-side only (never exposed to client)</li>
+        <li><strong>Resume Storage:</strong> Uploaded to Supabase Storage bucket with auth policies</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 12. WORKFLOWS -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="workflows" class="page-break"><span class="emoji">🔄</span> 12. End-to-End User Workflows</h2>
+
+  <h3>Workflow 1: New User Onboarding</h3>
+  <div class="mermaid">
+flowchart LR
+    A["Sign Up\n(Google OAuth)"] --> B["Auto-create Profile\n(DB Trigger)"]
+    B --> C["Onboarding Flow\n5 Steps"]
+    C --> D["Step 1: Basic Info\nName, Education, Experience"]
+    D --> E["Step 2: Skills\nAdd skills + self-rate 1-10"]
+    E --> F["Step 3: Goals\nSelect career goals"]
+    F --> G["Step 4: Resume\nUpload PDF → Extract text"]
+    G --> H["Step 5: Projects\nAdd name, tech, description"]
+    H --> I["Mark onboarding_complete\n→ Redirect to Dashboard"]
+  </div>
+
+  <h3>Workflow 2: Full Analysis Pipeline</h3>
+  <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant FE as Frontend
+    participant ANA as /api/analyze
+    participant REC as /api/companies
+    participant TASK as /api/tasks/generate
+    participant DB as Supabase
+    participant AI as Gemini 2.5 Flash
+
+    U->>FE: Click "Analyze & Match"
+    FE->>ANA: POST /api/analyze
+    ANA->>DB: Fetch profile (skills, resume, projects)
+    DB-->>ANA: Profile data
+    ANA->>AI: Analyzer Agent prompt
+    AI-->>ANA: Readiness score, skills, gaps
+    ANA->>DB: Save analysis
+    ANA-->>FE: Analysis complete
+
+    FE->>REC: POST /api/companies
+    REC->>DB: Fetch latest analysis
+    DB-->>REC: Analysis data
+    REC->>AI: Recommendation Agent prompt
+    AI-->>REC: Company matches + roadmap
+    REC->>DB: Save recommendations
+    REC-->>FE: Company matches ready
+
+    FE->>TASK: POST /api/tasks/generate
+    TASK->>DB: Fetch analysis + recommendations
+    TASK->>AI: Planner Agent prompt
+    AI-->>TASK: Weekly task plan
+    TASK->>DB: Save tasks
+    TASK-->>FE: Tasks ready
+  </div>
+
+  <h3>Workflow 3: Mock Interview</h3>
+  <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant FE as Interview Page
+    participant API as /api/interview
+    participant AI as Gemini
+
+    U->>FE: Select topic + difficulty
+    FE->>API: POST /api/interview {topic, difficulty}
+    API->>AI: Interview Generate prompt
+    AI-->>API: 5 questions + expected topics
+    API-->>FE: Questions displayed
+
+    loop For each question
+        U->>FE: Type answer
+        FE->>API: POST /api/interview/[id]/answer
+        API->>AI: Evaluate prompt (question + answer + expected)
+        AI-->>API: Score, feedback, topics covered/missed
+        API-->>FE: Show score + feedback
+    end
+
+    FE->>FE: Calculate overall score
+    FE->>U: Display final results + improvement tips
+  </div>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 13. API ROUTES -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="api-routes"><span class="emoji">📡</span> 13. API Routes Reference</h2>
+
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Route</th><th>Description</th><th>Auth</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/analyze/latest</code></td><td>Fetch latest analysis results</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/analyze</code></td><td>Run Analyzer Agent on profile</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/companies</code></td><td>Fetch saved company recommendations</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/companies</code></td><td>Run Recommendation Agent</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/tasks</code></td><td>List all tasks</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/tasks/generate</code></td><td>Run Planner Agent for weekly tasks</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-purple">PATCH</span></td><td><code>/api/tasks/[id]</code></td><td>Toggle task completion</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/interview</code></td><td>Generate interview questions</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/interview/[id]/answer</code></td><td>Evaluate interview answer</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/chat</code></td><td>Fetch chat history</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/chat</code></td><td>Send message to AI Mentor</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/roadmap</code></td><td>Generate career roadmap</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/jobs</code></td><td>Scrape LinkedIn jobs via Apify</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/streak</code></td><td>Gamification data (streaks, XP, achievements)</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/profile</code></td><td>Fetch user profile</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/onboarding/resume</code></td><td>Upload + parse resume PDF</td><td>✅</td></tr>
+      <tr><td><span class="badge badge-amber">POST</span></td><td><code>/api/onboarding/complete</code></td><td>Mark onboarding as finished</td><td>✅</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- 14. FUTURE SCOPE -->
+  <!-- ═════════════════════════════════════ -->
+  <h2 id="future"><span class="emoji">🚀</span> 14. Future Scope</h2>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4>📊 Analytics Dashboard</h4>
+      <p>Detailed skill progression charts over time, comparison with peer averages.</p>
+    </div>
+    <div class="card">
+      <h4>🎙️ Voice Interviews</h4>
+      <p>Speech-to-text for mock interviews, evaluating communication clarity and confidence.</p>
+    </div>
+    <div class="card">
+      <h4>👥 Peer Matching</h4>
+      <p>Connect students preparing for the same company to form study groups.</p>
+    </div>
+    <div class="card">
+      <h4>📧 Email Alerts</h4>
+      <p>Daily streak reminders, new job matches, and progress milestones via email.</p>
+    </div>
+    <div class="card">
+      <h4>🔌 More Job Sources</h4>
+      <p>Indeed, Naukri, and Internshala scrapers for broader Indian job coverage.</p>
+    </div>
+    <div class="card">
+      <h4>📱 Mobile App</h4>
+      <p>React Native companion app with push notifications for streaks and tasks.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <div style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+    <p><strong style="color: var(--primary);">CareerAI</strong> — Built with ❤️ for the AI Hackathon</p>
+    <p style="font-size: 0.85rem;">6 AI Agents · 17 API Routes · 8 Database Tables · 0 LangChain Dependencies</p>
+  </div>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#7c5cfc',
+      primaryTextColor: '#fff',
+      primaryBorderColor: '#7c5cfc',
+      lineColor: '#555',
+      secondaryColor: '#1a1a24',
+      tertiaryColor: '#111118',
+      fontSize: '14px',
+    },
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+    sequence: { useMaxWidth: true, actorFontSize: 13, messageFontSize: 12 },
+  });
+</script>
+</body>
+</html>
