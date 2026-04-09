@@ -383,12 +383,10 @@ export default function ProfilePage() {
               onChange={(e) => e.target.files?.[0] && handleResumeUpload(e.target.files[0])}
               disabled={uploading}
             />
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs" disabled={uploading} asChild>
-              <span>
-                {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                {uploading ? 'Uploading...' : profile.resume_url ? 'Re-upload' : 'Upload'}
-              </span>
-            </Button>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border text-xs font-medium hover:bg-accent transition-colors">
+              {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+              {uploading ? 'Uploading...' : profile.resume_url ? 'Re-upload' : 'Upload'}
+            </span>
           </label>
         </div>
 
