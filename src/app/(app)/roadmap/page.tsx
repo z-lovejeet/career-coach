@@ -50,7 +50,7 @@ interface Task {
 interface StudyResource {
   title: string;
   url: string;
-  type: 'youtube' | 'documentation' | 'course' | 'practice' | 'article' | 'tool';
+  type: 'youtube' | 'youtube_playlist' | 'documentation' | 'course' | 'practice' | 'article' | 'tool';
   description: string;
 }
 
@@ -152,6 +152,7 @@ const feasibilityConfig: Record<string, { color: string; icon: typeof CheckCircl
 };
 
 const resourceTypeConfig: Record<string, { icon: typeof Video; color: string; label: string }> = {
+  youtube_playlist: { icon: Video, color: "text-red-400 bg-red-500/10 border-red-500/20", label: "YT Playlist" },
   youtube: { icon: Video, color: "text-red-400 bg-red-500/10 border-red-500/20", label: "YouTube" },
   documentation: { icon: FileText, color: "text-blue-400 bg-blue-500/10 border-blue-500/20", label: "Docs" },
   course: { icon: GraduationCap, color: "text-purple-400 bg-purple-500/10 border-purple-500/20", label: "Course" },
