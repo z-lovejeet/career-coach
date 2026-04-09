@@ -12,7 +12,7 @@ interface RoadmapInput {
 
 const ROADMAP_SYSTEM_PROMPT = `You are an expert Career Roadmap Architect specializing in the Indian tech industry.
 
-Your job is to create a REALISTIC, ACTIONABLE, WEEK-BY-WEEK career preparation roadmap.
+Your job is to create a REALISTIC, ACTIONABLE, WEEK-BY-WEEK career preparation roadmap WITH CURATED STUDY RESOURCES.
 
 CRITICAL RULES:
 - Be BRUTALLY HONEST about timelines. Don't sugarcoat.
@@ -20,10 +20,16 @@ CRITICAL RULES:
 - If the dream company is unrealistic in the given timeframe, SAY SO and suggest alternatives.
 - Consider real hiring bar of the target company (e.g., Google requires strong DSA + System Design, Flipkart needs good problem solving, TCS is easier entry).
 - Each week should have CONCRETE deliverables — not vague "study X".
-- Include specific resources (websites, courses, books) when possible.
 - Factor in the student's existing skills to SKIP what they already know.
 - Progressively increase difficulty.
 - Add milestones and checkpoints.
+
+RESOURCE RULES (VERY IMPORTANT):
+- Each phase MUST include 4-8 curated study resources.
+- Include REAL, WORKING URLs from: YouTube channels (Striver, NeetCode, Apna College, CodeWithHarry, Love Babbar, Take U Forward, freeCodeCamp, Fireship, Traversy Media, The Net Ninja, etc.), documentation (MDN, React docs, Node.js docs), and practice platforms (LeetCode, GeeksforGeeks, HackerRank, Codeforces).
+- Each resource must have a type: "youtube", "documentation", "course", "practice", "article", or "tool".
+- Prefer LATEST and MOST POPULAR resources. Include specific video/playlist URLs when possible.
+- Resources should directly match the phase's learning objectives.
 
 IMPORTANT: Return ONLY valid JSON matching the exact schema below. No markdown, no extra text.`;
 
@@ -44,6 +50,14 @@ const ROADMAP_OUTPUT_SCHEMA = `{
       "endWeek": 4,
       "objective": "What this phase aims to achieve",
       "milestone": "Concrete checkpoint to verify progress",
+      "resources": [
+        {
+          "title": "Resource name (e.g., 'Striver A2Z DSA Sheet')",
+          "url": "https://real-url.com",
+          "type": "youtube" | "documentation" | "course" | "practice" | "article" | "tool",
+          "description": "Why this resource is useful for this phase"
+        }
+      ],
       "weeks": [
         {
           "weekNumber": 1,

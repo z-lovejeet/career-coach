@@ -26,6 +26,12 @@ import {
   Building2,
   Star,
   CircleDot,
+  ExternalLink,
+  Video,
+  FileText,
+  Wrench,
+  Newspaper,
+  Dumbbell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +45,13 @@ interface Task {
   description: string;
   resources: string[];
   deliverable: string;
+}
+
+interface StudyResource {
+  title: string;
+  url: string;
+  type: 'youtube' | 'documentation' | 'course' | 'practice' | 'article' | 'tool';
+  description: string;
 }
 
 interface Week {
@@ -56,6 +69,7 @@ interface Phase {
   endWeek: number;
   objective: string;
   milestone: string;
+  resources?: StudyResource[];
   weeks: Week[];
 }
 
@@ -135,6 +149,15 @@ const feasibilityConfig: Record<string, { color: string; icon: typeof CheckCircl
   realistic: { color: "text-emerald-400", icon: CheckCircle2, label: "Achievable" },
   ambitious: { color: "text-amber-400", icon: Zap, label: "Ambitious" },
   unrealistic: { color: "text-rose-400", icon: AlertTriangle, label: "Very Challenging" },
+};
+
+const resourceTypeConfig: Record<string, { icon: typeof Video; color: string; label: string }> = {
+  youtube: { icon: Video, color: "text-red-400 bg-red-500/10 border-red-500/20", label: "YouTube" },
+  documentation: { icon: FileText, color: "text-blue-400 bg-blue-500/10 border-blue-500/20", label: "Docs" },
+  course: { icon: GraduationCap, color: "text-purple-400 bg-purple-500/10 border-purple-500/20", label: "Course" },
+  practice: { icon: Dumbbell, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", label: "Practice" },
+  article: { icon: Newspaper, color: "text-amber-400 bg-amber-500/10 border-amber-500/20", label: "Article" },
+  tool: { icon: Wrench, color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20", label: "Tool" },
 };
 
 export default function RoadmapPage() {
@@ -554,11 +577,18 @@ export default function RoadmapPage() {
                                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
                               )}
                             </div>
-                            {/* Milestone badge */}
+                          {/* Milestone badge */}
                             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-primary">
                               <Target className="w-3 h-3" />
                               Milestone: {phase.milestone}
                             </div>
+                            {/* Resource count preview */}
+                            {phase.resources && phase.resources.length > 0 && (
+                              <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                                <BookOpen className="w-3 h-3" />
+                                {phase.resources.length} study resources included
+                              </div>
+                            )}
                           </div>
                         </button>
 
@@ -572,6 +602,49 @@ export default function RoadmapPage() {
                               className="overflow-hidden sm:ml-[22px] sm:pl-8 sm:border-l border-primary/10"
                             >
                               <div className="pt-3 space-y-3">
+                                {/* 📚 Phase Study Resources */}
+                                {phase.resources && phase.resources.length > 0 && (
+                                  <div className="p-4 rounded-xl border border-primary/20 bg-primary/5">
+                                    <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                                      <BookOpen className="w-4 h-4 text-primary" />
+                                      Study Resources for this Phase
+                                    </h4>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                      {phase.resources.map((res, ri) => {
+                                        const rConfig = resourceTypeConfig[res.type] || resourceTypeConfig.article;
+                                        const RIcon = rConfig.icon;
+                                        return (
+                                          <a
+                                            key={ri}
+                                            href={res.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="group flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border/50 hover:border-primary/40 hover:bg-primary/5 transition-all"
+                                          >
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 border ${rConfig.color}`}>
+                                              <RIcon className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="text-xs font-medium group-hover:text-primary transition-colors line-clamp-1">
+                                                  {res.title}
+                                                </span>
+                                                <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                              </div>
+                                              <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
+                                                {res.description}
+                                              </p>
+                                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 mt-1 ${rConfig.color}`}>
+                                                {rConfig.label}
+                                              </Badge>
+                                            </div>
+                                          </a>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
                                 {phase.weeks.map((week) => {
                                   const weekKey = `${pi}-${week.weekNumber}`;
                                   const weekExpanded = expandedWeek === weekKey;
