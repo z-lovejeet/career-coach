@@ -9,575 +9,286 @@ import {
   Phone,
   GraduationCap,
   Briefcase,
-  Code2,
-  FolderKanban,
-  Target,
-  Link2,
-  GitBranch,
-  ExternalLink,
   Globe,
+  Code2,
+  Target,
+  FolderKanban,
   FileText,
-  Sparkles,
-  ArrowRight,
-  Loader2,
-  Star,
   Edit3,
-  Download,
-  TrendingUp,
-  AlertTriangle,
   CheckCircle2,
-  XCircle,
+  Flame,
+  Star,
+  TrendingUp,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-import type { Profile, Analysis, ExtractedSkill, StrengthWeakness, MissingSkill } from "@/types";
+
+interface ProfileData {
+  full_name: string;
+  email: string;
+  phone: string;
+  education_level: string;
+  field_of_study: string;
+  experience_level: string;
+  skills: string[];
+  skill_ratings: Record<string, number>;
+  goals: string[];
+  projects: Array<{ name: string; description: string; tech_stack: string[] }>;
+  preferred_role: string;
+  preferred_locations: string[];
+  github_url: string;
+  portfolio_url: string;
+  linkedin_url: string;
+  resume_url: string;
+  onboarding_complete: boolean;
+  created_at: string;
+}
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [streak, setStreak] = useState<{ streak: { current: number; longest: number }; xp: { total: number; level: number; xpProgress: number } } | null>(null);
+  const [analysis, setAnalysis] = useState<{ readiness_score: number } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [analyzing, setAnalyzing] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    fetchData();
+    fetchProfileData();
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchProfileData = async () => {
     try {
-      const [profileRes, analysisRes] = await Promise.allSettled([
-        fetch("/api/profile").then((r) => r.json()),
-        fetch("/api/analyze/latest").then((r) => r.json()),
+      const [profileRes, streakRes, analysisRes] = await Promise.allSettled([
+        fetch("/api/profile").then(r => r.json()),
+        fetch("/api/streak").then(r => r.json()),
+        fetch("/api/analyze/latest").then(r => r.json()),
       ]);
-
-      if (profileRes.status === "fulfilled" && profileRes.value.success) {
-        setProfile(profileRes.value.data);
-      }
-      if (analysisRes.status === "fulfilled" && analysisRes.value.success) {
-        setAnalysis(analysisRes.value.data);
-      }
+      if (profileRes.status === "fulfilled" && profileRes.value.success) setProfile(profileRes.value.data);
+      if (streakRes.status === "fulfilled" && streakRes.value.success) setStreak(streakRes.value.data);
+      if (analysisRes.status === "fulfilled" && analysisRes.value.success) setAnalysis(analysisRes.value.data);
     } catch (err) {
-      console.error("Failed to fetch profile:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const runAnalysis = async () => {
-    setAnalyzing(true);
-    try {
-      toast.info("🧠 AI is analyzing your profile...");
-      const res = await fetch("/api/analyze", { method: "POST" });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error?.message);
-      setAnalysis(data.data);
-      toast.success("✅ Profile analysis complete!");
-    } catch (err) {
-      console.error("Analysis error:", err);
-      toast.error("Failed to analyze profile. Please try again.");
-    } finally {
-      setAnalyzing(false);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48 mb-2" />
+        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-32 rounded-2xl" />
+        <Skeleton className="h-32 rounded-2xl" />
+      </div>
+    );
+  }
 
-  if (loading) return <ProfileSkeleton />;
   if (!profile) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <p className="text-muted-foreground">Profile not found.</p>
-        <Button onClick={() => router.push("/onboarding")} className="mt-4">
-          Complete Onboarding
+      <div className="text-center py-20 text-muted-foreground">
+        <User className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>Profile not found. Complete onboarding first.</p>
+        <Button className="mt-4" onClick={() => router.push("/onboarding")}>
+          Go to Onboarding
         </Button>
       </div>
     );
   }
 
-  const skillLevelPercent: Record<string, number> = {
-    beginner: 25,
-    intermediate: 50,
-    advanced: 75,
-    expert: 100,
-  };
-
-  const skillLevelColor: Record<string, string> = {
-    beginner: "text-amber-400",
-    intermediate: "text-blue-400",
-    advanced: "text-violet-400",
-    expert: "text-emerald-400",
-  };
-
   return (
-    <div className="space-y-8 max-w-4xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl gradient-accent flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-            {profile.full_name?.charAt(0).toUpperCase() || "U"}
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">{profile.full_name || "User"}</h1>
-            <p className="text-muted-foreground text-sm">
-              {profile.preferred_role || profile.experience_level || "Student"} •{" "}
-              {profile.field_of_study || "Computer Science"}
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => router.push("/onboarding")}
-          className="gap-2"
-        >
-          <Edit3 className="w-4 h-4" />
-          Edit Profile
+    <div className="space-y-6 max-w-4xl">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Profile</h1>
+        <Button variant="outline" size="sm" onClick={() => router.push("/onboarding")} className="gap-2">
+          <Edit3 className="w-4 h-4" /> Edit Profile
         </Button>
       </div>
 
-      {/* Readiness Score Banner */}
-      {analysis && (
-        <motion.div
-          className="p-6 rounded-2xl glass-strong overflow-hidden relative"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2" />
-          <div className="relative flex items-center gap-6">
-            <div className="relative w-24 h-24 flex-shrink-0">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="50" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
-                <motion.circle
-                  cx="60" cy="60" r="50" fill="none"
-                  stroke="url(#profileScoreGrad)" strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 50}`}
-                  initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
-                  animate={{ strokeDashoffset: 2 * Math.PI * 50 * (1 - analysis.readiness_score / 100) }}
-                  transition={{ duration: 1.5, ease: "easeOut" }}
-                />
-                <defs>
-                  <linearGradient id="profileScoreGrad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" />
-                    <stop offset="100%" stopColor="#22d3ee" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold">{analysis.readiness_score}</span>
-                <span className="text-[10px] text-muted-foreground">/ 100</span>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold mb-1 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                AI Readiness Assessment
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>
+      {/* Hero Card */}
+      <motion.div
+        className="p-6 rounded-2xl glass-strong"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="flex flex-col sm:flex-row items-start gap-6">
+          <div className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
+            {profile.full_name?.charAt(0)?.toUpperCase() || "U"}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold">{profile.full_name}</h2>
+            <p className="text-muted-foreground text-sm">{profile.preferred_role || "Aspiring Developer"}</p>
+            <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
+              {profile.email && (
+                <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{profile.email}</span>
+              )}
+              {profile.phone && (
+                <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{profile.phone}</span>
+              )}
+              {profile.education_level && (
+                <span className="flex items-center gap-1"><GraduationCap className="w-3 h-3" />{profile.education_level} — {profile.field_of_study}</span>
+              )}
+              {profile.experience_level && (
+                <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{profile.experience_level}</span>
+              )}
             </div>
           </div>
-        </motion.div>
-      )}
 
-      {/* Info Grid */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Personal Info */}
+          {/* Stats Badges */}
+          <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+            {analysis && (
+              <div className="px-3 py-2 rounded-xl glass text-center min-w-[70px]">
+                <p className="text-lg font-bold text-primary">{analysis.readiness_score}</p>
+                <p className="text-[10px] text-muted-foreground">Score</p>
+              </div>
+            )}
+            {streak && (
+              <>
+                <div className="px-3 py-2 rounded-xl glass text-center min-w-[70px]">
+                  <p className="text-lg font-bold text-orange-400 flex items-center justify-center gap-1">
+                    <Flame className="w-4 h-4" />{streak.streak.current}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">Streak</p>
+                </div>
+                <div className="px-3 py-2 rounded-xl glass text-center min-w-[70px]">
+                  <p className="text-lg font-bold text-violet-400 flex items-center justify-center gap-1">
+                    <Star className="w-4 h-4" />Lv{streak.xp.level}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">{streak.xp.total} XP</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Links */}
+      {(profile.github_url || profile.linkedin_url || profile.portfolio_url || profile.resume_url) && (
         <motion.div
           className="p-5 rounded-2xl glass"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="font-semibold mb-4 flex items-center gap-2 text-sm">
-            <User className="w-4 h-4 text-primary" />
-            Personal Info
-          </h2>
-          <div className="space-y-3 text-sm">
-            <InfoRow icon={Mail} label="Email" value={profile.email} />
-            <InfoRow icon={Phone} label="Phone" value={profile.phone} />
-            <InfoRow icon={GraduationCap} label="Education" value={
-              profile.education_level
-                ? `${profile.education_level} — ${profile.field_of_study || "CS"}`
-                : null
-            } />
-            <InfoRow icon={Briefcase} label="Experience" value={profile.experience_level} />
-            <InfoRow icon={Target} label="Target Role" value={profile.preferred_role} />
-          </div>
-        </motion.div>
-
-        {/* Links */}
-        <motion.div
-          className="p-5 rounded-2xl glass"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <h2 className="font-semibold mb-4 flex items-center gap-2 text-sm">
-            <Link2 className="w-4 h-4 text-primary" />
-            Links & Resume
-          </h2>
-          <div className="space-y-3">
-            <LinkRow icon={GitBranch} label="GitHub" url={profile.github_url} />
-            <LinkRow icon={ExternalLink} label="LinkedIn" url={profile.linkedin_url} />
-            <LinkRow icon={Globe} label="Portfolio" url={profile.portfolio_url} />
+          <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Globe className="w-4 h-4 text-blue-400" /> Links
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {profile.github_url && (
+              <a href={profile.github_url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg glass hover:glass-strong transition-all text-xs flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                GitHub
+              </a>
+            )}
+            {profile.linkedin_url && (
+              <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg glass hover:glass-strong transition-all text-xs flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                LinkedIn
+              </a>
+            )}
+            {profile.portfolio_url && (
+              <a href={profile.portfolio_url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg glass hover:glass-strong transition-all text-xs flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5" /> Portfolio
+              </a>
+            )}
             {profile.resume_url && (
-              <a
-                href={profile.resume_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors group"
-              >
-                <div className="w-8 h-8 rounded-lg bg-rose-500/15 flex items-center justify-center flex-shrink-0">
-                  <FileText className="w-4 h-4 text-rose-400" />
-                </div>
-                <span className="text-sm flex-1">Resume</span>
-                <Download className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              <a href={profile.resume_url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-lg glass hover:glass-strong transition-all text-xs flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5" /> Resume
               </a>
             )}
           </div>
         </motion.div>
-      </div>
+      )}
 
       {/* Skills */}
-      <motion.div
-        className="p-5 rounded-2xl glass"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <h2 className="font-semibold mb-4 flex items-center gap-2 text-sm">
-          <Code2 className="w-4 h-4 text-primary" />
-          Skills
-          <Badge variant="outline" className="text-[10px] ml-auto">
-            {profile.skills.length} skills
-          </Badge>
-        </h2>
-
-        {profile.skills.length > 0 ? (
-          <div className="space-y-4">
-            {/* Manual skill ratings */}
-            <div className="grid gap-3 sm:grid-cols-2">
-              {profile.skills.map((skill) => {
-                const rating = profile.skill_ratings?.[skill] || 0;
-                return (
-                  <div key={skill} className="flex items-center gap-3">
-                    <span className="text-sm w-28 truncate">{skill}</span>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-primary to-cyan-400"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(rating / 10) * 100}%` }}
-                        transition={{ duration: 0.8 }}
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground w-8 text-right">{rating}/10</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* AI-extracted skills */}
-            {analysis && analysis.extracted_skills.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  AI-identified skills from your profile & resume
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {analysis.extracted_skills.map((skill: ExtractedSkill) => (
-                    <Badge
-                      key={skill.name}
-                      variant="outline"
-                      className={`text-[11px] ${skillLevelColor[skill.level] || "text-muted-foreground"}`}
-                    >
-                      {skill.name}
-                      <span className="ml-1 opacity-60">{skill.level}</span>
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+      {profile.skills?.length > 0 && (
+        <motion.div
+          className="p-5 rounded-2xl glass"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Code2 className="w-4 h-4 text-cyan-400" /> Skills ({profile.skills.length})
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {profile.skills.map(skill => {
+              const rating = profile.skill_ratings?.[skill];
+              return (
+                <Badge key={skill} variant="outline" className="text-xs gap-1.5 py-1">
+                  {skill}
+                  {rating && (
+                    <span className={`text-[10px] font-bold ${
+                      rating >= 7 ? "text-emerald-400" : rating >= 4 ? "text-amber-400" : "text-rose-400"
+                    }`}>
+                      {rating}/10
+                    </span>
+                  )}
+                </Badge>
+              );
+            })}
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No skills added yet.</p>
-        )}
-      </motion.div>
-
-      {/* Projects */}
-      <motion.div
-        className="p-5 rounded-2xl glass"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-      >
-        <h2 className="font-semibold mb-4 flex items-center gap-2 text-sm">
-          <FolderKanban className="w-4 h-4 text-primary" />
-          Projects
-          <Badge variant="outline" className="text-[10px] ml-auto">
-            {profile.projects?.length || 0} projects
-          </Badge>
-        </h2>
-        {profile.projects && profile.projects.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {profile.projects.map((project, i) => (
-              <div key={i} className="p-4 rounded-xl border border-border/50 bg-accent/20">
-                <h3 className="font-medium text-sm mb-1">{project.name}</h3>
-                <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{project.description}</p>
-                <div className="flex flex-wrap gap-1">
-                  {project.tech.map((t) => (
-                    <Badge
-                      key={t}
-                      variant="outline"
-                      className="text-[10px] border-primary/20 text-primary"
-                    >
-                      {t}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No projects added yet.</p>
-        )}
-      </motion.div>
+        </motion.div>
+      )}
 
       {/* Goals */}
-      <motion.div
-        className="p-5 rounded-2xl glass"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <h2 className="font-semibold mb-4 flex items-center gap-2 text-sm">
-          <Target className="w-4 h-4 text-primary" />
-          Career Goals
-        </h2>
-        {profile.goals.length > 0 ? (
+      {profile.goals?.length > 0 && (
+        <motion.div
+          className="p-5 rounded-2xl glass"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Target className="w-4 h-4 text-amber-400" /> Goals
+          </h3>
           <div className="flex flex-wrap gap-2">
-            {profile.goals.map((goal) => (
+            {profile.goals.map(goal => (
               <Badge key={goal} className="bg-primary/10 text-primary border-primary/20 text-xs">
                 {goal}
               </Badge>
             ))}
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No goals set yet.</p>
-        )}
-        {profile.preferred_locations?.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-2">Preferred Locations</p>
-            <div className="flex flex-wrap gap-2">
-              {profile.preferred_locations.map((loc) => (
-                <Badge key={loc} variant="outline" className="text-[11px]">
-                  {loc}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-      </motion.div>
-
-      {/* Strengths & Weaknesses */}
-      {analysis && (
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Strengths */}
-          <motion.div
-            className="p-5 rounded-2xl glass"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-          >
-            <h2 className="font-semibold mb-4 flex items-center gap-2 text-sm">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Strengths
-            </h2>
-            <div className="space-y-3">
-              {analysis.strengths.map((s: StrengthWeakness, i: number) => (
-                <div key={i} className="p-3 rounded-lg border border-emerald-500/10 bg-emerald-500/5">
-                  <p className="font-medium text-sm text-emerald-400">{s.skill}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{s.reason}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Weaknesses */}
-          <motion.div
-            className="p-5 rounded-2xl glass"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <h2 className="font-semibold mb-4 flex items-center gap-2 text-sm">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-              Areas to Improve
-            </h2>
-            <div className="space-y-3">
-              {analysis.weaknesses.map((w: StrengthWeakness, i: number) => (
-                <div key={i} className="p-3 rounded-lg border border-amber-500/10 bg-amber-500/5">
-                  <p className="font-medium text-sm text-amber-400">{w.skill}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{w.reason}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Missing Skills */}
-      {analysis && analysis.missing_skills.length > 0 && (
+      {/* Projects */}
+      {profile.projects?.length > 0 && (
         <motion.div
           className="p-5 rounded-2xl glass"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45 }}
+          transition={{ delay: 0.4 }}
         >
-          <h2 className="font-semibold mb-4 flex items-center gap-2 text-sm">
-            <XCircle className="w-4 h-4 text-rose-400" />
-            Missing Skills
-            <Badge variant="outline" className="text-[10px] ml-auto text-rose-400 border-rose-500/20">
-              {analysis.missing_skills.length} gaps
-            </Badge>
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {analysis.missing_skills.map((skill: MissingSkill, i: number) => (
-              <div key={i} className="p-3 rounded-lg border border-border/50 bg-accent/20">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-sm">{skill.skill}</span>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] ${
-                      skill.importance === "critical"
-                        ? "text-rose-400 border-rose-500/20"
-                        : skill.importance === "high"
-                        ? "text-amber-400 border-amber-500/20"
-                        : "text-blue-400 border-blue-500/20"
-                    }`}
-                  >
-                    {skill.importance}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">{skill.reason}</p>
+          <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <FolderKanban className="w-4 h-4 text-rose-400" /> Projects ({profile.projects.length})
+          </h3>
+          <div className="space-y-3">
+            {profile.projects.map((project, i) => (
+              <div key={i} className="p-3 rounded-xl bg-accent/30 border border-border/50">
+                <h4 className="font-medium text-sm">{project.name}</h4>
+                {project.description && (
+                  <p className="text-xs text-muted-foreground mt-1">{project.description}</p>
+                )}
+                {project.tech_stack?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {project.tech_stack.map(tech => (
+                      <Badge key={tech} variant="outline" className="text-[10px]">{tech}</Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </motion.div>
       )}
 
-      {/* No Analysis CTA */}
-      {!analysis && (
-        <motion.div
-          className="p-6 rounded-2xl glass-strong text-center"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 animate-float">
-            <Sparkles className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">Get Your AI Profile Analysis</h2>
-          <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
-            Let our AI analyze your skills, projects, and resume to assess your
-            placement readiness and identify areas for improvement.
-          </p>
-          <Button
-            onClick={runAnalysis}
-            disabled={analyzing}
-            className="gradient-primary text-white border-0 gap-2 hover:opacity-90 glow"
-            size="lg"
-          >
-            {analyzing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                Run AI Analysis
-              </>
-            )}
-          </Button>
-        </motion.div>
-      )}
-    </div>
-  );
-}
-
-/* Helper Components */
-function InfoRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Mail;
-  label: string;
-  value: string | null | undefined;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-      <span className="text-muted-foreground w-20 flex-shrink-0">{label}</span>
-      <span className="truncate">{value || "—"}</span>
-    </div>
-  );
-}
-
-function LinkRow({
-  icon: Icon,
-  label,
-  url,
-}: {
-  icon: typeof GitBranch;
-  label: string;
-  url: string | null | undefined;
-}) {
-  if (!url) {
-    return (
-      <div className="flex items-center gap-3 p-3 rounded-lg opacity-40">
-        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-          <Icon className="w-4 h-4" />
-        </div>
-        <span className="text-sm">{label}</span>
-        <span className="text-xs text-muted-foreground ml-auto">Not added</span>
-      </div>
-    );
-  }
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors group"
-    >
-      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-        <Icon className="w-4 h-4 text-primary" />
-      </div>
-      <span className="text-sm flex-1 truncate">{url}</span>
-      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-    </a>
-  );
-}
-
-function ProfileSkeleton() {
-  return (
-    <div className="space-y-8 max-w-4xl">
-      <div className="flex items-center gap-4">
-        <Skeleton className="w-16 h-16 rounded-2xl" />
-        <div>
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-32" />
-        </div>
-      </div>
-      <Skeleton className="h-32 rounded-2xl" />
-      <div className="grid gap-6 md:grid-cols-2">
-        <Skeleton className="h-48 rounded-2xl" />
-        <Skeleton className="h-48 rounded-2xl" />
-      </div>
-      <Skeleton className="h-40 rounded-2xl" />
-      <Skeleton className="h-40 rounded-2xl" />
+      {/* Member since */}
+      <p className="text-xs text-muted-foreground text-center">
+        Member since {new Date(profile.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+      </p>
     </div>
   );
 }

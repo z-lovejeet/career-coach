@@ -30,11 +30,12 @@ export async function callGemini<T = string>({
     config.responseMimeType = 'application/json';
   }
 
-  const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
+  // Models ordered by free-tier quota: 3.1-flash-lite (15 RPM, 500 RPD), 2.5-flash-lite (10 RPM), 2.5-flash (5 RPM)
+  const models = ['gemini-3.1-flash-lite-preview', 'gemini-2.5-flash-lite', 'gemini-2.5-flash'];
   let lastError: unknown;
 
   for (const model of models) {
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const response = await ai.models.generateContent({
           model,
@@ -64,10 +65,20 @@ export async function callGemini<T = string>({
       } catch (err: unknown) {
         lastError = err;
         const status = (err as { status?: number }).status;
-        // Retry on 503 (overloaded) or 429 (rate limit)
-        if (status === 503 || status === 429) {
-          const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
-          console.warn(`Gemini ${model} returned ${status}, retrying in ${delay / 1000}s (attempt ${attempt + 1}/3)...`);
+        const errMsg = (err as { message?: string }).message || '';
+        
+        if (status === 429) {
+          // Extract retry delay from error message if present
+          const retryMatch = errMsg.match(/retry in (\d+)/i);
+          const suggestedDelay = retryMatch ? parseInt(retryMatch[1]) : 0;
+          const delay = Math.max(suggestedDelay * 1000, Math.pow(3, attempt + 1) * 3000); // 9s, 27s, 81s
+          console.warn(`Gemini ${model} rate limited (429), retrying in ${Math.round(delay / 1000)}s (attempt ${attempt + 1}/3)...`);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+        if (status === 503) {
+          const delay = Math.pow(2, attempt + 1) * 1000;
+          console.warn(`Gemini ${model} overloaded (503), retrying in ${delay / 1000}s...`);
           await new Promise((r) => setTimeout(r, delay));
           continue;
         }

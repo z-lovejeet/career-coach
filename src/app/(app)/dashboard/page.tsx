@@ -19,6 +19,9 @@ import {
   BookOpen,
   Flame,
   Star,
+  AlertTriangle,
+  Bell,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +33,15 @@ import type { Analysis, Task, CompanyRecommendation, CompanyMatch } from "@/type
 interface StreakInfo {
   streak: { current: number; longest: number };
   xp: { total: number; level: number; xpProgress: number };
+}
+
+interface AgenticAlert {
+  id: string;
+  type: 'action' | 'warning' | 'critical' | 'info' | 'motivation';
+  title: string;
+  message: string;
+  action?: { label: string; href: string };
+  icon: string;
 }
 
 interface DashboardData {
@@ -48,37 +60,44 @@ export default function DashboardPage() {
     profile: null,
     streakInfo: null,
   });
+  const [alerts, setAlerts] = useState<AgenticAlert[]>([]);
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     fetchDashboard();
+    fetchAlerts();
   }, []);
 
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const [profileRes, analysisRes, tasksRes, recsRes, streakRes] = await Promise.allSettled([
-        fetch("/api/profile").then(r => r.json()),
-        fetch("/api/analyze/latest").then(r => r.json()),
-        fetch("/api/tasks").then(r => r.json()),
-        fetch("/api/companies").then(r => r.json()),
-        fetch("/api/streak").then(r => r.json()),
-      ]);
-
-      setData({
-        profile: profileRes.status === "fulfilled" && profileRes.value.success ? profileRes.value.data : null,
-        analysis: analysisRes.status === "fulfilled" && analysisRes.value.success ? analysisRes.value.data : null,
-        tasks: tasksRes.status === "fulfilled" && tasksRes.value.success ? tasksRes.value.data : [],
-        recommendations: recsRes.status === "fulfilled" && recsRes.value.success ? recsRes.value.data : null,
-        streakInfo: streakRes.status === "fulfilled" && streakRes.value.success ? streakRes.value.data : null,
-      });
+      const res = await fetch("/api/dashboard");
+      const result = await res.json();
+      if (result.success) {
+        setData(result.data);
+      }
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchAlerts = async () => {
+    try {
+      const res = await fetch("/api/alerts/check");
+      const result = await res.json();
+      if (result.success) setAlerts(result.data.alerts);
+    } catch { /* silent */ }
+  };
+
+  const dismissAlert = (id: string) => {
+    setDismissedAlerts(prev => new Set(prev).add(id));
+  };
+
+  const visibleAlerts = alerts.filter(a => !dismissedAlerts.has(a.id));
 
   if (loading) {
     return <DashboardSkeleton />;
@@ -136,6 +155,58 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* 🤖 AGENTIC ALERTS — Proactive AI Interventions */}
+      {visibleAlerts.length > 0 && (
+        <motion.div
+          className="space-y-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <Bell className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold">AI Coach Alerts</span>
+            <Badge variant="outline" className="text-[10px]">{visibleAlerts.length}</Badge>
+          </div>
+          {visibleAlerts.slice(0, 3).map((alert) => {
+            const borderColor = alert.type === 'critical' ? 'border-red-500/30 bg-red-500/5'
+              : alert.type === 'warning' ? 'border-amber-500/30 bg-amber-500/5'
+              : alert.type === 'action' ? 'border-primary/30 bg-primary/5'
+              : 'border-border/50 bg-accent/20';
+            return (
+              <motion.div
+                key={alert.id}
+                className={`p-3 rounded-xl border ${borderColor} flex items-start gap-3`}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+              >
+                <span className="text-lg flex-shrink-0 mt-0.5">{alert.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{alert.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{alert.message}</p>
+                  {alert.action && (
+                    <Button
+                      size="sm"
+                      variant={alert.type === 'critical' ? 'default' : 'outline'}
+                      className="mt-2 h-7 text-xs"
+                      onClick={() => router.push(alert.action!.href)}
+                    >
+                      {alert.action.label}
+                    </Button>
+                  )}
+                </div>
+                <button
+                  onClick={() => dismissAlert(alert.id)}
+                  className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      )}
 
       {/* Score + Stats Row */}
       <div className="grid gap-4 md:grid-cols-4">

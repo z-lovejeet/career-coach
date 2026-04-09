@@ -48,9 +48,10 @@ export default function AppLayout({
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserName(user.user_metadata?.full_name || user.email?.split("@")[0] || "User");
+      // getSession reads from cookies — instant, no network call
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUserName(session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User");
       }
     };
     getUser();

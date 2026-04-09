@@ -99,7 +99,7 @@ export default function StepBasicInfo({ formData, updateFormData }: Props) {
           <Label>Education Level *</Label>
           <Select
             value={formData.education_level || undefined}
-            onValueChange={(value) => updateFormData({ education_level: value || "" })}
+            onValueChange={(value: string | null) => updateFormData({ education_level: value || '' })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select education" />
@@ -118,7 +118,7 @@ export default function StepBasicInfo({ formData, updateFormData }: Props) {
           <Label>Field of Study *</Label>
           <Select
             value={formData.field_of_study || undefined}
-            onValueChange={(value) => updateFormData({ field_of_study: value || "" })}
+            onValueChange={(value: string | null) => updateFormData({ field_of_study: value || '' })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select field" />
@@ -137,7 +137,7 @@ export default function StepBasicInfo({ formData, updateFormData }: Props) {
           <Label>Experience Level *</Label>
           <Select
             value={formData.experience_level || undefined}
-            onValueChange={(value) => updateFormData({ experience_level: value || "fresher" })}
+            onValueChange={(value: string | null) => updateFormData({ experience_level: value || 'fresher' })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select experience" />
