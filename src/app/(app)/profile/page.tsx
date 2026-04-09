@@ -20,11 +20,18 @@ import {
   Star,
   TrendingUp,
   BarChart3,
+  Upload,
+  Loader2,
+  Sparkles,
+  ArrowRight,
+  Brain,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 interface ProfileData {
   full_name: string;
@@ -47,11 +54,22 @@ interface ProfileData {
   created_at: string;
 }
 
+interface FullAnalysis {
+  readiness_score: number;
+  extracted_skills: Array<{ name: string; level: string; confidence: number }>;
+  strengths: Array<{ skill: string; reason: string }>;
+  weaknesses: Array<{ skill: string; reason: string }>;
+  missing_skills: Array<{ skill: string; importance: string; reason: string }>;
+  summary: string;
+}
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [streak, setStreak] = useState<{ streak: { current: number; longest: number }; xp: { total: number; level: number; xpProgress: number } } | null>(null);
-  const [analysis, setAnalysis] = useState<{ readiness_score: number } | null>(null);
+  const [analysis, setAnalysis] = useState<FullAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -72,6 +90,49 @@ export default function ProfilePage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResumeUpload = async (file: File) => {
+    if (file.type !== 'application/pdf') {
+      toast.error('Only PDF files are accepted');
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+      const res = await fetch('/api/onboarding/resume', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Resume uploaded successfully!');
+        fetchProfileData(); // Refresh profile data
+      } else {
+        toast.error(data.error?.message || 'Upload failed');
+      }
+    } catch {
+      toast.error('Failed to upload resume');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const runAnalysis = async () => {
+    setAnalyzing(true);
+    try {
+      toast.info('Running AI analysis... This takes 15-30 seconds.');
+      const res = await fetch('/api/analyze', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setAnalysis(data.data);
+        toast.success('Analysis complete!');
+      } else {
+        toast.error(data.error?.message || 'Analysis failed');
+      }
+    } catch {
+      toast.error('Analysis failed. Please try again.');
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -284,6 +345,146 @@ export default function ProfilePage() {
           </div>
         </motion.div>
       )}
+
+      {/* Resume & Analysis Section */}
+      <motion.div
+        className="p-5 rounded-2xl glass"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+      >
+        <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+          <Brain className="w-4 h-4 text-primary" /> Resume & AI Analysis
+        </h3>
+
+        {/* Resume upload */}
+        <div className="flex items-center gap-4 mb-4 p-3 rounded-xl bg-accent/30 border border-border/50">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <FileText className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            {profile.resume_url ? (
+              <>
+                <p className="text-sm font-medium">Resume uploaded</p>
+                <a href={profile.resume_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate block">View resume</a>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium">No resume uploaded</p>
+                <p className="text-xs text-muted-foreground">Upload your resume for AI analysis</p>
+              </>
+            )}
+          </div>
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => e.target.files?.[0] && handleResumeUpload(e.target.files[0])}
+              disabled={uploading}
+            />
+            <Button size="sm" variant="outline" className="gap-1.5 text-xs" disabled={uploading} asChild>
+              <span>
+                {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                {uploading ? 'Uploading...' : profile.resume_url ? 'Re-upload' : 'Upload'}
+              </span>
+            </Button>
+          </label>
+        </div>
+
+        {/* Run analysis button */}
+        <Button
+          onClick={runAnalysis}
+          disabled={analyzing}
+          className="w-full gradient-primary text-white border-0 gap-2 hover:opacity-90 mb-4"
+        >
+          {analyzing ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing your profile...</>
+          ) : (
+            <><Sparkles className="w-4 h-4" /> {analysis ? 'Re-run AI Analysis' : 'Run AI Analysis'}</>
+          )}
+        </Button>
+
+        {/* Analysis results */}
+        {analysis && (
+          <div className="space-y-3">
+            {/* Score */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/30 border border-border/50">
+              <div className="text-2xl font-bold text-primary">{analysis.readiness_score}</div>
+              <div>
+                <p className="text-sm font-medium">Readiness Score</p>
+                <p className="text-xs text-muted-foreground">
+                  {analysis.readiness_score >= 70 ? 'Well prepared!' : analysis.readiness_score >= 40 ? 'Good progress, keep going' : 'Needs more preparation'}
+                </p>
+              </div>
+            </div>
+
+            {/* Summary */}
+            {analysis.summary && (
+              <p className="text-xs text-muted-foreground leading-relaxed p-3 rounded-lg bg-accent/30 border border-border/50">
+                {analysis.summary}
+              </p>
+            )}
+
+            {/* Strengths */}
+            {analysis.strengths?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Strengths
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {analysis.strengths.map((s, i) => (
+                    <Badge key={i} className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs">{s.skill}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Weaknesses */}
+            {analysis.weaknesses?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5 text-amber-400" /> Areas to Improve
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {analysis.weaknesses.map((w, i) => (
+                    <Badge key={i} className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-xs">{w.skill}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Missing skills */}
+            {analysis.missing_skills?.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-rose-400" /> Missing Skills
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {analysis.missing_skills.map((m, i) => (
+                    <Badge key={i} variant="outline" className="text-xs gap-1">
+                      {m.skill}
+                      <span className={`text-[10px] font-bold ${
+                        m.importance === 'critical' ? 'text-rose-400' : m.importance === 'high' ? 'text-amber-400' : 'text-muted-foreground'
+                      }`}>{m.importance}</span>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Link to full dashboard */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1.5 text-xs"
+              onClick={() => router.push('/dashboard')}
+            >
+              View Full Dashboard <ArrowRight className="w-3 h-3" />
+            </Button>
+          </div>
+        )}
+      </motion.div>
 
       {/* Member since */}
       <p className="text-xs text-muted-foreground text-center">
