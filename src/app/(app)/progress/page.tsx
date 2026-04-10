@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import useSWR from "swr";
 import {
   Flame,
   Star,
@@ -63,28 +63,15 @@ const categoryConfig: Record<string, { icon: typeof Code2; label: string; color:
   other: { icon: BarChart3, label: "Other", color: "text-gray-400" },
 };
 
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+
 export default function ProgressPage() {
-  const [data, setData] = useState<StreakData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchProgress();
-  }, []);
-
-  const fetchProgress = async () => {
-    try {
-      const res = await fetch("/api/streak");
-      const json = await res.json();
-      if (json.success) setData(json.data);
-    } catch (err) {
-      console.error("Failed to fetch progress:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: json, isLoading: loading } = useSWR('/api/streak', fetcher);
+  const data: StreakData | null = json?.success ? json.data : null;
 
   if (loading) return <ProgressSkeleton />;
-  if (!data) return <div className="text-center py-20 text-muted-foreground">Failed to load progress data.</div>;
+  if (!data && !loading) return <div className="text-center py-20 text-muted-foreground">Failed to load progress data.</div>;
+  if (!data) return <ProgressSkeleton />;
 
   const { streak, xp, stats, achievements, heatmap, categoryBreakdown } = data;
   const unlockedCount = achievements.filter((a) => a.unlocked).length;

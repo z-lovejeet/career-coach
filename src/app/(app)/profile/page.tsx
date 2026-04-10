@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import {
   User,
   Mail,
@@ -63,35 +64,22 @@ interface FullAnalysis {
   summary: string;
 }
 
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [streak, setStreak] = useState<{ streak: { current: number; longest: number }; xp: { total: number; level: number; xpProgress: number } } | null>(null);
-  const [analysis, setAnalysis] = useState<FullAnalysis | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: profileRes, isLoading: loadingProfile, mutate: revalidateProfile } = useSWR('/api/profile', fetcher);
+  const { data: streakRes, isLoading: loadingStreak } = useSWR('/api/streak', fetcher);
+  const { data: analysisRes, isLoading: loadingAnalysis, mutate: revalidateAnalysis } = useSWR('/api/analyze/latest', fetcher);
+
+  const profile: ProfileData | null = profileRes?.success ? profileRes.data : null;
+  const streak = streakRes?.success ? streakRes.data : null;
+  const analysis: FullAnalysis | null = analysisRes?.success ? analysisRes.data : null;
+
   const [analyzing, setAnalyzing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
-
-  const fetchProfileData = async () => {
-    try {
-      const [profileRes, streakRes, analysisRes] = await Promise.allSettled([
-        fetch("/api/profile").then(r => r.json()),
-        fetch("/api/streak").then(r => r.json()),
-        fetch("/api/analyze/latest").then(r => r.json()),
-      ]);
-      if (profileRes.status === "fulfilled" && profileRes.value.success) setProfile(profileRes.value.data);
-      if (streakRes.status === "fulfilled" && streakRes.value.success) setStreak(streakRes.value.data);
-      if (analysisRes.status === "fulfilled" && analysisRes.value.success) setAnalysis(analysisRes.value.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = loadingProfile || loadingStreak || loadingAnalysis;
 
   const handleResumeUpload = async (file: File) => {
     if (file.type !== 'application/pdf') {
@@ -106,7 +94,8 @@ export default function ProfilePage() {
       const data = await res.json();
       if (data.success) {
         toast.success('Resume uploaded successfully!');
-        fetchProfileData(); // Refresh profile data
+        revalidateProfile();
+        revalidateAnalysis();
       } else {
         toast.error(data.error?.message || 'Upload failed');
       }
@@ -124,7 +113,7 @@ export default function ProfilePage() {
       const res = await fetch('/api/analyze', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        setAnalysis(data.data);
+        revalidateAnalysis();
         toast.success('Analysis complete!');
       } else {
         toast.error(data.error?.message || 'Analysis failed');

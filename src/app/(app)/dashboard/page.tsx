@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import {
   Sparkles,
   TrendingUp,
@@ -50,52 +51,32 @@ interface DashboardData {
   streakInfo: StreakInfo | null;
 }
 
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData>({
+  const { data: dashboardRes, isLoading: loadingDb, mutate: revalidateDb } = useSWR('/api/dashboard', fetcher);
+  const { data: alertsRes } = useSWR('/api/alerts/check', fetcher);
+
+  const data: DashboardData = dashboardRes?.success ? dashboardRes.data : {
     analysis: null,
     tasks: [],
     recommendations: null,
     profile: null,
     streakInfo: null,
-  });
-  const [alerts, setAlerts] = useState<AgenticAlert[]>([]);
+  };
+
+  const alerts: AgenticAlert[] = alertsRes?.success ? alertsRes.data.alerts : [];
+
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    fetchDashboard();
-    fetchAlerts();
-  }, []);
-
-  const fetchDashboard = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/dashboard");
-      const result = await res.json();
-      if (result.success) {
-        setData(result.data);
-      }
-    } catch (err) {
-      console.error("Dashboard fetch error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAlerts = async () => {
-    try {
-      const res = await fetch("/api/alerts/check");
-      const result = await res.json();
-      if (result.success) setAlerts(result.data.alerts);
-    } catch { /* silent */ }
-  };
 
   const dismissAlert = (id: string) => {
     setDismissedAlerts(prev => new Set(prev).add(id));
   };
 
   const visibleAlerts = alerts.filter(a => !dismissedAlerts.has(a.id));
+
+  const loading = loadingDb && !dashboardRes;
 
   if (loading) {
     return <DashboardSkeleton />;

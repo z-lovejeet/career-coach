@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { CelebrationTracker } from "@/components/ui/celebration-tracker";
 
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -157,6 +158,7 @@ export default function AppLayout({
           {children}
         </div>
       </main>
+      <CelebrationTracker />
     </div>
   );
 }
