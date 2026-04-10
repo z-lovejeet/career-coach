@@ -376,8 +376,8 @@ export default function RoadmapPage() {
                       : "border-border bg-accent/30 text-muted-foreground hover:border-primary/30"
                   }`}
                 >
-                  <option.icon className="w-4 h-4" />
-                  {option.label}
+                  <focus.icon className="w-4 h-4" />
+                  {focus.label}
                 </button>
               );
             })}
