@@ -189,7 +189,7 @@ export default function RoadmapPage() {
       toast.error("Please enter your dream company!");
       return;
     }
-    if (focusAreas.length === 0) {
+    if (!focusAreas || focusAreas.length === 0) {
       toast.error("Select at least one focus area!");
       return;
     }
