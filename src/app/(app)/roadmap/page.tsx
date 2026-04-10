@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useLocalStorage } from "react-use";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Map,
@@ -163,33 +162,31 @@ const resourceTypeConfig: Record<string, { icon: typeof Video; color: string; la
 };
 
 export default function RoadmapPage() {
-  // Input form state (persisted)
-  const [dreamCompany, setDreamCompany] = useLocalStorage("roadmap_dreamCompany", "");
-  const [targetRole, setTargetRole] = useLocalStorage("roadmap_targetRole", "Software Engineer");
-  const [timelineMonths, setTimelineMonths] = useLocalStorage("roadmap_timelineMonths", 3);
-  const [hoursPerDay, setHoursPerDay] = useLocalStorage("roadmap_hoursPerDay", 4);
-  const [focusAreas, setFocusAreas] = useLocalStorage<string[]>("roadmap_focusAreas", ["dsa", "web_dev"]);
-  
+  // Input form state
+  const [dreamCompany, setDreamCompany] = useState("");
+  const [targetRole, setTargetRole] = useState("Software Engineer");
+  const [timelineMonths, setTimelineMonths] = useState(3);
+  const [hoursPerDay, setHoursPerDay] = useState(4);
+  const [focusAreas, setFocusAreas] = useState<string[]>(["dsa", "web_dev"]);
   const [generating, setGenerating] = useState(false);
 
-  // Roadmap state (persisted)
-  const [roadmap, setRoadmap] = useLocalStorage<Roadmap | null>("career_ai_roadmap", null);
+  // Roadmap state
+  const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [expandedPhase, setExpandedPhase] = useState<number | null>(0);
   const [expandedWeek, setExpandedWeek] = useState<string | null>(null);
 
   const toggleFocus = (id: string) => {
-    setFocusAreas((prev) => {
-      const current = prev || [];
-      return current.includes(id) ? current.filter((f) => f !== id) : [...current, id];
-    });
+    setFocusAreas((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+    );
   };
 
   const generateRoadmap = async () => {
-    if (!dreamCompany?.trim()) {
+    if (!dreamCompany.trim()) {
       toast.error("Please enter your dream company!");
       return;
     }
-    if (!focusAreas || focusAreas.length === 0) {
+    if (focusAreas.length === 0) {
       toast.error("Select at least one focus area!");
       return;
     }
@@ -282,7 +279,7 @@ export default function RoadmapPage() {
             Dream Company
           </label>
           <input
-            value={dreamCompany || ""}
+            value={dreamCompany}
             onChange={(e) => setDreamCompany(e.target.value)}
             placeholder="e.g., Google, Flipkart, Goldman Sachs..."
             className="w-full px-4 py-3 rounded-xl bg-accent/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
@@ -310,7 +307,7 @@ export default function RoadmapPage() {
             Target Role
           </label>
           <input
-            value={targetRole || ""}
+            value={targetRole}
             onChange={(e) => setTargetRole(e.target.value)}
             placeholder="e.g., Software Engineer, Frontend Developer..."
             className="w-full px-4 py-3 rounded-xl bg-accent/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
@@ -325,9 +322,9 @@ export default function RoadmapPage() {
             </label>
             <input
               type="range"
-              min="1"
-              max="12"
-              value={timelineMonths || 3}
+              min={1}
+              max={12}
+              value={timelineMonths}
               onChange={(e) => setTimelineMonths(Number(e.target.value))}
               className="w-full accent-primary"
             />
@@ -344,9 +341,9 @@ export default function RoadmapPage() {
             </label>
             <input
               type="range"
-              min="1"
-              max="10"
-              value={hoursPerDay || 4}
+              min={1}
+              max={10}
+              value={hoursPerDay}
               onChange={(e) => setHoursPerDay(Number(e.target.value))}
               className="w-full accent-primary"
             />
@@ -363,21 +360,21 @@ export default function RoadmapPage() {
           <label className="text-sm font-medium text-foreground mb-2 block">
             Focus Areas
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {FOCUS_OPTIONS.map((focus) => {
-              const isSelected = (focusAreas || []).includes(focus.id);
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {FOCUS_OPTIONS.map((option) => {
+              const selected = focusAreas.includes(option.id);
               return (
                 <button
-                  key={focus.id}
-                  onClick={() => toggleFocus(focus.id)}
+                  key={option.id}
+                  onClick={() => toggleFocus(option.id)}
                   className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all text-sm ${
-                    isSelected
+                    selected
                       ? "border-primary/50 bg-primary/10 text-primary"
                       : "border-border bg-accent/30 text-muted-foreground hover:border-primary/30"
                   }`}
                 >
-                  <focus.icon className="w-4 h-4" />
-                  {focus.label}
+                  <option.icon className="w-4 h-4" />
+                  {option.label}
                 </button>
               );
             })}
