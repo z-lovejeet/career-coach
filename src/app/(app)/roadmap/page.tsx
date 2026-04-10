@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocalStorage } from "react-use";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Map,
@@ -162,31 +163,37 @@ const resourceTypeConfig: Record<string, { icon: typeof Video; color: string; la
 };
 
 export default function RoadmapPage() {
-  // Input form state
-  const [dreamCompany, setDreamCompany] = useState("");
-  const [targetRole, setTargetRole] = useState("Software Engineer");
-  const [timelineMonths, setTimelineMonths] = useState(3);
-  const [hoursPerDay, setHoursPerDay] = useState(4);
-  const [focusAreas, setFocusAreas] = useState<string[]>(["dsa", "web_dev"]);
+  // Input form state (persisted)
+  const [dreamCompany, setDreamCompany] = useLocalStorage("roadmap_dreamCompany", "");
+  const [targetRole, setTargetRole] = useLocalStorage("roadmap_targetRole", "Software Engineer");
+  const [timelineMonths, setTimelineMonths] = useLocalStorage("roadmap_timelineMonths", 3);
+  const [hoursPerDay, setHoursPerDay] = useLocalStorage("roadmap_hoursPerDay", 4);
+  const [focusAreas, setFocusAreas] = useLocalStorage<string[]>("roadmap_focusAreas", ["dsa", "web_dev"]);
+  
   const [generating, setGenerating] = useState(false);
 
-  // Roadmap state
-  const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
+  // Roadmap state (persisted)
+  const [roadmap, setRoadmap] = useLocalStorage<Roadmap | null>("career_ai_roadmap", null);
   const [expandedPhase, setExpandedPhase] = useState<number | null>(0);
   const [expandedWeek, setExpandedWeek] = useState<string | null>(null);
 
+  // Hydration guard — prevents SSR from overwriting localStorage values
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const toggleFocus = (id: string) => {
-    setFocusAreas((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
-    );
+    setFocusAreas((prev) => {
+      const current = prev || [];
+      return current.includes(id) ? current.filter((f) => f !== id) : [...current, id];
+    });
   };
 
   const generateRoadmap = async () => {
-    if (!dreamCompany.trim()) {
+    if (!dreamCompany?.trim()) {
       toast.error("Please enter your dream company!");
       return;
     }
-    if (focusAreas.length === 0) {
+    if (!focusAreas || focusAreas.length === 0) {
       toast.error("Select at least one focus area!");
       return;
     }
@@ -238,16 +245,42 @@ export default function RoadmapPage() {
         warnings: raw.warnings || [],
       };
       
+      // Only save if phases were actually generated
+      if (normalized.phases.length === 0) {
+        toast.error("Roadmap generated without phases. Please try again.");
+        return;
+      }
+
       setRoadmap(normalized);
       setExpandedPhase(0);
       toast.success("✅ Roadmap generated! Scroll down to explore.");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to generate roadmap. Please try again.");
+      toast.error(err instanceof Error ? err.message : "Failed to generate roadmap. Please try again.");
     } finally {
       setGenerating(false);
     }
   };
+
+  // Prevent hydration mismatch — useLocalStorage values differ between server and client
+  if (!mounted) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">
+            <Map className="w-8 h-8 text-primary" />
+            Roadmap Maker
+          </h1>
+          <p className="text-muted-foreground">
+            AI-powered career preparation roadmap — brutally honest, week-by-week
+          </p>
+        </div>
+        <div className="p-6 rounded-2xl glass-strong flex items-center justify-center min-h-[200px]">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -279,7 +312,7 @@ export default function RoadmapPage() {
             Dream Company
           </label>
           <input
-            value={dreamCompany}
+            value={dreamCompany || ""}
             onChange={(e) => setDreamCompany(e.target.value)}
             placeholder="e.g., Google, Flipkart, Goldman Sachs..."
             className="w-full px-4 py-3 rounded-xl bg-accent/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
@@ -307,7 +340,7 @@ export default function RoadmapPage() {
             Target Role
           </label>
           <input
-            value={targetRole}
+            value={targetRole || ""}
             onChange={(e) => setTargetRole(e.target.value)}
             placeholder="e.g., Software Engineer, Frontend Developer..."
             className="w-full px-4 py-3 rounded-xl bg-accent/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition"
@@ -322,9 +355,9 @@ export default function RoadmapPage() {
             </label>
             <input
               type="range"
-              min={1}
-              max={12}
-              value={timelineMonths}
+              min="1"
+              max="12"
+              value={timelineMonths || 3}
               onChange={(e) => setTimelineMonths(Number(e.target.value))}
               className="w-full accent-primary"
             />
@@ -341,9 +374,9 @@ export default function RoadmapPage() {
             </label>
             <input
               type="range"
-              min={1}
-              max={10}
-              value={hoursPerDay}
+              min="1"
+              max="10"
+              value={hoursPerDay || 4}
               onChange={(e) => setHoursPerDay(Number(e.target.value))}
               className="w-full accent-primary"
             />
@@ -360,21 +393,21 @@ export default function RoadmapPage() {
           <label className="text-sm font-medium text-foreground mb-2 block">
             Focus Areas
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {FOCUS_OPTIONS.map((option) => {
-              const selected = focusAreas.includes(option.id);
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {FOCUS_OPTIONS.map((focus) => {
+              const isSelected = (focusAreas || []).includes(focus.id);
               return (
                 <button
-                  key={option.id}
-                  onClick={() => toggleFocus(option.id)}
+                  key={focus.id}
+                  onClick={() => toggleFocus(focus.id)}
                   className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all text-sm ${
-                    selected
+                    isSelected
                       ? "border-primary/50 bg-primary/10 text-primary"
                       : "border-border bg-accent/30 text-muted-foreground hover:border-primary/30"
                   }`}
                 >
-                  <option.icon className="w-4 h-4" />
-                  {option.label}
+                  <focus.icon className="w-4 h-4" />
+                  {focus.label}
                 </button>
               );
             })}
@@ -404,7 +437,7 @@ export default function RoadmapPage() {
 
       {/* Roadmap Display */}
       <AnimatePresence>
-        {roadmap && (
+        {mounted && roadmap && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

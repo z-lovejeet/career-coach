@@ -45,18 +45,30 @@ export async function POST(request: NextRequest) {
 Student: ${profile?.experience_level || 'fresher'}, Skills: ${skills}, Score: ${analysis?.readiness_score || '?'}/100, Weak: ${weak}, Missing: ${missing}
 Focus: ${body.focusAreas.join(', ')}, ${body.hoursPerDay}h/day
 
-${phases} phases. Per phase: 3-4 resources (1 must be youtube_playlist with real playlist URL), 2 weeks, 2-3 tasks/week.
+IMPORTANT: You MUST generate exactly ${phases} phases with 2 weeks each. Every phase MUST have a non-empty "weeks" array and every week MUST have a non-empty "tasks" array. The "phases" array must NEVER be empty.
+
+Per phase: 3-4 resources (1 must be youtube_playlist with real playlist URL), 2 weeks, 2-3 tasks/week.
 Use real URLs from: youtube.com/playlist, leetcode.com, geeksforgeeks.org, react.dev, developer.mozilla.org, neetcode.io
 
 JSON: {"overview":{"feasibility":"realistic|ambitious|unrealistic","feasibilityNote":"str","alternativeCompanies":[],"currentReadiness":0,"targetReadiness":0,"estimatedFinalReadiness":0},"phases":[{"phaseNumber":1,"title":"str","startWeek":1,"endWeek":4,"objective":"str","milestone":"str","resources":[{"title":"str","url":"str","type":"youtube_playlist|youtube|documentation|course|practice","description":"str"}],"weeks":[{"weekNumber":1,"focus":"str","dailyHoursBreakdown":{"theory":1,"practice":2,"projects":0},"tasks":[{"title":"str","type":"dsa|web_dev|system_design|project|soft_skills","description":"str","resources":["str"],"deliverable":"str"}],"weeklyGoal":"str"}]}],"keySkillsToAcquire":[{"skill":"str","currentLevel":"none|beginner|intermediate","targetLevel":"intermediate|advanced","estimatedWeeks":4,"priority":"critical|high|medium"}],"interviewPrep":{"dsaProblemsTarget":150,"systemDesignTopics":["str"],"mockInterviewsTarget":10,"companySpecificTips":["str"]},"warnings":["str"]}`;
 
-    const roadmap = await callGemini({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const roadmap: any = await callGemini({
       systemPrompt: SYSTEM,
       userPrompt,
       jsonMode: true,
       temperature: 0.5,
-      maxTokens: 8192,
+      maxTokens: 16384,
     });
+
+    // Validate phases exist — critical guard
+    if (!roadmap.phases || !Array.isArray(roadmap.phases) || roadmap.phases.length === 0) {
+      console.error('Roadmap generated with empty phases:', JSON.stringify(roadmap).substring(0, 500));
+      return NextResponse.json(
+        { success: false, error: { code: 'generation_error', message: 'AI generated an incomplete roadmap. Please try again.' } },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ success: true, data: roadmap });
   } catch (err) {
