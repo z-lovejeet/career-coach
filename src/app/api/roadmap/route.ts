@@ -10,7 +10,7 @@ interface RoadmapInput {
   focusAreas: string[];
 }
 
-const SYSTEM = `Career roadmap architect for Indian tech placements. Return ONLY valid JSON.`;
+const SYSTEM = `You are a career roadmap generator. Return ONLY valid JSON. No markdown.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,22 +35,31 @@ export async function POST(request: NextRequest) {
     const profile = profileRes.data;
     const analysis = analysisRes.data;
 
-    const skills = profile?.skills?.slice(0, 8)?.join(', ') || 'None';
-    const weak = (analysis?.weaknesses || []).slice(0, 3).map((w: {skill: string}) => w.skill).join(', ') || 'N/A';
-    const missing = (analysis?.missing_skills || []).slice(0, 4).map((m: {skill: string}) => m.skill).join(', ') || 'N/A';
+    const skills = profile?.skills?.slice(0, 6)?.join(', ') || 'None';
+    const weak = (analysis?.weaknesses || []).slice(0, 2).map((w: {skill: string}) => w.skill).join(', ') || 'N/A';
+    const missing = (analysis?.missing_skills || []).slice(0, 3).map((m: {skill: string}) => m.skill).join(', ') || 'N/A';
 
-    const phases = Math.min(Math.ceil(body.timelinMonths), 5);
+    const phases = Math.min(Math.ceil(body.timelinMonths / 2), 3);
 
-    const userPrompt = `${body.timelinMonths}-month roadmap for ${body.dreamCompany} ${body.targetRole}.
-Student: ${profile?.experience_level || 'fresher'}, Skills: ${skills}, Score: ${analysis?.readiness_score || '?'}/100, Weak: ${weak}, Missing: ${missing}
-Focus: ${body.focusAreas.join(', ')}, ${body.hoursPerDay}h/day
+    const focusStr = body.focusAreas.join(', ');
 
-IMPORTANT: You MUST generate exactly ${phases} phases with 2 weeks each. Every phase MUST have a non-empty "weeks" array and every week MUST have a non-empty "tasks" array. The "phases" array must NEVER be empty.
+    const userPrompt = `Build a personalized ${body.timelinMonths}-month placement prep roadmap.
 
-Per phase: 3-4 resources (1 must be youtube_playlist with real playlist URL), 2 weeks, 2-3 tasks/week.
-Use real URLs from: youtube.com/playlist, leetcode.com, geeksforgeeks.org, react.dev, developer.mozilla.org, neetcode.io
+TARGET: ${body.dreamCompany} — ${body.targetRole}
+TIMELINE: ${body.timelinMonths} months, ${body.hoursPerDay} hours per day available
+FOCUS AREAS: ${focusStr}
+STUDENT PROFILE: ${profile?.experience_level || 'fresher'}, knows ${skills}, readiness ${analysis?.readiness_score || '?'}/100
+GAPS: weak in ${weak}, missing ${missing}
 
-JSON: {"overview":{"feasibility":"realistic|ambitious|unrealistic","feasibilityNote":"str","alternativeCompanies":[],"currentReadiness":0,"targetReadiness":0,"estimatedFinalReadiness":0},"phases":[{"phaseNumber":1,"title":"str","startWeek":1,"endWeek":4,"objective":"str","milestone":"str","resources":[{"title":"str","url":"str","type":"youtube_playlist|youtube|documentation|course|practice","description":"str"}],"weeks":[{"weekNumber":1,"focus":"str","dailyHoursBreakdown":{"theory":1,"practice":2,"projects":0},"tasks":[{"title":"str","type":"dsa|web_dev|system_design|project|soft_skills","description":"str","resources":["str"],"deliverable":"str"}],"weeklyGoal":"str"}]}],"keySkillsToAcquire":[{"skill":"str","currentLevel":"none|beginner|intermediate","targetLevel":"intermediate|advanced","estimatedWeeks":4,"priority":"critical|high|medium"}],"interviewPrep":{"dsaProblemsTarget":150,"systemDesignTopics":["str"],"mockInterviewsTarget":10,"companySpecificTips":["str"]},"warnings":["str"]}`;
+RULES:
+- Generate exactly ${phases} phases, 2 weeks each
+- Daily hour splits must total ${body.hoursPerDay}h (theory+practice+projects)
+- Tasks must match the focus areas: ${focusStr}
+- Each phase needs 2 resources (1 must be a real youtube playlist URL)
+- Company-specific tips must be about ${body.dreamCompany} interview process
+- Warnings should be honest about ${body.timelinMonths}-month timeline feasibility
+
+JSON: {"overview":{"feasibility":"realistic|ambitious|unrealistic","feasibilityNote":"str","alternativeCompanies":[],"currentReadiness":0,"targetReadiness":0,"estimatedFinalReadiness":0},"phases":[{"phaseNumber":1,"title":"str","startWeek":1,"endWeek":2,"objective":"str","milestone":"str","resources":[{"title":"str","url":"real url","type":"youtube_playlist|documentation|practice","description":"str"}],"weeks":[{"weekNumber":1,"focus":"str","dailyHoursBreakdown":{"theory":1,"practice":2,"projects":1},"tasks":[{"title":"str","type":"dsa|web_dev|system_design|project|soft_skills","description":"str","resources":["str"],"deliverable":"str"}],"weeklyGoal":"str"}]}],"keySkillsToAcquire":[{"skill":"str","currentLevel":"none|beginner","targetLevel":"intermediate|advanced","estimatedWeeks":4,"priority":"critical|high|medium"}],"interviewPrep":{"dsaProblemsTarget":100,"systemDesignTopics":["str"],"mockInterviewsTarget":5,"companySpecificTips":["str"]},"warnings":["str"]}`;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const roadmap: any = await callGemini({
@@ -58,10 +67,10 @@ JSON: {"overview":{"feasibility":"realistic|ambitious|unrealistic","feasibilityN
       userPrompt,
       jsonMode: true,
       temperature: 0.5,
-      maxTokens: 16384,
+      maxTokens: 8192,
     });
 
-    // Validate phases exist — critical guard
+    // Validate phases exist
     if (!roadmap.phases || !Array.isArray(roadmap.phases) || roadmap.phases.length === 0) {
       console.error('Roadmap generated with empty phases:', JSON.stringify(roadmap).substring(0, 500));
       return NextResponse.json(

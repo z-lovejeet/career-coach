@@ -70,8 +70,34 @@ export default function StepResume({ formData, updateFormData }: Props) {
         throw new Error(data.error?.message || "Analysis failed");
       }
 
-      setAnalysis(data.data.analysis);
-      toast.success("✅ Resume analyzed! Review extracted data below.");
+      const extractedData = data.data.analysis;
+      setAnalysis(extractedData);
+
+      // AUTO-APPLY extracted data immediately (no manual click needed)
+      if (extractedData) {
+        const mergedSkills = Array.from(new Set([...formData.skills, ...(extractedData.skills || [])]));
+        const mergedRatings = { ...formData.skill_ratings, ...(extractedData.skill_ratings || {}) };
+        const mergedProjects = [
+          ...formData.projects,
+          ...(extractedData.projects || []).filter(
+            (ap: { name: string }) => !formData.projects.some((fp) => fp.name.toLowerCase() === ap.name.toLowerCase())
+          ),
+        ];
+
+        updateFormData({
+          skills: mergedSkills,
+          skill_ratings: mergedRatings,
+          projects: mergedProjects,
+          full_name: formData.full_name || extractedData.full_name || "",
+          education_level: formData.education_level || extractedData.education_level || "",
+          field_of_study: formData.field_of_study || extractedData.field_of_study || "",
+          experience_level: formData.experience_level || extractedData.experience_level || "fresher",
+          preferred_role: formData.preferred_role || extractedData.preferred_role || "",
+        });
+
+        setApplied(true);
+        toast.success(`🎉 Auto-filled: ${extractedData.skills?.length || 0} skills, ${extractedData.projects?.length || 0} projects, education & role!`);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Resume analysis failed. You can still fill in details manually.");
@@ -206,21 +232,10 @@ export default function StepResume({ formData, updateFormData }: Props) {
               <Brain className="w-4 h-4 text-primary" />
               AI Extracted Data
             </h3>
-            {!applied ? (
-              <Button
-                size="sm"
-                onClick={applyAnalysis}
-                className="gradient-primary text-white border-0 gap-1.5 text-xs hover:opacity-90"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                Apply All to Profile
-              </Button>
-            ) : (
-              <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-xs">
-                <CheckCircle2 className="w-3 h-3 mr-1" />
-                Applied ✓
-              </Badge>
-            )}
+            <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-xs">
+              <CheckCircle2 className="w-3 h-3 mr-1" />
+              Auto-Applied to Profile ✓
+            </Badge>
           </div>
 
           {/* Summary */}
@@ -321,6 +336,9 @@ export default function StepResume({ formData, updateFormData }: Props) {
               <li>• Education level and field of study</li>
               <li>• Experience level and target role</li>
             </ul>
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              💡 No resume? No problem! Click <strong>Next</strong> to fill skills, projects &amp; goals manually.
+            </p>
           </div>
         </div>
       </div>

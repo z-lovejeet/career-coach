@@ -335,7 +335,7 @@ export default function ProfilePage() {
         </motion.div>
       )}
 
-      {/* Resume & Analysis Section */}
+      {/* Resume Upload Card */}
       <motion.div
         className="p-5 rounded-2xl glass"
         initial={{ opacity: 0, y: 10 }}
@@ -343,11 +343,10 @@ export default function ProfilePage() {
         transition={{ delay: 0.15 }}
       >
         <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-          <Brain className="w-4 h-4 text-primary" /> Resume & AI Analysis
+          <FileText className="w-4 h-4 text-primary" /> Resume
         </h3>
 
-        {/* Resume upload */}
-        <div className="flex items-center gap-4 mb-4 p-3 rounded-xl bg-accent/30 border border-border/50">
+        <div className="flex items-center gap-4 p-3 rounded-xl bg-accent/30 border border-border/50">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
             <FileText className="w-5 h-5 text-primary" />
           </div>
@@ -383,7 +382,7 @@ export default function ProfilePage() {
         <Button
           onClick={runAnalysis}
           disabled={analyzing}
-          className="w-full gradient-primary text-white border-0 gap-2 hover:opacity-90 mb-4"
+          className="w-full gradient-primary text-white border-0 gap-2 hover:opacity-90 mt-4"
         >
           {analyzing ? (
             <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing your profile...</>
@@ -391,37 +390,74 @@ export default function ProfilePage() {
             <><Sparkles className="w-4 h-4" /> {analysis ? 'Re-run AI Analysis' : 'Run AI Analysis'}</>
           )}
         </Button>
+      </motion.div>
 
-        {/* Analysis results */}
-        {analysis && (
-          <div className="space-y-3">
-            {/* Score */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/30 border border-border/50">
-              <div className="text-2xl font-bold text-primary">{analysis.readiness_score}</div>
-              <div>
-                <p className="text-sm font-medium">Readiness Score</p>
+      {/* ═══════════════════════════════════════ */}
+      {/* CV Analysis Report */}
+      {/* ═══════════════════════════════════════ */}
+      {analysis && (
+        <motion.div
+          className="p-5 rounded-2xl glass-strong border border-primary/10"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="font-semibold text-base flex items-center gap-2">
+              <Brain className="w-5 h-5 text-primary" />
+              CV Analysis Report
+            </h3>
+            <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
+              AI-Generated
+            </Badge>
+          </div>
+
+          {/* Readiness Score */}
+          <div className="p-4 rounded-xl bg-accent/30 border border-border/50 mb-4">
+            <div className="flex items-center gap-4">
+              <div className={`text-3xl font-bold ${
+                analysis.readiness_score >= 70 ? 'text-emerald-400' : analysis.readiness_score >= 40 ? 'text-amber-400' : 'text-rose-400'
+              }`}>
+                {analysis.readiness_score}<span className="text-sm text-muted-foreground font-normal">/100</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Placement Readiness Score</p>
                 <p className="text-xs text-muted-foreground">
-                  {analysis.readiness_score >= 70 ? 'Well prepared!' : analysis.readiness_score >= 40 ? 'Good progress, keep going' : 'Needs more preparation'}
+                  {analysis.readiness_score >= 70 ? '🎯 Well prepared for placements!' : analysis.readiness_score >= 40 ? '📈 Good progress — keep pushing!' : '🔥 Needs focused preparation'}
                 </p>
+                <Progress value={analysis.readiness_score} className="h-2 mt-2" />
               </div>
             </div>
+          </div>
 
-            {/* Summary */}
-            {analysis.summary && (
-              <p className="text-xs text-muted-foreground leading-relaxed p-3 rounded-lg bg-accent/30 border border-border/50">
+          {/* AI Summary */}
+          {analysis.summary && (
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 mb-4">
+              <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-primary" /> AI Assessment
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {analysis.summary}
               </p>
-            )}
+            </div>
+          )}
 
+          <div className="grid sm:grid-cols-2 gap-4">
             {/* Strengths */}
             {analysis.strengths?.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Strengths
+              <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                <p className="text-xs font-semibold mb-3 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Strengths ({analysis.strengths.length})
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="space-y-2">
                   {analysis.strengths.map((s, i) => (
-                    <Badge key={i} className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs">{s.skill}</Badge>
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-emerald-400 mt-0.5 text-xs">✓</span>
+                      <div>
+                        <p className="text-xs font-medium text-emerald-300">{s.skill}</p>
+                        {s.reason && <p className="text-[11px] text-muted-foreground">{s.reason}</p>}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -429,49 +465,121 @@ export default function ProfilePage() {
 
             {/* Weaknesses */}
             {analysis.weaknesses?.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
-                  <Target className="w-3.5 h-3.5 text-amber-400" /> Areas to Improve
+              <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                <p className="text-xs font-semibold mb-3 flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5 text-amber-400" /> Areas to Improve ({analysis.weaknesses.length})
                 </p>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="space-y-2">
                   {analysis.weaknesses.map((w, i) => (
-                    <Badge key={i} className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-xs">{w.skill}</Badge>
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-amber-400 mt-0.5 text-xs">⚠</span>
+                      <div>
+                        <p className="text-xs font-medium text-amber-300">{w.skill}</p>
+                        {w.reason && <p className="text-[11px] text-muted-foreground">{w.reason}</p>}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
             )}
+          </div>
 
-            {/* Missing skills */}
-            {analysis.missing_skills?.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
-                  <TrendingUp className="w-3.5 h-3.5 text-rose-400" /> Missing Skills
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {analysis.missing_skills.map((m, i) => (
-                    <Badge key={i} variant="outline" className="text-xs gap-1">
-                      {m.skill}
-                      <span className={`text-[10px] font-bold ${
-                        m.importance === 'critical' ? 'text-rose-400' : m.importance === 'high' ? 'text-amber-400' : 'text-muted-foreground'
-                      }`}>{m.importance}</span>
-                    </Badge>
-                  ))}
-                </div>
+          {/* Missing Skills */}
+          {analysis.missing_skills?.length > 0 && (
+            <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/10 mt-4">
+              <p className="text-xs font-semibold mb-3 flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-rose-400" /> Missing Skills for Target Role ({analysis.missing_skills.length})
+              </p>
+              <div className="space-y-2">
+                {analysis.missing_skills.map((m, i) => (
+                  <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-accent/30">
+                    <span className="text-rose-400 mt-0.5 text-xs">✕</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-medium">{m.skill}</p>
+                        <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${
+                          m.importance === 'critical' ? 'text-rose-400 border-rose-500/30' : m.importance === 'high' ? 'text-amber-400 border-amber-500/30' : 'text-muted-foreground'
+                        }`}>{m.importance}</Badge>
+                      </div>
+                      {m.reason && <p className="text-[11px] text-muted-foreground mt-0.5">{m.reason}</p>}
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Link to full dashboard */}
+          {/* Extracted Skills */}
+          {analysis.extracted_skills?.length > 0 && (
+            <div className="p-4 rounded-xl glass mt-4">
+              <p className="text-xs font-semibold mb-3 flex items-center gap-1.5">
+                <BarChart3 className="w-3.5 h-3.5 text-cyan-400" /> Extracted Skills ({analysis.extracted_skills.length})
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {analysis.extracted_skills.map((s, i) => (
+                  <Badge key={i} variant="outline" className="text-xs gap-1.5 py-1">
+                    {s.name}
+                    <span className={`text-[10px] font-bold ${
+                      s.confidence >= 80 ? 'text-emerald-400' : s.confidence >= 50 ? 'text-amber-400' : 'text-rose-400'
+                    }`}>
+                      {s.level}
+                    </span>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2 mt-4">
             <Button
               variant="outline"
               size="sm"
-              className="w-full gap-1.5 text-xs"
+              className="flex-1 gap-1.5 text-xs"
               onClick={() => router.push('/dashboard')}
             >
               View Full Dashboard <ArrowRight className="w-3 h-3" />
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              onClick={runAnalysis}
+              disabled={analyzing}
+            >
+              <RefreshCw className={`w-3 h-3 ${analyzing ? 'animate-spin' : ''}`} />
+              Re-analyze
+            </Button>
           </div>
-        )}
-      </motion.div>
+        </motion.div>
+      )}
+
+      {/* No analysis yet prompt */}
+      {!analysis && !loadingAnalysis && (
+        <motion.div
+          className="p-6 rounded-2xl glass text-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <Brain className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+          <p className="text-sm font-medium mb-1">No CV Analysis Report Yet</p>
+          <p className="text-xs text-muted-foreground mb-4">
+            Upload your resume and run AI analysis to get a detailed placement readiness report.
+          </p>
+          <Button
+            onClick={runAnalysis}
+            disabled={analyzing}
+            className="gradient-primary text-white border-0 gap-2 hover:opacity-90"
+          >
+            {analyzing ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</>
+            ) : (
+              <><Sparkles className="w-4 h-4" /> Generate Analysis Report</>
+            )}
+          </Button>
+        </motion.div>
+      )}
 
       {/* Member since */}
       <p className="text-xs text-muted-foreground text-center">
