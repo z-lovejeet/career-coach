@@ -22,7 +22,7 @@ export async function POST() {
       .eq('profile_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (analysisError || !analysis) {
       return NextResponse.json(
@@ -38,14 +38,14 @@ export async function POST() {
       .eq('profile_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     // Fetch profile goals
     const { data: profile } = await supabase
       .from('profiles')
       .select('goals')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     // Count existing weeks of tasks
     const { data: existingTasks } = await supabase
