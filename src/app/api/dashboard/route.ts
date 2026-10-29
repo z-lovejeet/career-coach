@@ -19,10 +19,10 @@ export async function GET() {
 
     // Run ALL queries in parallel — single auth check, multiple data fetches
     const [profileResult, analysisResult, tasksResult, recsResult, completedResult] = await Promise.all([
-      supabase.from('profiles').select('full_name, onboarding_complete, skills, goals').eq('id', user.id).single(),
-      supabase.from('analyses').select('*').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(1).single(),
+      supabase.from('profiles').select('full_name, onboarding_complete, skills, goals').eq('id', user.id).maybeSingle(),
+      supabase.from('analyses').select('*').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('tasks').select('*').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(20),
-      supabase.from('company_recommendations').select('*').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(1).single(),
+      supabase.from('company_recommendations').select('*').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('tasks').select('completed_at, created_at').eq('profile_id', user.id).eq('completed', true),
     ]);
 
