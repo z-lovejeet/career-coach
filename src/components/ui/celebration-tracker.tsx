@@ -54,11 +54,19 @@ export function CelebrationTracker() {
     prevLevelRef.current = currentLevel;
     prevStreakRef.current = currentStreak;
 
+    let hideTimer: ReturnType<typeof setTimeout> | undefined;
+    let showTimer: ReturnType<typeof setTimeout> | undefined;
+
     if (triggerCelebration) {
-      setShowConfetti(true);
+      showTimer = setTimeout(() => setShowConfetti(true), 0);
       // Auto-hide confetti after 5 seconds
-      setTimeout(() => setShowConfetti(false), 5000);
+      hideTimer = setTimeout(() => setShowConfetti(false), 5000);
     }
+
+    return () => {
+      if (showTimer) clearTimeout(showTimer);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
   }, [streakRes]);
 
   if (!showConfetti) return null;
