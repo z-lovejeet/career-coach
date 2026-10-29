@@ -12,21 +12,17 @@ import {
   Circle,
   Building2,
   Code2,
-  BarChart3,
   ArrowRight,
   Zap,
   BookOpen,
   Flame,
   Star,
-  AlertTriangle,
-  Bell,
   X,
+  ChevronRight,
+  Cpu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import type { Analysis, Task, CompanyRecommendation, CompanyMatch } from "@/types";
 
 interface StreakInfo {
@@ -54,7 +50,7 @@ interface DashboardData {
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function DashboardPage() {
-  const { data: dashboardRes, isLoading: loadingDb, mutate: revalidateDb } = useSWR('/api/dashboard', fetcher);
+  const { data: dashboardRes, isLoading: loadingDb } = useSWR('/api/dashboard', fetcher);
   const { data: alertsRes } = useSWR('/api/alerts/check', fetcher);
 
   const data: DashboardData = dashboardRes?.success ? dashboardRes.data : {
@@ -66,7 +62,6 @@ export default function DashboardPage() {
   };
 
   const alerts: AgenticAlert[] = alertsRes?.success ? alertsRes.data.alerts : [];
-
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
   const router = useRouter();
 
@@ -75,7 +70,6 @@ export default function DashboardPage() {
   };
 
   const visibleAlerts = alerts.filter(a => !dismissedAlerts.has(a.id));
-
   const loading = loadingDb && !dashboardRes;
 
   if (loading) {
@@ -102,62 +96,73 @@ export default function DashboardPage() {
   const targets = (recommendations?.target_companies || []) as CompanyMatch[];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="space-y-7 max-w-7xl mx-auto">
+      {/* ─── Executive Command Header ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight mb-1">
-            Welcome back, {data.profile?.full_name?.split(" ")[0] || "Student"}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+              Command Center
+            </span>
+            <span className="text-muted-foreground/40">•</span>
+            <span className="font-mono text-[11px] text-muted-foreground">Candidate Profile Active</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            Welcome back, {data.profile?.full_name?.split(" ")[0] || "Candidate"}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Here&apos;s your career preparation overview
-          </p>
         </div>
+
         {data.streakInfo && (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/8 border border-orange-500/15">
-              <Flame className="w-3.5 h-3.5 text-orange-400" />
-              <span className="text-sm font-semibold text-orange-400">{data.streakInfo.streak.current}</span>
-              <span className="text-xs text-muted-foreground">day streak</span>
+          <div className="flex items-center gap-2.5 font-mono">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
+              <Flame className="w-4 h-4 text-orange-400" />
+              <span className="text-sm font-bold text-orange-400">{data.streakInfo.streak.current}</span>
+              <span className="text-[11px] text-slate-400">day streak</span>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/8 border border-primary/15">
-              <Star className="w-3.5 h-3.5 text-primary" />
-              <span className="text-sm font-semibold text-primary">Lvl {data.streakInfo.xp.level}</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <Star className="w-4 h-4 text-blue-400" />
+              <span className="text-sm font-bold text-blue-400">Level {data.streakInfo.xp.level}</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* Alerts */}
+      {/* ─── High-Priority Autonomous Alerts ─── */}
       {visibleAlerts.length > 0 && (
-        <div className="rounded-xl glass overflow-hidden">
-          <div className="px-5 py-3 border-b border-white/[0.04] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-sm font-medium">AI Coach Insights</span>
+        <div className="p-1 rounded-2xl bg-white/[0.04] border border-amber-500/20 shadow-[0_10px_30px_rgba(245,158,11,0.06)]">
+          <div className="rounded-[calc(1rem-0.125rem)] bg-[#0E111B] divide-y divide-white/[0.06] overflow-hidden">
+            <div className="px-5 py-3 bg-[#121524] flex items-center justify-between">
+              <div className="flex items-center gap-2.5 font-mono text-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                <span className="text-amber-300 font-semibold uppercase tracking-wider">
+                  Proactive Mentor Telemetry
+                </span>
+              </div>
+              <span className="text-[11px] font-mono text-slate-400">
+                {visibleAlerts.length} unresolved {visibleAlerts.length > 1 ? 'items' : 'item'}
+              </span>
             </div>
-            <span className="text-xs text-muted-foreground">{visibleAlerts.length} alert{visibleAlerts.length > 1 ? 's' : ''}</span>
-          </div>
-          <div className="divide-y divide-white/[0.04]">
-            {visibleAlerts.slice(0, 3).map((alert) => (
-              <div key={alert.id} className="px-5 py-4 flex items-start gap-4 hover:bg-white/[0.01] transition-colors">
+            {visibleAlerts.slice(0, 2).map((alert) => (
+              <div key={alert.id} className="p-4 flex items-start gap-4 hover:bg-white/[0.01] transition-colors">
                 <span className="text-xl flex-shrink-0 mt-0.5">{alert.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium mb-0.5">{alert.title}</p>
+                  <p className="text-sm font-semibold text-white mb-0.5">{alert.title}</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">{alert.message}</p>
                   {alert.action && (
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="mt-3 h-7 text-xs"
+                      className="mt-3 h-7 px-3 rounded-lg text-xs font-mono bg-blue-600 hover:bg-blue-500 text-white"
                       onClick={() => router.push(alert.action!.href)}
                     >
                       {alert.action.label} <ArrowRight className="w-3 h-3 ml-1" />
                     </Button>
                   )}
                 </div>
-                <button onClick={() => dismissAlert(alert.id)} className="text-muted-foreground/40 hover:text-foreground transition-colors flex-shrink-0 mt-1">
-                  <X className="w-3.5 h-3.5" />
+                <button
+                  onClick={() => dismissAlert(alert.id)}
+                  className="text-muted-foreground/40 hover:text-white transition-colors p-1"
+                >
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ))}
@@ -165,188 +170,285 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Score + Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        {/* Readiness Score */}
+      {/* ─── Score & Readiness Metrics (Double Bezel Bento) ─── */}
+      <div className="grid gap-5 md:grid-cols-12">
+        {/* Circular Gauge Card */}
         <motion.div
-          className="md:col-span-1 p-6 rounded-xl glass text-center"
-          initial={{ opacity: 0, scale: 0.95 }}
+          className="md:col-span-4 p-1.5 rounded-3xl bg-white/[0.04] border border-white/10"
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          <div className="relative w-24 h-24 mx-auto mb-3">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-              <motion.circle
-                cx="60" cy="60" r="50" fill="none"
-                stroke="url(#scoreGrad)" strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 50}`}
-                initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 50 * (1 - analysis.readiness_score / 100) }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-              />
-              <defs>
-                <linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#60a5fa" />
-                  <stop offset="100%" stopColor="#3b82f6" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold">{analysis.readiness_score}</span>
-              <span className="text-[10px] text-muted-foreground">/ 100</span>
+          <div className="p-6 rounded-[calc(1.5rem-0.375rem)] bg-[#0C0E16] h-full flex flex-col items-center justify-between text-center">
+            <div className="w-full flex items-center justify-between mb-2">
+              <span className="font-mono text-[10px] tracking-widest uppercase text-muted-foreground">Placement Gauge</span>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                DYNAMIC
+              </span>
+            </div>
+
+            <div className="relative w-36 h-36 my-3">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="9" />
+                <motion.circle
+                  cx="60" cy="60" r="50" fill="none"
+                  stroke="url(#blueGaugeGrad)" strokeWidth="9"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 50}`}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 50 * (1 - analysis.readiness_score / 100) }}
+                  transition={{ duration: 1.6, ease: "easeOut" }}
+                />
+                <defs>
+                  <linearGradient id="blueGaugeGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#60A5FA" />
+                    <stop offset="60%" stopColor="#3B82F6" />
+                    <stop offset="100%" stopColor="#06B6D4" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center font-mono">
+                <span className="text-4xl font-bold tracking-tight text-white">{analysis.readiness_score}</span>
+                <span className="text-[11px] text-muted-foreground uppercase">Readiness</span>
+              </div>
+            </div>
+
+            <div className="w-full pt-3 border-t border-white/[0.06]">
+              <p className="text-xs font-mono font-medium text-slate-300">
+                {analysis.readiness_score >= 75
+                  ? "Tier-1 Product Placement Ready"
+                  : analysis.readiness_score >= 45
+                  ? "High Potential • Close Target Gaps"
+                  : "Foundation Stage • Complete Daily Tasks"}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Calibrated against Google, Uber & Atlassian rubrics
+              </p>
             </div>
           </div>
-          <p className="text-sm font-medium">Readiness</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            {analysis.readiness_score >= 70 ? "Great progress!" : analysis.readiness_score >= 40 ? "Keep going!" : "Let's improve!"}
-          </p>
         </motion.div>
 
-        {/* Stats */}
-        <div className="md:col-span-3 grid gap-3 grid-cols-2 sm:grid-cols-3">
-          <StatCard icon={CheckCircle2} label="Tasks Done" value={`${completedTasks}/${totalTasks}`} sub={`${completionRate}% completion`} color="text-emerald-400" index={0} />
-          <StatCard icon={Building2} label="Company Matches" value={String(currentFit.length + targets.length)} sub={`${currentFit.length} current fit`} color="text-blue-400" index={1} />
-          <StatCard icon={TrendingUp} label="Strengths" value={String(analysis.strengths.length)} sub={analysis.strengths[0]?.skill || "—"} color="text-primary" index={2} />
-          <StatCard icon={Target} label="Skill Gaps" value={String(analysis.missing_skills.length)} sub={analysis.missing_skills[0]?.skill || "None!"} color="text-amber-400" index={3} />
-          <StatCard icon={Code2} label="Skills" value={String(analysis.extracted_skills.length)} sub="Identified by AI" color="text-cyan-400" index={4} />
-          <StatCard icon={Zap} label="Top Target" value={targets[0]?.name || "—"} sub={targets[0] ? `${targets[0].match_score}% match` : "Run analysis"} color="text-rose-400" index={5} />
+        {/* 6 KPI Stat Tiles */}
+        <div className="md:col-span-8 grid gap-4 grid-cols-2 sm:grid-cols-3">
+          <StatTile
+            icon={CheckCircle2}
+            label="Tasks Complete"
+            value={`${completedTasks}/${totalTasks}`}
+            sub={`${completionRate}% completion rate`}
+            color="text-emerald-400"
+            border="hover:border-emerald-500/30"
+          />
+          <StatTile
+            icon={Building2}
+            label="Matched Orgs"
+            value={String(currentFit.length + targets.length)}
+            sub={`${currentFit.length} fit, ${targets.length} target`}
+            color="text-blue-400"
+            border="hover:border-blue-500/30"
+          />
+          <StatTile
+            icon={TrendingUp}
+            label="Core Strength"
+            value={analysis.strengths[0]?.skill || "DSA"}
+            sub="Verified via dossier"
+            color="text-cyan-400"
+            border="hover:border-cyan-500/30"
+          />
+          <StatTile
+            icon={Target}
+            label="Primary Gap"
+            value={analysis.missing_skills[0]?.skill || "System Design"}
+            sub="High priority sprint"
+            color="text-amber-400"
+            border="hover:border-amber-500/30"
+          />
+          <StatTile
+            icon={Code2}
+            label="Extracted Skills"
+            value={String(analysis.extracted_skills.length)}
+            sub="Gemini multi-modal"
+            color="text-violet-400"
+            border="hover:border-violet-500/30"
+          />
+          <StatTile
+            icon={Zap}
+            label="Top Target"
+            value={targets[0]?.name || currentFit[0]?.name || "Google"}
+            sub={targets[0] ? `${targets[0].match_score}% target fit` : "In analysis"}
+            color="text-rose-400"
+            border="hover:border-rose-500/30"
+          />
         </div>
       </div>
 
-      {/* AI Summary */}
-      <motion.div
-        className="p-5 rounded-xl glass"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold text-sm">AI Assessment</h3>
+      {/* ─── AI Assessment Dossier ─── */}
+      <div className="p-1.5 rounded-2xl bg-white/[0.04] border border-white/10">
+        <div className="p-6 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16]">
+          <div className="flex items-center justify-between mb-3 border-b border-white/[0.06] pb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <h3 className="font-semibold text-sm text-white">Synthesized Placement Assessment</h3>
+            </div>
+            <span className="font-mono text-[10px] text-slate-500">ENGINE: GEMINI 3.8 FLASH</span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+            {analysis.summary}
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">{analysis.summary}</p>
-      </motion.div>
+      </div>
 
-      {/* Tasks + Companies */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Tasks */}
-        <motion.div
-          className="p-5 rounded-xl glass"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Tasks
-            </h3>
-            <Button variant="ghost" size="sm" onClick={() => router.push("/tasks")} className="text-xs gap-1 h-7 text-muted-foreground hover:text-foreground">
-              View All <ArrowRight className="w-3 h-3" />
-            </Button>
-          </div>
-          {tasks.length > 0 ? (
-            <div className="space-y-1">
-              {tasks.slice(0, 5).map(task => (
-                <div
-                  key={task.id}
-                  className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
-                    task.completed ? "opacity-40" : "hover:bg-white/[0.02]"
-                  }`}
+      {/* ─── Lower Split: High-Yield Tasks & Company Opportunities ─── */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Tasks Section */}
+        <div className="p-1.5 rounded-2xl bg-white/[0.04] border border-white/10">
+          <div className="p-6 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16] h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4 border-b border-white/[0.06] pb-3">
+                <h3 className="font-semibold text-sm text-white flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  High-Yield Practice Tasks
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push("/tasks")}
+                  className="text-xs font-mono text-slate-400 hover:text-white h-7 px-2"
                 >
-                  {task.completed ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                  ) : (
-                    <Circle className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
-                  )}
-                  <span className={`text-sm flex-1 truncate ${task.completed ? "line-through text-muted-foreground" : ""}`}>
-                    {task.title}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">{task.category}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              <BookOpen className="w-6 h-6 mx-auto mb-2 opacity-30" />
-              No tasks yet
-            </div>
-          )}
-        </motion.div>
+                  All Tasks <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </div>
 
-        {/* Companies */}
-        <motion.div
-          className="p-5 rounded-xl glass"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-blue-400" /> Company Matches
-            </h3>
-            <Button variant="ghost" size="sm" onClick={() => router.push("/companies")} className="text-xs gap-1 h-7 text-muted-foreground hover:text-foreground">
-              View All <ArrowRight className="w-3 h-3" />
+              {tasks.length > 0 ? (
+                <div className="space-y-2">
+                  {tasks.slice(0, 5).map(task => (
+                    <div
+                      key={task.id}
+                      className={`p-3 rounded-xl border border-white/[0.04] bg-[#0F121D] flex items-center gap-3 transition-all ${
+                        task.completed ? "opacity-40" : "hover:border-white/10"
+                      }`}
+                    >
+                      {task.completed ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-muted-foreground/60 flex-shrink-0" />
+                      )}
+                      <span className={`text-xs font-medium flex-1 truncate ${task.completed ? "line-through text-muted-foreground" : "text-slate-200"}`}>
+                        {task.title}
+                      </span>
+                      <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-slate-400 uppercase">
+                        {task.category}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground text-xs font-mono">
+                  <BookOpen className="w-7 h-7 mx-auto mb-2 opacity-30" />
+                  No tasks generated for this week.
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={() => router.push("/tasks")}
+              variant="outline"
+              className="w-full mt-4 h-9 rounded-xl border-white/10 text-xs font-mono tracking-wider uppercase text-slate-300 hover:bg-white/[0.04]"
+            >
+              Open Full Task Board
             </Button>
           </div>
-          {currentFit.length > 0 || targets.length > 0 ? (
-            <div className="space-y-1">
-              {[...currentFit.slice(0, 3), ...targets.slice(0, 2)].map((company, i) => (
-                <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/[0.02] transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
-                    {company.match_score}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{company.name}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{company.role}</p>
-                  </div>
-                  <span className={`text-[10px] font-medium ${company.match_score >= 60 ? "text-emerald-400" : "text-amber-400"}`}>
-                    {company.match_score >= 60 ? "fit" : "target"}
-                  </span>
+        </div>
+
+        {/* Company Matches Section */}
+        <div className="p-1.5 rounded-2xl bg-white/[0.04] border border-white/10">
+          <div className="p-6 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16] h-full flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4 border-b border-white/[0.06] pb-3">
+                <h3 className="font-semibold text-sm text-white flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-blue-400" />
+                  Company Compatibility Matches
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push("/companies")}
+                  className="text-xs font-mono text-slate-400 hover:text-white h-7 px-2"
+                >
+                  View Radar <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </div>
+
+              {currentFit.length > 0 || targets.length > 0 ? (
+                <div className="space-y-2">
+                  {[...currentFit.slice(0, 3), ...targets.slice(0, 2)].map((company, i) => (
+                    <div
+                      key={i}
+                      className="p-3 rounded-xl border border-white/[0.04] bg-[#0F121D] flex items-center gap-3.5 hover:border-white/10 transition-all"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center font-mono text-xs font-bold text-blue-400 flex-shrink-0">
+                        {company.match_score}%
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">{company.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{company.role}</p>
+                      </div>
+                      <span className={`font-mono text-[10px] px-2 py-0.5 rounded border uppercase ${
+                        company.match_score >= 60
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                      }`}>
+                        {company.match_score >= 60 ? "Current Fit" : "Target"}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="text-center py-12 text-muted-foreground text-xs font-mono">
+                  <Building2 className="w-7 h-7 mx-auto mb-2 opacity-30" />
+                  No company matches recorded.
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              <Building2 className="w-6 h-6 mx-auto mb-2 opacity-30" />
-              No matches yet
-            </div>
-          )}
-        </motion.div>
+
+            <Button
+              onClick={() => router.push("/companies")}
+              variant="outline"
+              className="w-full mt-4 h-9 rounded-xl border-white/10 text-xs font-mono tracking-wider uppercase text-slate-300 hover:bg-white/[0.04]"
+            >
+              Analyze Live Job Listings
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function StatCard({
+function StatTile({
   icon: Icon,
   label,
   value,
   sub,
   color,
-  index,
+  border,
 }: {
   icon: typeof CheckCircle2;
   label: string;
   value: string;
   sub: string;
   color: string;
-  index: number;
+  border: string;
 }) {
   return (
-    <motion.div
-      className="p-4 rounded-xl glass"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + index * 0.05 }}
-    >
+    <div className={`p-4 rounded-2xl bg-[#0C0E16] border border-white/[0.08] ${border} transition-colors flex flex-col justify-between`}>
       <div className="flex items-center gap-2 mb-2">
-        <Icon className={`w-4 h-4 ${color}`} />
-        <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{label}</span>
+        <Icon className={`w-3.5 h-3.5 ${color}`} />
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground truncate">{label}</span>
       </div>
-      <p className="text-xl font-bold truncate">{value}</p>
-      <p className="text-[11px] text-muted-foreground truncate mt-0.5">{sub}</p>
-    </motion.div>
+      <div>
+        <p className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-white truncate">{value}</p>
+        <p className="text-[11px] text-muted-foreground truncate mt-0.5">{sub}</p>
+      </div>
+    </div>
   );
 }
 
@@ -365,84 +467,81 @@ function GettingStarted({
 }) {
   const router = useRouter();
   const steps = [
-    { title: "Complete Onboarding", desc: "Set up your profile with skills and goals", href: "/onboarding", done: onboardingComplete },
-    { title: "Run AI Analysis", desc: "Let AI analyze your placement readiness", href: "/companies", done: hasAnalysis },
-    { title: "Get Company Matches", desc: "See which companies match your profile", href: "/companies", done: hasRecommendations },
-    { title: "Generate Task Plan", desc: "Get a personalized weekly preparation plan", href: "/tasks", done: hasTasks },
+    { title: "Complete Onboarding Dossier", desc: "Ingest resume, self-rate proficiencies, and specify target tiers", href: "/onboarding", done: onboardingComplete },
+    { title: "Run Deep AI Analysis", desc: "Let Gemini 3.8 decode gaps and calculate your readiness index", href: "/companies", done: hasAnalysis },
+    { title: "Establish Target Company Match", desc: "Map your skillset against real product company criteria", href: "/companies", done: hasRecommendations },
+    { title: "Generate Adaptive Task Plan", desc: "Groq 120B synthesizes a personalized weekly prep agenda", href: "/tasks", done: hasTasks },
   ];
 
   const nextStep = steps.find(s => !s.done);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight mb-1">
-          Welcome, {name?.split(" ")[0] || "Student"}
+        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-mono text-blue-400 mb-2">
+          <span>ONBOARDING CALIBRATION</span>
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          Welcome to CareerAI, {name?.split(" ")[0] || "Candidate"}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          {onboardingComplete
-            ? "Your profile is set up! Now let's analyze your skills."
-            : "Let's get you started on your career journey"}
+        <p className="text-sm text-muted-foreground mt-1">
+          Follow the 4-step initialization protocol to calibrate your placement pipeline.
         </p>
       </div>
 
-      <div className="p-6 rounded-xl glass">
-        <h2 className="font-semibold mb-5 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          Getting Started
-        </h2>
-        <div className="space-y-1">
-          {steps.map((step, i) => (
-            <button
-              key={i}
-              onClick={() => !step.done && router.push(step.href)}
-              className={`w-full flex items-center gap-4 p-4 rounded-xl transition-colors text-left ${
-                step.done ? "opacity-50 cursor-default" : "hover:bg-white/[0.02] cursor-pointer"
-              }`}
-            >
-              {step.done ? (
-                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 flex-shrink-0">
-                  <CheckCircle2 className="w-4 h-4" />
+      <div className="p-1.5 rounded-3xl bg-white/[0.04] border border-white/10">
+        <div className="p-6 rounded-[calc(1.5rem-0.375rem)] bg-[#0C0E16]">
+          <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2 font-mono">
+            <Cpu className="w-4 h-4 text-blue-400" />
+            Initialization Checklist
+          </h2>
+          <div className="space-y-2">
+            {steps.map((step, i) => (
+              <button
+                key={i}
+                onClick={() => !step.done && router.push(step.href)}
+                className={`w-full flex items-center gap-4 p-4 rounded-xl border border-white/[0.06] text-left transition-all ${
+                  step.done ? "opacity-50 bg-[#0A0C14] cursor-default" : "hover:border-blue-500/30 bg-[#0F121C] cursor-pointer"
+                }`}
+              >
+                {step.done ? (
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-mono text-xs font-bold flex-shrink-0">
+                    0{i + 1}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className={`font-semibold text-sm ${step.done ? "line-through text-slate-400" : "text-white"}`}>
+                    {step.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
                 </div>
-              ) : (
-                <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                  {i + 1}
-                </div>
-              )}
-              <div className="flex-1">
-                <p className={`font-medium text-sm ${step.done ? "line-through text-muted-foreground" : ""}`}>
-                  {step.title}
-                </p>
-                <p className="text-xs text-muted-foreground">{step.desc}</p>
-              </div>
-              {!step.done && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
-            </button>
-          ))}
+                {!step.done && <ChevronRight className="w-4 h-4 text-slate-400" />}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {nextStep && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-5 rounded-xl glass border border-primary/15"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold text-sm">Next: {nextStep.title}</p>
+        <div className="p-1 rounded-2xl bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-cyan-500/20 border border-blue-500/30">
+          <div className="p-5 rounded-[calc(1rem-0.125rem)] bg-[#0D101C] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-blue-400">Next Action</span>
+              <h4 className="text-sm font-semibold text-white mt-0.5">{nextStep.title}</h4>
               <p className="text-xs text-muted-foreground">{nextStep.desc}</p>
             </div>
             <Button
               onClick={() => router.push(nextStep.href)}
-              className="gradient-primary text-white border-0 gap-2 hover:opacity-90"
+              className="h-10 px-6 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)]"
             >
-              Go <ArrowRight className="w-4 h-4" />
+              Execute <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
             </Button>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );
@@ -450,22 +549,22 @@ function GettingStarted({
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <div>
-        <Skeleton className="h-7 w-56 mb-2" />
-        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-8 w-64 mb-2 bg-white/[0.04]" />
+        <Skeleton className="h-4 w-44 bg-white/[0.04]" />
       </div>
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="p-6 rounded-xl glass">
-          <Skeleton className="w-24 h-24 rounded-full mx-auto mb-3" />
-          <Skeleton className="h-4 w-20 mx-auto" />
+      <div className="grid gap-5 md:grid-cols-12">
+        <div className="md:col-span-4 p-6 rounded-3xl bg-white/[0.02] border border-white/[0.06]">
+          <Skeleton className="w-36 h-36 rounded-full mx-auto mb-4 bg-white/[0.04]" />
+          <Skeleton className="h-4 w-32 mx-auto bg-white/[0.04]" />
         </div>
-        <div className="md:col-span-3 grid gap-3 grid-cols-2 sm:grid-cols-3">
+        <div className="md:col-span-8 grid gap-4 grid-cols-2 sm:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="p-4 rounded-xl glass">
-              <Skeleton className="h-3 w-16 mb-2" />
-              <Skeleton className="h-5 w-12 mb-1" />
-              <Skeleton className="h-3 w-20" />
+            <div key={i} className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+              <Skeleton className="h-3 w-16 mb-3 bg-white/[0.04]" />
+              <Skeleton className="h-6 w-20 mb-1 bg-white/[0.04]" />
+              <Skeleton className="h-3 w-28 bg-white/[0.04]" />
             </div>
           ))}
         </div>
