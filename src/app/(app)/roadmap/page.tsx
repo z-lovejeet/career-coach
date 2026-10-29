@@ -177,9 +177,22 @@ export default function RoadmapPage() {
   const [expandedPhase, setExpandedPhase] = useState<number | null>(0);
   const [expandedWeek, setExpandedWeek] = useState<string | null>(null);
 
-  // Hydration guard — prevents SSR from overwriting localStorage values
+  // Hydration guard & cloud sync — restores from DB if localStorage is empty
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    if (!roadmap) {
+      fetch("/api/roadmap")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            setRoadmap(data.data);
+          }
+        })
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleFocus = (id: string) => {
     setFocusAreas((prev) => {
