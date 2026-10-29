@@ -2,29 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
 import {
   Building2,
   Sparkles,
   Target,
-  TrendingUp,
   CheckCircle2,
-  ArrowRight,
   Loader2,
   MapPin,
   Briefcase,
   ExternalLink,
   Clock,
   Users,
-  Globe,
   DollarSign,
   Search,
-  Zap,
-  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import type { CompanyRecommendation, CompanyMatch } from "@/types";
@@ -74,7 +66,6 @@ export default function CompaniesPage() {
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [fetchingJobs, setFetchingJobs] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     fetchRecommendations();
@@ -96,23 +87,21 @@ export default function CompaniesPage() {
   const runAnalysis = async () => {
     setAnalyzing(true);
     try {
-      // Step 1: Run profile analysis
-      toast.info("🧠 Step 1/2: Analyzing your profile...");
+      toast.info("Step 1/2: Extracting profile metrics via Gemini 3.8...");
       const analysisRes = await fetch("/api/analyze", { method: "POST" });
       const analysisData = await analysisRes.json();
       if (!analysisData.success) throw new Error(analysisData.error?.message);
 
-      // Step 2: Generate company recommendations
-      toast.info("🏢 Step 2/2: Matching companies...");
+      toast.info("Step 2/2: Computing company match matrices via Groq 120B...");
       const recsRes = await fetch("/api/companies", { method: "POST" });
       const recsData = await recsRes.json();
       if (!recsData.success) throw new Error(recsData.error?.message);
 
       setRecommendations(recsData.data);
-      toast.success("✅ Analysis complete! Company matches ready.");
+      toast.success("Analysis complete! Placement matches updated.");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to generate recommendations. Please try again.");
+      toast.error("Failed to generate recommendations. Please retry.");
     } finally {
       setAnalyzing(false);
     }
@@ -121,15 +110,15 @@ export default function CompaniesPage() {
   const fetchLinkedInJobs = async () => {
     setFetchingJobs(true);
     try {
-      toast.info("🔍 Searching LinkedIn for real jobs matching your skills...");
+      toast.info("Searching live LinkedIn listings matching your profile skills...");
       const res = await fetch("/api/jobs", { method: "POST" });
       const data = await res.json();
       if (!data.success) throw new Error(data.error?.message);
       setJobsData(data.data);
-      toast.success(`✅ Found ${data.data.total} live job listings!`);
+      toast.success(`Found ${data.data.total} verified live job openings!`);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to fetch LinkedIn jobs. Please try again.");
+      toast.error("Failed to fetch LinkedIn jobs");
     } finally {
       setFetchingJobs(false);
     }
@@ -137,243 +126,194 @@ export default function CompaniesPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-64 mb-2" />
-        <Skeleton className="h-4 w-48" />
-        <Skeleton className="h-48 rounded-2xl" />
+      <div className="space-y-6 max-w-6xl mx-auto">
+        <Skeleton className="h-8 w-64 bg-white/[0.04]" />
+        <Skeleton className="h-44 rounded-2xl bg-white/[0.04]" />
         <div className="grid gap-4 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-40 rounded-xl" />
+            <Skeleton key={i} className="h-40 rounded-2xl bg-white/[0.04]" />
           ))}
         </div>
       </div>
     );
   }
 
-  // Empty state — no recommendations yet
-  if (!recommendations) {
-    return (
-      <div className="space-y-8">
+  const currentFit = (recommendations?.current_fit_companies || []) as CompanyMatch[];
+  const targets = (recommendations?.target_companies || []) as CompanyMatch[];
+
+  return (
+    <div className="space-y-7 max-w-6xl mx-auto">
+      {/* ─── Header & Telemetry ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
         <div>
-          <h1 className="text-3xl font-bold mb-1">Companies & Jobs</h1>
-          <p className="text-muted-foreground">
-            AI-powered company matching + real LinkedIn job listings
-          </p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+              Placement Radar
+            </span>
+            <span className="text-muted-foreground/40">•</span>
+            <span className="font-mono text-[11px] text-muted-foreground">Market Alignment</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            Company Matches & Live Roles
+          </h1>
         </div>
 
-        <div className="flex flex-col items-center justify-center py-16">
-          <div className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center mb-6 animate-float">
-            <Building2 className="w-10 h-10 text-white" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">No Company Recommendations Yet</h2>
-          <p className="text-muted-foreground text-sm text-center max-w-md mb-8">
-            Let our AI analyze your profile and match you with real
-            companies. This takes about 15-30 seconds.
-          </p>
+        <div className="flex items-center gap-3">
           <Button
             onClick={runAnalysis}
             disabled={analyzing}
-            size="lg"
-            className="gradient-primary text-white border-0 gap-2 hover:opacity-90 glow"
+            className="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center gap-2"
           >
             {analyzing ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 Analyzing...
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5" />
-                Analyze & Match Companies
+                <Sparkles className="w-3.5 h-3.5" />
+                Re-Run Match Radar
               </>
             )}
           </Button>
         </div>
       </div>
-    );
-  }
 
-  const currentFit = (recommendations.current_fit_companies || []) as CompanyMatch[];
-  const targets = (recommendations.target_companies || []) as CompanyMatch[];
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold mb-1">Companies & Jobs</h1>
-          <p className="text-muted-foreground">
-            AI recommendations + real LinkedIn job listings
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={runAnalysis}
-          disabled={analyzing}
-          className="gap-2"
-          size="sm"
-        >
-          {analyzing ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Sparkles className="w-4 h-4" />
-          )}
-          Re-analyze
-        </Button>
-      </div>
-
-      {/* Tab Switcher */}
-      <div className="flex p-1 rounded-xl glass-strong w-fit">
+      {/* ─── Segmented Tab Switcher ─── */}
+      <div className="flex items-center gap-2 p-1 rounded-2xl bg-[#0C0E16] border border-white/[0.08] w-fit">
         <button
           onClick={() => setTab("ai")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs font-mono tracking-wide uppercase transition-all flex items-center gap-2 ${
             tab === "ai"
-              ? "gradient-primary text-white shadow-lg"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.35)]"
+              : "text-muted-foreground hover:text-white"
           }`}
         >
-          <Sparkles className="w-4 h-4" />
-          AI Matches
+          <Building2 className="w-3.5 h-3.5" />
+          AI Fit Radar ({currentFit.length + targets.length})
         </button>
         <button
           onClick={() => {
             setTab("live");
             if (!jobsData && !fetchingJobs) fetchLinkedInJobs();
           }}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+          className={`px-4 py-2 rounded-xl text-xs font-mono tracking-wide uppercase transition-all flex items-center gap-2 ${
             tab === "live"
-              ? "gradient-primary text-white shadow-lg"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.35)]"
+              : "text-muted-foreground hover:text-white"
           }`}
         >
-          <Search className="w-4 h-4" />
-          Live Jobs
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <Search className="w-3.5 h-3.5" />
+          Live LinkedIn Roles {jobsData ? `(${jobsData.total})` : ""}
         </button>
       </div>
 
+      {/* ─── Content Area ─── */}
       <AnimatePresence mode="wait">
         {tab === "ai" ? (
           <motion.div
             key="ai"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             className="space-y-8"
           >
-            {/* Current Fit */}
+            {/* Current Fit Companies */}
             <div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                Current Fit ({currentFit.length})
-                <span className="text-xs text-muted-foreground font-normal">Companies you can target now</span>
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {currentFit.map((company, i) => (
-                  <CompanyCard key={i} company={company} type="fit" index={i} />
-                ))}
-              </div>
-            </div>
-
-            {/* Target Companies */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Target className="w-5 h-5 text-amber-400" />
-                Target Companies ({targets.length})
-                <span className="text-xs text-muted-foreground font-normal">With more preparation</span>
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {targets.map((company, i) => (
-                  <CompanyCard key={i} company={company} type="target" index={i} />
-                ))}
-              </div>
-            </div>
-
-            {/* Roadmap */}
-            {recommendations.roadmap_to_target && (recommendations.roadmap_to_target as Array<{month: number; focus: string; tasks: string[]}>).length > 0 && (
-              <div>
-                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                  Roadmap to Target Companies
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <h2 className="text-sm font-mono uppercase tracking-wider text-slate-300 font-semibold">
+                  Immediate High-Fit Companies (70%+ Match)
                 </h2>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {(recommendations.roadmap_to_target as Array<{month: number; focus: string; tasks: string[]}>).map((step, i) => (
-                    <motion.div
-                      key={i}
-                      className="p-4 rounded-xl glass"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                          M{step.month}
-                        </div>
-                        <span className="font-medium text-sm">{step.focus}</span>
-                      </div>
-                      <ul className="space-y-1">
-                        {step.tasks.map((task, j) => (
-                          <li key={j} className="text-xs text-muted-foreground flex gap-1.5">
-                            <span className="text-primary mt-0.5">•</span>
-                            {task}
-                          </li>
-                        ))}
-                      </ul>
-                    </motion.div>
+              </div>
+
+              {currentFit.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {currentFit.map((company, i) => (
+                    <CompanyCard key={i} company={company} type="fit" index={i} />
                   ))}
                 </div>
+              ) : (
+                <div className="p-8 rounded-2xl bg-[#0C0E16] border border-white/[0.08] text-center text-xs font-mono text-muted-foreground">
+                  No immediate fit companies recorded. Run the analysis above to calculate matches.
+                </div>
+              )}
+            </div>
+
+            {/* Target Companies (Reach) */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="w-4 h-4 text-amber-400" />
+                <h2 className="text-sm font-mono uppercase tracking-wider text-slate-300 font-semibold">
+                  Target Product Companies (Requires Calibration)
+                </h2>
               </div>
-            )}
+
+              {targets.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {targets.map((company, i) => (
+                    <CompanyCard key={i} company={company} type="target" index={i} />
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 rounded-2xl bg-[#0C0E16] border border-white/[0.08] text-center text-xs font-mono text-muted-foreground">
+                  No target companies identified. Run analysis to surface stretch placement goals.
+                </div>
+              )}
+            </div>
           </motion.div>
         ) : (
           <motion.div
             key="live"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             className="space-y-6"
           >
-            {/* Live Jobs Header */}
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                {jobsData
-                  ? `${jobsData.total} jobs found • scraped ${new Date(jobsData.scrapedAt).toLocaleTimeString()}`
-                  : "Real-time LinkedIn job listings matched to your profile"}
-              </p>
+            {/* Live Search Action Bar */}
+            <div className="p-4 rounded-2xl bg-[#0C0E16] border border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <span className="font-mono text-xs text-slate-300 font-semibold">
+                  {jobsData
+                    ? `${jobsData.total} verified postings • Scraped ${new Date(jobsData.scrapedAt).toLocaleTimeString()}`
+                    : "Real-time LinkedIn pipeline matched to candidate profile"}
+                </span>
+                <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                  Synchronized with candidate skills and preferred engineering roles
+                </p>
+              </div>
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={fetchLinkedInJobs}
                 disabled={fetchingJobs}
-                className="gap-2"
+                className="h-9 px-4 border-white/10 hover:border-white/20 text-xs font-mono uppercase tracking-wider text-slate-300"
               >
                 {fetchingJobs ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                    Querying...
+                  </>
                 ) : (
-                  <Search className="w-3.5 h-3.5" />
+                  <>
+                    <Search className="w-3.5 h-3.5 mr-1.5" />
+                    Refresh Feed
+                  </>
                 )}
-                Refresh
               </Button>
             </div>
 
-            {/* Loading state */}
             {fetchingJobs && !jobsData && (
-              <div className="flex flex-col items-center py-16">
-                <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mb-4 animate-pulse">
-                  <Search className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="font-semibold mb-1">Searching LinkedIn...</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-sm">
-                  Scraping real job listings based on your skills. This takes 30-60 seconds.
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
+                <h3 className="text-sm font-semibold text-white">Scraping LinkedIn Engineering Feeds...</h3>
+                <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                  Apify is matching real job openings with your skill dossier. This takes 15-30 seconds.
                 </p>
-                <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Powered by Apify LinkedIn Scraper
-                </div>
               </div>
             )}
 
-            {/* Jobs Grid */}
             {jobsData && jobsData.jobs.length > 0 && (
               <div className="grid gap-4">
                 {jobsData.jobs.map((job, i) => (
@@ -382,10 +322,9 @@ export default function CompaniesPage() {
               </div>
             )}
 
-            {/* No jobs */}
             {jobsData && jobsData.jobs.length === 0 && (
-              <div className="text-center py-16">
-                <p className="text-muted-foreground">No jobs found. Try adjusting your profile skills.</p>
+              <div className="p-12 text-center rounded-2xl bg-[#0C0E16] border border-white/[0.08] font-mono text-xs text-muted-foreground">
+                No active postings found for your current search parameters.
               </div>
             )}
           </motion.div>
@@ -395,7 +334,6 @@ export default function CompaniesPage() {
   );
 }
 
-/* ─── Company Card (AI Matches) ─── */
 function CompanyCard({
   company,
   type,
@@ -405,64 +343,82 @@ function CompanyCard({
   type: "fit" | "target";
   index: number;
 }) {
-  const scoreColor =
-    company.match_score >= 70
-      ? "text-emerald-400"
-      : company.match_score >= 40
-      ? "text-amber-400"
-      : "text-rose-400";
+  const isHighFit = company.match_score >= 70;
 
   return (
     <motion.div
-      className="p-5 rounded-xl glass hover:glass-strong transition-all group"
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: index * 0.04 }}
+      className="p-1 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-white/15 transition-all"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            {company.name.charAt(0)}
+      <div className="p-5 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16] h-full flex flex-col justify-between">
+        <div>
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-mono font-bold text-sm flex-shrink-0">
+                {company.name.charAt(0)}
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm text-white">{company.name}</h3>
+                <p className="text-xs text-muted-foreground">{company.role}</p>
+              </div>
+            </div>
+
+            <div className={`font-mono text-base font-bold px-2.5 py-1 rounded-lg border ${
+              isHighFit
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+            }`}>
+              {company.match_score}%
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-sm">{company.name}</h3>
-            <p className="text-xs text-muted-foreground">{company.role}</p>
+
+          <p className="text-xs text-slate-300 leading-relaxed mb-4">
+            {company.reason}
+          </p>
+
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-1.5">
+              {(company.matching_skills || []).map((sk) => (
+                <span
+                  key={sk}
+                  className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                >
+                  ✓ {sk}
+                </span>
+              ))}
+            </div>
+
+            {company.gap_skills && company.gap_skills.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {company.gap_skills.map((sk) => (
+                  <span
+                    key={sk}
+                    className="font-mono text-[10px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                  >
+                    Gap: {sk}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-        <div className={`text-lg font-bold ${scoreColor}`}>
-          {company.match_score}%
-        </div>
+
+        {type === "target" && company.estimated_timeline && (
+          <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              Target Window: {company.estimated_timeline}
+            </span>
+            <span className="text-amber-400">Calibration Sprint</span>
+          </div>
+        )}
       </div>
-
-      <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{company.reason}</p>
-
-      <div className="flex flex-wrap gap-1.5">
-        {(company.matching_skills || company.required_skills || []).slice(0, 4).map((skill) => (
-          <Badge
-            key={skill}
-            variant="outline"
-            className={`text-[10px] ${
-              type === "fit"
-                ? "text-emerald-400 border-emerald-500/20"
-                : "text-amber-400 border-amber-500/20"
-            }`}
-          >
-            {skill}
-          </Badge>
-        ))}
-      </div>
-
-      {type === "target" && company.estimated_timeline && (
-        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Clock className="w-3 h-3" />
-          {company.estimated_timeline}
-        </div>
-      )}
     </motion.div>
   );
 }
 
-/* ─── Job Card (Live LinkedIn Jobs) ─── */
 function JobCard({ job, index }: { job: LinkedInJob; index: number }) {
   const postedDate = job.postedAt
     ? new Date(job.postedAt).toLocaleDateString("en-US", {
@@ -474,150 +430,94 @@ function JobCard({ job, index }: { job: LinkedInJob; index: number }) {
 
   return (
     <motion.div
-      className="p-5 rounded-xl glass hover:glass-strong transition-all group"
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04 }}
+      transition={{ delay: index * 0.03 }}
+      className="p-1 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-white/15 transition-all"
     >
-      <div className="flex items-start gap-4">
-        {/* Company Logo */}
-        <div className="w-12 h-12 rounded-xl overflow-hidden bg-accent flex items-center justify-center flex-shrink-0">
-          {job.companyLogo ? (
-            <img
-              src={job.companyLogo}
-              alt={job.companyName}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Building2 className="w-6 h-6 text-muted-foreground" />
-          )}
-        </div>
+      <div className="p-5 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16]">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#121522] border border-white/[0.08] flex items-center justify-center flex-shrink-0 relative">
+              {job.companyLogo ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={job.companyLogo}
+                  alt={job.companyName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Building2 className="w-6 h-6 text-slate-500" />
+              )}
+            </div>
 
-        {/* Job Details */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="font-semibold text-sm group-hover:text-primary transition-colors line-clamp-1">
+              <h3 className="font-semibold text-sm text-white hover:text-blue-400 transition-colors">
                 {job.title}
               </h3>
               <p className="text-xs text-muted-foreground">{job.companyName}</p>
-            </div>
-            <a
-              href={job.applyUrl || job.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-shrink-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Button
-                size="sm"
-                className="gradient-primary text-white border-0 gap-1.5 text-xs hover:opacity-90"
-              >
-                Apply
-                <ExternalLink className="w-3 h-3" />
-              </Button>
-            </a>
-          </div>
 
-          {/* Meta Info */}
-          <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
-            {job.location && (
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {job.location}
-              </span>
-            )}
-            {job.employmentType && (
-              <span className="flex items-center gap-1">
-                <Briefcase className="w-3 h-3" />
-                {job.employmentType}
-              </span>
-            )}
-            {job.seniorityLevel && (
-              <span className="flex items-center gap-1">
-                <BarChart3 className="w-3 h-3" />
-                {job.seniorityLevel}
-              </span>
-            )}
-            {postedDate && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {postedDate}
-              </span>
-            )}
-          </div>
-
-          {/* Salary */}
-          {job.salaryInfo && job.salaryInfo.length > 0 && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <DollarSign className="w-3 h-3 text-emerald-400" />
-              <span className="text-xs font-medium text-emerald-400">
-                {job.salaryInfo.join(" — ")}
-              </span>
-            </div>
-          )}
-
-          {/* Description */}
-          {job.description && (
-            <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-              {job.description}
-            </p>
-          )}
-
-          {/* Benefits + Applicants */}
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            {job.benefits?.map((benefit, i) => (
-              <Badge
-                key={i}
-                variant="outline"
-                className="text-[10px] text-emerald-400 border-emerald-500/20"
-              >
-                {benefit}
-              </Badge>
-            ))}
-            {job.applicantsCount && (
-              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                {job.applicantsCount} applicants
-              </span>
-            )}
-            {job.companyEmployeesCount && (
-              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                <Globe className="w-3 h-3" />
-                {job.companyEmployeesCount.toLocaleString()} employees
-              </span>
-            )}
-          </div>
-
-          {/* Recruiter */}
-          {job.recruiter && (
-            <div className="mt-3 pt-3 border-t border-border/50 flex items-center gap-2">
-              {job.recruiter.photo && (
-                <img
-                  src={job.recruiter.photo}
-                  alt={job.recruiter.name}
-                  className="w-6 h-6 rounded-full"
-                />
-              )}
-              <div className="text-[11px]">
-                <span className="text-muted-foreground">Posted by </span>
-                {job.recruiter.profileUrl ? (
-                  <a
-                    href={job.recruiter.profileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    {job.recruiter.name}
-                  </a>
-                ) : (
-                  <span className="font-medium">{job.recruiter.name}</span>
+              <div className="flex flex-wrap items-center gap-3 mt-2 text-xs font-mono text-slate-400">
+                {job.location && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                    {job.location}
+                  </span>
                 )}
-                {job.recruiter.title && (
-                  <span className="text-muted-foreground"> · {job.recruiter.title}</span>
+                {job.employmentType && (
+                  <span className="flex items-center gap-1">
+                    <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                    {job.employmentType}
+                  </span>
+                )}
+                {postedDate && (
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    {postedDate}
+                  </span>
                 )}
               </div>
             </div>
+          </div>
+
+          <a
+            href={job.applyUrl || job.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-shrink-0"
+          >
+            <Button
+              size="sm"
+              className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all flex items-center gap-1.5"
+            >
+              Apply via LinkedIn <ExternalLink className="w-3 h-3" />
+            </Button>
+          </a>
+        </div>
+
+        {job.salaryInfo && job.salaryInfo.length > 0 && (
+          <div className="mt-3 flex items-center gap-1.5 text-xs font-mono text-emerald-400">
+            <DollarSign className="w-3.5 h-3.5" />
+            <span>{job.salaryInfo.join(" — ")}</span>
+          </div>
+        )}
+
+        {job.description && (
+          <p className="text-xs text-muted-foreground mt-3 line-clamp-2 leading-relaxed">
+            {job.description}
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-white/[0.04]">
+          {job.benefits?.slice(0, 3).map((b, i) => (
+            <span key={i} className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              {b}
+            </span>
+          ))}
+          {job.applicantsCount && (
+            <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
+              <Users className="w-3 h-3" /> {job.applicantsCount} applicants
+            </span>
           )}
         </div>
       </div>
