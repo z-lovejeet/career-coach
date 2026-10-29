@@ -100,6 +100,13 @@ export async function GET() {
       .eq('profile_id', user.id)
       .order('created_at', { ascending: true });
 
+    if (error) {
+      return NextResponse.json(
+        { success: false, error: { code: 'fetch_failed', message: error.message } },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ success: true, data: messages || [] });
   } catch {
     return NextResponse.json(

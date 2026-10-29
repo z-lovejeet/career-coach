@@ -49,12 +49,39 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
+    // Whitelist allowed fields to prevent mass assignment vulnerabilities
+    const allowedFields = [
+      'full_name',
+      'phone',
+      'skills',
+      'skill_ratings',
+      'goals',
+      'education_level',
+      'field_of_study',
+      'experience_level',
+      'github_url',
+      'portfolio_url',
+      'linkedin_url',
+      'resume_url',
+      'projects',
+      'preferred_role',
+      'preferred_locations',
+      'onboarding_complete',
+    ];
+
+    const sanitizedUpdates: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    for (const field of allowedFields) {
+      if (field in body) {
+        sanitizedUpdates[field] = body[field];
+      }
+    }
+
     const { data: profile, error } = await supabase
       .from('profiles')
-      .update({
-        ...body,
-        updated_at: new Date().toISOString(),
-      })
+      .update(sanitizedUpdates)
       .eq('id', user.id)
       .select()
       .single();
