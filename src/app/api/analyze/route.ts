@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { analyzeProfile } from '@/lib/agents/analyzer';
 import { generateWeeklyPlan } from '@/lib/agents/planner';
-import { callGemini } from '@/lib/agents/gemini';
 import type { AnalyzerInput, PlannerInput } from '@/types';
 
 /**
@@ -49,24 +48,30 @@ export async function POST() {
           const pdfBuffer = await pdfRes.arrayBuffer();
           const base64Pdf = Buffer.from(pdfBuffer).toString('base64');
           
-          // Use Gemini to read the PDF directly (no pdf-parse needed!)
+          // Use Gemini to read the PDF directly
           const { GoogleGenAI } = await import('@google/genai');
           const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-          
-          const result = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [
-              {
-                role: 'user',
-                parts: [
+          const { getGemini38Usage, recordGemini38Request } = await import('@/lib/agents/ai');
+
+          const usage = getGemini38Usage();
+          const modelsToTry = usage.allowed ? ['gemini-3.8-flash', 'gemini-3.5-flash-lite'] : ['gemini-3.5-flash-lite'];
+
+          for (const model of modelsToTry) {
+            try {
+              const result = await ai.models.generateContent({
+                model,
+                contents: [
                   {
-                    inlineData: {
-                      mimeType: 'application/pdf',
-                      data: base64Pdf,
-                    },
-                  },
-                  {
-                    text: `Extract the following from this resume in a structured text format:
+                    role: 'user',
+                    parts: [
+                      {
+                        inlineData: {
+                          mimeType: 'application/pdf',
+                          data: base64Pdf,
+                        },
+                      },
+                      {
+                        text: `Extract the following from this resume in a structured text format:
 1. Name and contact info
 2. Education details
 3. All technical skills mentioned
@@ -76,13 +81,21 @@ export async function POST() {
 7. Key achievements
 
 Return a clean, structured text summary. No JSON needed.`,
+                      },
+                    ],
                   },
                 ],
-              },
-            ],
-          });
+              });
 
-          resumeAnalysis = result.text || '';
+              resumeAnalysis = result.text || '';
+              if (model === 'gemini-3.8-flash') {
+                recordGemini38Request();
+              }
+              if (resumeAnalysis) break;
+            } catch (mErr) {
+              console.warn(`[Resume Analysis] Model ${model} failed, trying fallback:`, (mErr as Error).message || mErr);
+            }
+          }
           console.log('Resume analyzed successfully, extracted', resumeAnalysis.length, 'chars');
         }
       } catch (resumeErr) {
