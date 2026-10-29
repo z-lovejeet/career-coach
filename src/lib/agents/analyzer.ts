@@ -1,4 +1,4 @@
-import { callGemini, buildStudentContext } from './gemini';
+import { callAI, buildStudentContext } from './ai';
 import type { AnalyzerInput, AnalyzerOutput } from '@/types';
 
 const ANALYZER_SYSTEM_PROMPT = `You are an expert Career Analyzer AI Agent for students preparing for tech placements in India.
@@ -63,12 +63,15 @@ Career Goals: ${input.goals.join(', ')}
 Respond with JSON matching this schema:
 ${ANALYZER_OUTPUT_SCHEMA}`;
 
-  const result = await callGemini<AnalyzerOutput>({
-    systemPrompt: ANALYZER_SYSTEM_PROMPT,
-    userPrompt,
-    jsonMode: true,
-    temperature: 0.4,
-  });
+  const result = await callAI<AnalyzerOutput>(
+    {
+      systemPrompt: ANALYZER_SYSTEM_PROMPT,
+      userPrompt,
+      jsonMode: true,
+      temperature: 0.4,
+    },
+    'gemini'
+  );
 
   // Validate and clamp readiness score
   if (result.readiness_score < 0) result.readiness_score = 0;
