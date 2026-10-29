@@ -62,13 +62,21 @@ export async function POST(request: NextRequest) {
       actorInput.startUrls = [{ url: body.searchUrl }];
     }
 
-    // Initialize Apify client and run the actor
+    // Initialize Apify client and run the actor with timeout guard for serverless functions
     const client = new ApifyClient({ token: apiToken });
 
-    const run = await client.actor(ACTOR_ID).call(actorInput, {
-      timeout: 120,
-      memory: 256,
-    });
+    // Race against a 12s timeout so Vercel does not terminate with a 504 before the AI fallback
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('LinkedIn scraping timed out, using AI fallback')), 12000)
+    );
+
+    const run = await Promise.race([
+      client.actor(ACTOR_ID).call(actorInput, {
+        timeout: 15,
+        memory: 256,
+      }),
+      timeoutPromise,
+    ]);
 
     // Fetch results from the dataset
     const { items } = await client.dataset(run.defaultDatasetId).listItems();

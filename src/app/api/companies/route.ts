@@ -22,7 +22,7 @@ export async function POST() {
       .eq('profile_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (analysisError || !analysis) {
       return NextResponse.json(
@@ -36,7 +36,7 @@ export async function POST() {
       .from('profiles')
       .select('goals, preferred_locations, experience_level')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     // Build recommendation input
     const input: RecommendationInput = {
@@ -105,9 +105,9 @@ export async function GET() {
       .eq('profile_id', user.id)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (error) {
+    if (error || !recommendations) {
       return NextResponse.json(
         { success: false, error: { code: 'not_found', message: 'No recommendations found' } },
         { status: 404 }
