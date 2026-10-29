@@ -29,24 +29,23 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // FAST: getSession() reads from cookies — NO network call
-  // getUser() calls Supabase auth server every time (adds 500ms-2s)
+  // Validate user auth token securely with Supabase Auth
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Protected routes: redirect to /auth if not logged in
   const protectedPaths = ['/dashboard', '/onboarding', '/tasks', '/companies', '/interview', '/chat', '/progress', '/profile', '/roadmap'];
   const isProtected = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
 
-  if (isProtected && !session) {
+  if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth';
     return NextResponse.redirect(url);
   }
 
   // If logged in and going to /auth, redirect to dashboard
-  if (session && request.nextUrl.pathname === '/auth') {
+  if (user && request.nextUrl.pathname === '/auth') {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
