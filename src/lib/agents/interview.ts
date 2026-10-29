@@ -1,4 +1,4 @@
-import { callGemini } from './gemini';
+import { callAI } from './ai';
 import type { InterviewGenerateInput, InterviewQuestion, InterviewEvaluateInput, InterviewEvaluation } from '@/types';
 
 const INTERVIEW_GEN_PROMPT = `You are an expert Technical Interview Conductor AI for tech placements in India.
@@ -47,12 +47,15 @@ Return JSON:
   ]
 }`;
 
-  const result = await callGemini<{ questions: InterviewQuestion[] }>({
-    systemPrompt: INTERVIEW_GEN_PROMPT,
-    userPrompt,
-    jsonMode: true,
-    temperature: 0.6,
-  });
+  const result = await callAI<{ questions: InterviewQuestion[] }>(
+    {
+      systemPrompt: INTERVIEW_GEN_PROMPT,
+      userPrompt,
+      jsonMode: true,
+      temperature: 0.6,
+    },
+    'groq'
+  );
 
   return result.questions;
 }
@@ -77,12 +80,15 @@ Return JSON:
   "improvement_tip": "Specific actionable tip"
 }`;
 
-  const result = await callGemini<InterviewEvaluation>({
-    systemPrompt: INTERVIEW_EVAL_PROMPT,
-    userPrompt,
-    jsonMode: true,
-    temperature: 0.3,
-  });
+  const result = await callAI<InterviewEvaluation>(
+    {
+      systemPrompt: INTERVIEW_EVAL_PROMPT,
+      userPrompt,
+      jsonMode: true,
+      temperature: 0.3,
+    },
+    'groq'
+  );
 
   return result;
 }
