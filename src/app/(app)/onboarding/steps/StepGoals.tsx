@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -56,8 +54,6 @@ const locationOptions = [
 ];
 
 export default function StepGoals({ formData, updateFormData }: Props) {
-  const [locationInput, setLocationInput] = useState("");
-
   const toggleGoal = (goal: string) => {
     const newGoals = formData.goals.includes(goal)
       ? formData.goals.filter((g) => g !== goal)
@@ -71,7 +67,6 @@ export default function StepGoals({ formData, updateFormData }: Props) {
     updateFormData({
       preferred_locations: [...formData.preferred_locations, trimmed],
     });
-    setLocationInput("");
   };
 
   const removeLocation = (location: string) => {

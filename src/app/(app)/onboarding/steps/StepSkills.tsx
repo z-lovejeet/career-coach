@@ -45,9 +45,10 @@ export default function StepSkills({ formData, updateFormData }: Props) {
     updateFormData({ skills: newSkills, skill_ratings: newRatings });
   };
 
-  const updateRating = (skill: string, value: number[]) => {
+  const updateRating = (skill: string, value: number | readonly number[]) => {
+    const num = typeof value === 'number' ? value : value[0];
     updateFormData({
-      skill_ratings: { ...formData.skill_ratings, [skill]: value[0] },
+      skill_ratings: { ...formData.skill_ratings, [skill]: num },
     });
   };
 
@@ -139,10 +140,7 @@ export default function StepSkills({ formData, updateFormData }: Props) {
               </div>
               <Slider
                 value={[formData.skill_ratings[skill] || 5]}
-                onValueChange={(value) => {
-                  const num = typeof value === 'number' ? value : value[0];
-                  updateFormData({ skill_ratings: { ...formData.skill_ratings, [skill]: num } });
-                }}
+                onValueChange={(value) => updateRating(skill, value)}
                 min={1}
                 max={10}
                 step={1}

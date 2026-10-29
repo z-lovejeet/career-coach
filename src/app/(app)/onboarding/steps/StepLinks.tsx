@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Globe, Link as LinkIcon, ExternalLink } from "lucide-react";
+import { Globe } from "lucide-react";
 import type { OnboardingFormData } from "@/types";
 
 interface Props {

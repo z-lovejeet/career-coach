@@ -40,7 +40,6 @@ export default function StepResume({ formData, updateFormData }: Props) {
   const [dragActive, setDragActive] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
-  const [applied, setApplied] = useState(false);
 
   const handleFile = async (file: File) => {
     if (file.type !== "application/pdf") {
@@ -52,7 +51,6 @@ export default function StepResume({ formData, updateFormData }: Props) {
     // Immediately upload and analyze
     setAnalyzing(true);
     setAnalysis(null);
-    setApplied(false);
 
     try {
       toast.info("🧠 Analyzing your resume with AI... This takes 10-20 seconds.");
@@ -95,7 +93,6 @@ export default function StepResume({ formData, updateFormData }: Props) {
           preferred_role: formData.preferred_role || extractedData.preferred_role || "",
         });
 
-        setApplied(true);
         toast.success(`🎉 Auto-filled: ${extractedData.skills?.length || 0} skills, ${extractedData.projects?.length || 0} projects, education & role!`);
       }
     } catch (err) {
@@ -104,34 +101,6 @@ export default function StepResume({ formData, updateFormData }: Props) {
     } finally {
       setAnalyzing(false);
     }
-  };
-
-  const applyAnalysis = () => {
-    if (!analysis) return;
-
-    // Merge extracted data into form (preserve existing entries)
-    const mergedSkills = Array.from(new Set([...formData.skills, ...analysis.skills]));
-    const mergedRatings = { ...formData.skill_ratings, ...analysis.skill_ratings };
-    const mergedProjects = [
-      ...formData.projects,
-      ...analysis.projects.filter(
-        (ap) => !formData.projects.some((fp) => fp.name.toLowerCase() === ap.name.toLowerCase())
-      ),
-    ];
-
-    updateFormData({
-      skills: mergedSkills,
-      skill_ratings: mergedRatings,
-      projects: mergedProjects,
-      full_name: formData.full_name || analysis.full_name || "",
-      education_level: formData.education_level || analysis.education_level || "",
-      field_of_study: formData.field_of_study || analysis.field_of_study || "",
-      experience_level: formData.experience_level || analysis.experience_level || "fresher",
-      preferred_role: formData.preferred_role || analysis.preferred_role || "",
-    });
-
-    setApplied(true);
-    toast.success(`🎉 Applied: ${analysis.skills.length} skills + ${analysis.projects.length} projects auto-filled!`);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -145,7 +114,6 @@ export default function StepResume({ formData, updateFormData }: Props) {
   const removeFile = () => {
     updateFormData({ resume_file: null });
     setAnalysis(null);
-    setApplied(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
