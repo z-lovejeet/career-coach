@@ -78,16 +78,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: urlData } = supabase.storage
+    const { data: signedUrlData } = await supabase.storage
       .from('resumes')
-      .getPublicUrl(uploadData.path);
+      .createSignedUrl(uploadData.path, 60 * 60 * 24 * 365); // 1-year secure signed URL
+
+    const fileUrl = signedUrlData?.signedUrl || supabase.storage.from('resumes').getPublicUrl(uploadData.path).data.publicUrl;
 
     // Update profile with resume URL
     await supabase
       .from('profiles')
       .upsert({
         id: user.id,
-        resume_url: urlData.publicUrl,
+        resume_url: fileUrl,
         updated_at: new Date().toISOString(),
       });
 
@@ -98,33 +100,49 @@ export async function POST(request: NextRequest) {
 
       const { GoogleGenAI } = await import('@google/genai');
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const { getGemini38Usage, recordGemini38Request } = await import('@/lib/agents/ai');
 
-      const result = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          {
-            role: 'user',
-            parts: [
+      const usage = getGemini38Usage();
+      const modelsToTry = usage.allowed ? ['gemini-3.8-flash', 'gemini-3.5-flash-lite'] : ['gemini-3.5-flash-lite'];
+
+      let resultText = '';
+      for (const model of modelsToTry) {
+        try {
+          const result = await ai.models.generateContent({
+            model,
+            contents: [
               {
-                inlineData: {
-                  mimeType: 'application/pdf',
-                  data: base64Pdf,
-                },
-              },
-              {
-                text: RESUME_EXTRACTION_PROMPT,
+                role: 'user',
+                parts: [
+                  {
+                    inlineData: {
+                      mimeType: 'application/pdf',
+                      data: base64Pdf,
+                    },
+                  },
+                  {
+                    text: RESUME_EXTRACTION_PROMPT,
+                  },
+                ],
               },
             ],
-          },
-        ],
-        config: {
-          responseMimeType: 'application/json',
-          temperature: 0.3,
-          maxOutputTokens: 4096,
-        },
-      });
+            config: {
+              responseMimeType: 'application/json',
+              temperature: 0.3,
+              maxOutputTokens: 4096,
+            },
+          });
+          resultText = result.text || '';
+          if (model === 'gemini-3.8-flash') {
+            recordGemini38Request();
+          }
+          if (resultText) break;
+        } catch (mErr) {
+          console.warn(`[Resume Extraction] Model ${model} failed, trying fallback:`, (mErr as Error).message || mErr);
+        }
+      }
 
-      const text = result.text || '';
+      const text = resultText;
       
       try {
         analysis = JSON.parse(text);
@@ -163,7 +181,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        resume_url: urlData.publicUrl,
+        resume_url: fileUrl,
         analysis,
       },
     });
