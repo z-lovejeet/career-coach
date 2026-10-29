@@ -1,4 +1,4 @@
-import { callGemini } from './gemini';
+import { callAI } from './ai';
 import type { ChatInput, ChatOutput } from '@/types';
 
 const CHAT_SYSTEM_PROMPT = `You are CareerAI Mentor, a friendly, knowledgeable AI career coach for tech students preparing for placements in India.
@@ -56,12 +56,15 @@ ${input.message}
 
 Respond as CareerAI Mentor:`;
 
-  const result = await callGemini<ChatOutput>({
-    systemPrompt: CHAT_SYSTEM_PROMPT,
-    userPrompt,
-    jsonMode: true,
-    temperature: 0.7,
-  });
+  const result = await callAI<ChatOutput>(
+    {
+      systemPrompt: CHAT_SYSTEM_PROMPT,
+      userPrompt,
+      jsonMode: true,
+      temperature: 0.7,
+    },
+    'groq'
+  );
 
   return result;
 }
