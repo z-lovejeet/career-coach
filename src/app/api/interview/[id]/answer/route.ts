@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { evaluateAnswer } from '@/lib/agents/interview';
+import type { InterviewEvaluation } from '@/types';
 
 export async function POST(
   request: NextRequest,
@@ -55,12 +56,12 @@ export async function POST(
 
     // Update interview with answer and evaluation
     const answers = [...(interview.answers as string[]), answer];
-    const evaluations = [...(interview.evaluations as object[]), evaluation];
+    const evaluations = [...((interview.evaluations || []) as InterviewEvaluation[]), evaluation];
 
     const isComplete = answers.length >= questions.length;
     const overallScore = isComplete
       ? Math.round(
-          evaluations.reduce((sum: number, e: any) => sum + (e.score || 0), 0) /
+          evaluations.reduce((sum: number, e: InterviewEvaluation) => sum + (e.score || 0), 0) /
           evaluations.length * 10
         )
       : null;
@@ -73,7 +74,7 @@ export async function POST(
         status: isComplete ? 'completed' : 'in_progress',
         overall_score: overallScore,
         feedback_summary: isComplete
-          ? `Scored ${overallScore}/100. Covered ${evaluations.filter((e: any) => e.score >= 6).length}/${evaluations.length} questions well.`
+          ? `Scored ${overallScore}/100. Covered ${evaluations.filter((e: InterviewEvaluation) => e.score >= 6).length}/${evaluations.length} questions well.`
           : null,
       })
       .eq('id', id)
