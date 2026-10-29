@@ -1,5 +1,5 @@
-import { callGemini } from './gemini';
-import type { PlannerInput, PlannerOutput, TaskCategory, TaskDifficulty, TaskType } from '@/types';
+import { callAI } from './ai';
+import type { PlannerInput, PlannerOutput } from '@/types';
 
 const PLANNER_SYSTEM_PROMPT = `You are an expert Career Task Planner AI Agent for tech students preparing for placements.
 
@@ -75,12 +75,15 @@ Create a balanced week plan with specific, actionable tasks across DSA, web deve
 Respond with JSON matching this schema:
 ${PLANNER_OUTPUT_SCHEMA}`;
 
-  const result = await callGemini<PlannerOutput>({
-    systemPrompt: PLANNER_SYSTEM_PROMPT,
-    userPrompt,
-    jsonMode: true,
-    temperature: 0.6,
-  });
+  const result = await callAI<PlannerOutput>(
+    {
+      systemPrompt: PLANNER_SYSTEM_PROMPT,
+      userPrompt,
+      jsonMode: true,
+      temperature: 0.6,
+    },
+    'groq'
+  );
 
   return result;
 }
