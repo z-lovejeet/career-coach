@@ -1,4 +1,4 @@
-import { callGemini } from './gemini';
+import { callAI } from './ai';
 import type { RecommendationInput, RecommendationOutput } from '@/types';
 
 const RECOMMENDATION_SYSTEM_PROMPT = `You are an expert Career Recommendation AI Agent specializing in the Indian tech job market.
@@ -91,12 +91,15 @@ STUDENT PREFERENCES:
 Respond with JSON matching this schema:
 ${RECOMMENDATION_OUTPUT_SCHEMA}`;
 
-  const result = await callGemini<RecommendationOutput>({
-    systemPrompt: RECOMMENDATION_SYSTEM_PROMPT,
-    userPrompt,
-    jsonMode: true,
-    temperature: 0.5,
-  });
+  const result = await callAI<RecommendationOutput>(
+    {
+      systemPrompt: RECOMMENDATION_SYSTEM_PROMPT,
+      userPrompt,
+      jsonMode: true,
+      temperature: 0.5,
+    },
+    'groq'
+  );
 
   return result;
 }
