@@ -81,8 +81,11 @@ export async function PUT(request: NextRequest) {
 
     const { data: profile, error } = await supabase
       .from('profiles')
-      .update(sanitizedUpdates)
-      .eq('id', user.id)
+      .upsert({
+        id: user.id,
+        email: user.email,
+        ...sanitizedUpdates,
+      })
       .select()
       .single();
 
