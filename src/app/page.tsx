@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -13,20 +12,33 @@ import {
   LayoutDashboard,
   Cpu,
   Check,
+  Sparkles,
+  Terminal,
+  ShieldCheck,
+  Zap,
+  Flame,
+  Star,
+  Activity,
+  Code2,
+  Layers,
+  ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const autonomousAgents = [
-  { name: "Profile Intelligence", engine: "Gemini 3.8 Flash", role: "Resume parsing & multi-modal skill gap extraction" },
-  { name: "Mentor Reasoning", engine: "Groq • GPT-OSS 120B", role: "Real-time Socratic doubt clearing & DSA coaching" },
-  { name: "Adaptive Planner", engine: "Groq • GPT-OSS 120B", role: "Dynamic weekly curriculum calibrated to gaps" },
-  { name: "Technical Interviewer", engine: "Groq • GPT-OSS 120B", role: "Multi-round mock interviews with nuance grading" },
-  { name: "Company Matchmaker", engine: "Gemini 3.8 Flash", role: "Deterministic fit scoring & target company matching" },
-  { name: "Live Market Radar", engine: "Apify / LinkedIn", role: "Real-time job postings synchronized with your skill level" },
+  { name: "Profile Intelligence", engine: "Gemini 3.8 Flash", role: "Multi-modal resume parsing & granular skill matrix taxonomy extraction" },
+  { name: "Mentor Reasoning", engine: "Groq • GPT-OSS 120B", role: "Real-time Socratic architectural debate & algorithmic coaching" },
+  { name: "Adaptive Planner", engine: "Groq • GPT-OSS 120B", role: "Dynamic weekly sprint curriculum calibrated to identified candidate gaps" },
+  { name: "Technical Interviewer", engine: "Groq • GPT-OSS 120B", role: "Multi-round simulated engineering rounds with nuanced rubric scoring" },
+  { name: "Company Matchmaker", engine: "Gemini 3.8 Flash", role: "Deterministic fit index calculation against real Tier-1 hiring bars" },
+  { name: "Live Market Radar", engine: "Apify / LinkedIn", role: "Real-time scrapers mapping verified hiring openings to candidate skillsets" },
 ];
 
 export default function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [activeCockpitTab, setActiveCockpitTab] = useState<"mentor" | "interview" | "radar">("mentor");
+  const [guestLoading, setGuestLoading] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -37,24 +49,51 @@ export default function LandingPage() {
     checkAuth();
   }, []);
 
+  const handleGuestLogin = async () => {
+    setGuestLoading(true);
+    try {
+      const res = await fetch("/api/auth/guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to initialize guest session");
+      }
+      const { email: guestEmail, password: guestPassword } = data.credentials;
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: guestEmail,
+        password: guestPassword,
+      });
+      if (signInError) throw signInError;
+      window.location.href = "/dashboard";
+    } catch (err: unknown) {
+      console.error("Guest login error:", err);
+      setGuestLoading(false);
+      window.location.href = "/auth";
+    }
+  };
+
   const cta = isLoggedIn ? "/dashboard" : "/auth";
-  const ctaText = isLoggedIn ? "Launch Command Center" : "Initialize Career Engine";
+  const ctaText = isLoggedIn ? "Launch Command Center" : "Calibrate Candidate Dossier";
 
   return (
-    <div className="min-h-screen bg-[#08090D] text-[#F4F6F9] selection:bg-blue-500/20 selection:text-blue-300">
-      {/* ─── Top Ambient Light Grid ─── */}
-      <div className="fixed inset-0 subtle-grid pointer-events-none opacity-40" />
-      <div className="fixed -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-blue-600/15 via-indigo-600/5 to-transparent blur-[140px] pointer-events-none" />
+    <div className="min-h-screen bg-[#07080C] text-[#F4F6F9] selection:bg-blue-500/25 selection:text-blue-200">
+      {/* ─── Ambient Architectural Lighting & Precision Grid ─── */}
+      <div className="fixed inset-0 subtle-grid pointer-events-none opacity-30 z-0" />
+      <div className="fixed -top-32 left-1/2 -translate-x-1/2 w-[1000px] h-[480px] bg-gradient-to-b from-blue-600/18 via-indigo-600/6 to-transparent blur-[160px] pointer-events-none z-0" />
+      <div className="fixed top-1/3 -right-60 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[180px] pointer-events-none z-0" />
 
-      {/* ─── Navigation ─── */}
-      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#08090D]/80 border-b border-white/[0.08]">
+      {/* ─── Floating Top Navigation Bar ─── */}
+      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl bg-[#07080C]/85 border-b border-white/[0.08]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/10 p-0.5 bg-[#0E1017]">
-              <Image src="/logo.png" alt="CareerAI Logo" fill className="object-cover rounded-md" />
+            <div className="relative w-8 h-8 rounded-xl overflow-hidden border border-white/10 p-0.5 bg-[#0C0E16] shadow-sm group-hover:border-blue-500/50 transition-colors">
+              <Image src="/logo.png" alt="CareerAI Logo" fill className="object-cover rounded-lg" priority />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-base font-semibold tracking-tight text-white group-hover:text-blue-400 transition-colors">
+              <span className="text-sm sm:text-base font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">
                 CareerAI
               </span>
               <span className="px-1.5 py-0.5 rounded text-[10px] font-mono tracking-widest uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -63,24 +102,32 @@ export default function LandingPage() {
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-muted-foreground">
-            <a href="#features" className="hover:text-white transition-colors">Architecture</a>
-            <a href="#pipeline" className="hover:text-white transition-colors">Agent Pipeline</a>
-            <a href="#matrix" className="hover:text-white transition-colors">Placement Matrix</a>
-            <a href="#workflow" className="hover:text-white transition-colors">Protocol</a>
+          <nav className="hidden md:flex items-center gap-8 text-xs font-mono tracking-wider uppercase text-slate-400">
+            <a href="#cockpit" className="hover:text-white transition-colors">Live Cockpit</a>
+            <a href="#architecture" className="hover:text-white transition-colors">Architecture</a>
+            <a href="#pipeline" className="hover:text-white transition-colors">Agent Syndicate</a>
+            <a href="#protocol" className="hover:text-white transition-colors">Protocol</a>
           </nav>
 
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <Link href="/dashboard">
-                <Button className="h-9 px-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs tracking-wide shadow-[0_0_20px_rgba(59,130,246,0.35)] transition-all">
+                <Button className="h-9 px-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.35)] transition-all">
                   <LayoutDashboard className="w-3.5 h-3.5 mr-1.5" /> Dashboard
                 </Button>
               </Link>
             ) : (
               <>
+                <button
+                  onClick={handleGuestLogin}
+                  disabled={guestLoading}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 font-mono text-xs transition-colors"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>{guestLoading ? "Connecting..." : "Guest Access"}</span>
+                </button>
                 <Link href="/auth">
-                  <Button variant="ghost" className="h-9 px-3.5 text-xs text-muted-foreground hover:text-white hover:bg-white/[0.04]">
+                  <Button variant="ghost" className="h-9 px-3.5 text-xs font-mono text-slate-400 hover:text-white hover:bg-white/[0.04]">
                     Sign In
                   </Button>
                 </Link>
@@ -95,207 +142,306 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* ─── Hero Section ─── */}
-      <section className="relative pt-36 pb-20 md:pt-44 md:pb-28 px-6 overflow-hidden">
-        <div className="max-w-6xl mx-auto">
-          {/* Eyebrow Badge */}
-          <div className="flex justify-center mb-8">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-md"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-mono text-[11px] text-slate-300 tracking-wider uppercase">
-                Dual AI Engine: Groq 120B + Gemini 3.8
-              </span>
-            </motion.div>
-          </div>
-
-          {/* Heading */}
-          <div className="text-center max-w-4xl mx-auto mb-10">
-            <motion.h1
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-[-0.03em] leading-[1.06] text-white"
-            >
-              Precision Placement Intelligence for{" "}
-              <span className="gradient-accent-text">Elite Software Roles.</span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="mt-6 text-base sm:text-lg md:text-xl text-[#94A3B8] max-w-2xl mx-auto leading-relaxed font-normal"
-            >
-              Seven orchestrated AI agents decode your resume, simulate rigorous technical rounds, isolate critical skill gaps, and calibrate your daily prep until your offer is secured.
-            </motion.p>
-          </div>
-
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
-          >
-            <Link href={cta} className="w-full sm:w-auto">
-              <div className="p-0.5 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 shadow-[0_0_35px_rgba(59,130,246,0.35)] hover:shadow-[0_0_45px_rgba(59,130,246,0.5)] transition-all">
-                <button className="w-full sm:w-auto h-12 px-7 rounded-full bg-[#08090D] hover:bg-[#0D101A] text-white font-medium text-sm flex items-center justify-center gap-3 transition-colors">
-                  <span>{ctaText}</span>
-                  <div className="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </div>
-                </button>
-              </div>
-            </Link>
-
-            <a href="#features" className="w-full sm:w-auto">
-              <Button
-                variant="outline"
-                className="w-full sm:w-auto h-12 px-6 rounded-full border-white/10 hover:border-white/20 hover:bg-white/[0.04] text-xs font-mono tracking-wider uppercase text-slate-300"
-              >
-                Inspect Telemetry
-              </Button>
-            </a>
-          </motion.div>
-
-          {/* ─── Hero Machine Mockup (Double-Bezel Architecture) ─── */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="p-1.5 rounded-2xl md:rounded-3xl bg-white/[0.05] border border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.8)] ring-1 ring-white/[0.04]"
-          >
-            <div className="rounded-[calc(1.5rem-0.375rem)] bg-[#0C0E16] border border-white/[0.08] overflow-hidden">
-              {/* Terminal Title Bar */}
-              <div className="px-5 py-3.5 bg-[#090A10] border-b border-white/[0.06] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                  <span className="ml-3 font-mono text-[11px] text-muted-foreground">
-                    career-coach.orchestrator • pid 88412
-                  </span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-[10px]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    AGENTS READY
-                  </span>
-                </div>
+      {/* ─── HERO SECTION (Bespoke Editorial Cockpit Split) ─── */}
+      <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 px-6 z-10 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          {/* Main Grid Split: Typography Left (7 cols) + Interactive Terminal Cockpit Right (5 cols) */}
+          <div className="grid lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+            
+            {/* ─── Left Column: High-Craft Narrative ─── */}
+            <div className="lg:col-span-7 flex flex-col items-start text-left">
+              
+              {/* Telemetry Status Beacon */}
+              <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[#0F121E] border border-white/10 mb-6 shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300">
+                  DUAL AI RUNTIME: GROQ 120B • GEMINI 3.8 FLASH
+                </span>
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  LATENCY &lt;380MS
+                </span>
               </div>
 
-              {/* Terminal Body Grid */}
-              <div className="p-6 md:p-8 grid md:grid-cols-12 gap-6 bg-[#0B0D14]">
-                {/* Left: Candidate Readiness Score */}
-                <div className="md:col-span-4 p-5 rounded-xl bg-[#0F121C] border border-white/[0.06] flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Readiness Index</span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">CALCULATED</span>
-                    </div>
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <span className="text-5xl font-bold font-mono tracking-tight text-white">84</span>
-                      <span className="text-sm font-mono text-muted-foreground">/ 100</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Calibrated against Tier-1 Product Engineering standards (Google L3 / Atlassian P3).
-                    </p>
-                  </div>
+              {/* Grand Headline */}
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.035em] leading-[1.05] text-white">
+                Autonomous placement intelligence for{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-cyan-300">
+                  elite software engineers.
+                </span>
+              </h1>
 
-                  <div className="space-y-2 mt-6">
-                    <div className="flex justify-between text-[11px] font-mono">
-                      <span className="text-slate-400">DSA & Algorithms</span>
-                      <span className="text-emerald-400 font-semibold">92%</span>
-                    </div>
-                    <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full w-[92%]" />
-                    </div>
+              {/* Subtitle */}
+              <p className="mt-6 text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl leading-relaxed font-normal">
+                Continuous multi-agent reasoning that decodes your code & resume, conducts rigorous Socratic mock rounds, isolates algorithmic blindspots, and calibrates your preparation until offer day.
+              </p>
 
-                    <div className="flex justify-between text-[11px] font-mono pt-1">
-                      <span className="text-slate-400">System Design</span>
-                      <span className="text-amber-400 font-semibold">68%</span>
-                    </div>
-                    <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-500 rounded-full w-[68%]" />
-                    </div>
-
-                    <div className="flex justify-between text-[11px] font-mono pt-1">
-                      <span className="text-slate-400">Production React / Node</span>
-                      <span className="text-blue-400 font-semibold">89%</span>
-                    </div>
-                    <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full w-[89%]" />
+              {/* Double-Nested "Button-in-Button" CTA Cluster */}
+              <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full sm:w-auto">
+                <Link href={cta} className="group">
+                  <div className="p-0.5 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 shadow-[0_0_35px_rgba(59,130,246,0.35)] group-hover:shadow-[0_0_50px_rgba(59,130,246,0.55)] transition-all">
+                    <div className="h-12 px-7 rounded-full bg-[#090B12] group-hover:bg-[#0D101C] text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-3 transition-colors">
+                      <span className="tracking-wide font-semibold">{ctaText}</span>
+                      <div className="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center transition-transform group-hover:translate-x-1 group-hover:-translate-y-[1px]">
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </div>
                     </div>
                   </div>
+                </Link>
+
+                {!isLoggedIn && (
+                  <button
+                    onClick={handleGuestLogin}
+                    disabled={guestLoading}
+                    className="group"
+                  >
+                    <div className="h-12 px-6 rounded-full border border-emerald-500/35 hover:border-emerald-500/60 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-mono text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(16,185,129,0.15)]">
+                      {guestLoading ? (
+                        <span className="flex items-center gap-2">
+                          <span className="w-3.5 h-3.5 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
+                          <span>Calibrating...</span>
+                        </span>
+                      ) : (
+                        <>
+                          <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Guest Login (1-Click)</span>
+                        </>
+                      )}
+                    </div>
+                  </button>
+                )}
+
+                <a href="#cockpit" className="group">
+                  <Button
+                    variant="outline"
+                    className="h-12 px-5 rounded-full border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.06] text-xs font-mono tracking-wider uppercase text-slate-300 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Live Cockpit</span>
+                  </Button>
+                </a>
+              </div>
+
+              {/* Social Proof / Engineering Standards Verification */}
+              <div className="mt-10 pt-6 border-t border-white/[0.06] w-full">
+                <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500 mb-3">
+                  Calibrated to rubrics from Tier-1 product engineering teams
+                </p>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-mono text-slate-400">
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <Check className="w-3.5 h-3.5 text-blue-400" /> Google L3/L4
+                  </span>
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <Check className="w-3.5 h-3.5 text-blue-400" /> Stripe Core
+                  </span>
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <Check className="w-3.5 h-3.5 text-blue-400" /> Uber Infra
+                  </span>
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <Check className="w-3.5 h-3.5 text-blue-400" /> Atlassian P3
+                  </span>
+                  <span className="flex items-center gap-1.5 text-slate-300">
+                    <Check className="w-3.5 h-3.5 text-blue-400" /> Razorpay
+                  </span>
                 </div>
+              </div>
 
-                {/* Right: Live Agent Action Stream */}
-                <div className="md:col-span-8 p-5 rounded-xl bg-[#0F121C] border border-white/[0.06] flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-3 border-b border-white/[0.06] pb-3">
-                    <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                      <Cpu className="w-3.5 h-3.5 text-blue-400" />
-                      Live Autonomous Pipeline Activity
-                    </span>
-                    <span className="font-mono text-[10px] text-slate-500">POLL: 50ms</span>
-                  </div>
+            </div>
 
-                  <div className="space-y-2.5 font-mono text-xs">
-                    <div className="p-2.5 rounded bg-black/40 border border-white/[0.04] flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-blue-400">›</span>
-                        <span className="text-slate-300">Resume parsed:</span>
-                        <span className="text-white font-semibold">Distributed Caching, Redis, Kafka</span>
-                      </div>
-                      <span className="text-[10px] text-emerald-400">MATCHED</span>
+            {/* ─── Right Column: Interactive Hardware Telemetry Cockpit (Doppelrand) ─── */}
+            <div id="cockpit" className="lg:col-span-5 w-full">
+              <div className="p-1.5 sm:p-2 rounded-3xl bg-white/[0.04] border border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.85)] ring-1 ring-white/[0.05]">
+                <div className="rounded-[calc(1.5rem-0.375rem)] bg-[#0C0E16] border border-white/[0.08] overflow-hidden flex flex-col">
+                  
+                  {/* Terminal Header Bar */}
+                  <div className="px-4 py-3 bg-[#08090F] border-b border-white/[0.06] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                      <span className="ml-2 font-mono text-[11px] text-slate-400 truncate">
+                        career-agent.daemon • pid 94102
+                      </span>
                     </div>
 
-                    <div className="p-2.5 rounded bg-black/40 border border-white/[0.04] flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-purple-400">›</span>
-                        <span className="text-slate-300">Interview Agent:</span>
-                        <span className="text-white">Generated DP question (Coin Change variant)</span>
-                      </div>
-                      <span className="text-[10px] text-blue-400">GROQ 120B</span>
-                    </div>
-
-                    <div className="p-2.5 rounded bg-black/40 border border-white/[0.04] flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-amber-400">›</span>
-                        <span className="text-slate-300">Alert Triggered:</span>
-                        <span className="text-amber-300">Target company &quot;Stripe&quot; demands gRPC fluency</span>
-                      </div>
-                      <span className="text-[10px] text-amber-400">GAP DETECTED</span>
-                    </div>
-
-                    <div className="p-2.5 rounded bg-black/40 border border-white/[0.04] flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-emerald-400">›</span>
-                        <span className="text-slate-300">Scheduler:</span>
-                        <span className="text-white">Week 3 task plan auto-injected 2 gRPC labs</span>
-                      </div>
-                      <span className="text-[10px] text-emerald-400">ADAPTED</span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="font-mono text-[10px] text-emerald-400">STREAMING</span>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-muted-foreground">
-                    <span>Engine: Groq LLM + Gemini 3.8 Multi-modal</span>
-                    <span className="text-emerald-400 flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Fallback active (3.5 Flash Lite ready)
-                    </span>
+                  {/* Interactive Cockpit Segment Selector */}
+                  <div className="p-2 bg-[#0A0C14] border-b border-white/[0.06] flex items-center gap-1.5">
+                    <button
+                      onClick={() => setActiveCockpitTab("mentor")}
+                      className={`flex-1 py-1.5 px-2 rounded-lg font-mono text-[11px] transition-all flex items-center justify-center gap-1.5 ${
+                        activeCockpitTab === "mentor"
+                          ? "bg-blue-600/20 text-blue-300 border border-blue-500/30 font-medium"
+                          : "text-slate-400 hover:text-white hover:bg-white/[0.03]"
+                      }`}
+                    >
+                      <Sparkles className="w-3 h-3 text-blue-400" />
+                      <span>01 Socratic</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveCockpitTab("interview")}
+                      className={`flex-1 py-1.5 px-2 rounded-lg font-mono text-[11px] transition-all flex items-center justify-center gap-1.5 ${
+                        activeCockpitTab === "interview"
+                          ? "bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 font-medium"
+                          : "text-slate-400 hover:text-white hover:bg-white/[0.03]"
+                      }`}
+                    >
+                      <Mic className="w-3 h-3 text-emerald-400" />
+                      <span>02 Mock Rubric</span>
+                    </button>
+
+                    <button
+                      onClick={() => setActiveCockpitTab("radar")}
+                      className={`flex-1 py-1.5 px-2 rounded-lg font-mono text-[11px] transition-all flex items-center justify-center gap-1.5 ${
+                        activeCockpitTab === "radar"
+                          ? "bg-purple-600/20 text-purple-300 border border-purple-500/30 font-medium"
+                          : "text-slate-400 hover:text-white hover:bg-white/[0.03]"
+                      }`}
+                    >
+                      <Building2 className="w-3 h-3 text-purple-400" />
+                      <span>03 Match Radar</span>
+                    </button>
+                  </div>
+
+                  {/* Active Cockpit Body Display */}
+                  <div className="p-5 sm:p-6 min-h-[300px] flex flex-col justify-between bg-[#0B0D15]">
+                    
+                    {/* View 1: Socratic AI Mentor Reasoning */}
+                    {activeCockpitTab === "mentor" && (
+                      <div className="space-y-3.5">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pb-2 border-b border-white/[0.04]">
+                          <span className="text-blue-400 flex items-center gap-1.5">
+                            <Cpu className="w-3.5 h-3.5" /> GROQ • OPENAI/GPT-OSS-120B
+                          </span>
+                          <span className="text-emerald-400 font-bold">280 tok/sec</span>
+                        </div>
+
+                        {/* User Message */}
+                        <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.06] text-xs text-slate-200 font-mono">
+                          <span className="text-blue-400 mr-2">candidate&gt;</span>
+                          &quot;Should I use Dijkstra or 0-1 BFS for a grid with weighted edge costs 0 and 1?&quot;
+                        </div>
+
+                        {/* Agent Socratic Response */}
+                        <div className="p-3 rounded-xl bg-[#0F121E] border border-blue-500/20 text-xs font-mono text-slate-200 space-y-2">
+                          <div className="flex items-center gap-1.5 text-blue-400 text-[10px] font-bold uppercase tracking-wider">
+                            <Sparkles className="w-3 h-3" /> Mentor Evaluation
+                          </div>
+                          <p className="leading-relaxed">
+                            Use <strong>0-1 BFS via a Deque</strong>. Time complexity drops from <code className="text-amber-400 bg-black/40 px-1 py-0.5 rounded">O(E log V)</code> to pure <code className="text-emerald-400 bg-black/40 px-1 py-0.5 rounded">O(V + E)</code> because edges are processed in strictly non-decreasing distance order without a min-heap overhead.
+                          </p>
+                          <div className="p-2 rounded bg-black/50 text-[11px] text-slate-300 border border-white/[0.04]">
+                            <code>q.push_front(v) if w == 0 else q.push_back(v)</code>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* View 2: Mock Interview Live Rubric */}
+                    {activeCockpitTab === "interview" && (
+                      <div className="space-y-3.5">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pb-2 border-b border-white/[0.04]">
+                          <span className="text-emerald-400 flex items-center gap-1.5">
+                            <Mic className="w-3.5 h-3.5" /> TECHNICAL ROUND SIMULATION
+                          </span>
+                          <span className="text-white font-bold">L4 Distributed Systems</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-[#0F121E] border border-emerald-500/20 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs font-bold text-white">Score: 92 / 100</span>
+                            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              STRONG HIRE
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-300 font-mono">
+                            Question: <em>&quot;Design idempotent transaction handling under network retries.&quot;</em>
+                          </p>
+                          <div className="space-y-1.5 pt-1 text-[11px] font-mono">
+                            <div className="flex items-center gap-1.5 text-emerald-400">
+                              <Check className="w-3 h-3" /> Covered: Unique Idempotency Keys + Redis Leases
+                            </div>
+                            <div className="flex items-center gap-1.5 text-amber-400">
+                              <span>⚠</span> Tip: Explicitly handle duplicate in-flight requests with 409 Conflict
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04] text-[11px] font-mono flex items-center justify-between text-slate-400">
+                          <span>Confidence Metric</span>
+                          <span className="text-emerald-400 font-semibold">96.4% Nuance Recognition</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* View 3: Company Match Radar */}
+                    {activeCockpitTab === "radar" && (
+                      <div className="space-y-3.5">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 pb-2 border-b border-white/[0.04]">
+                          <span className="text-purple-400 flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5" /> PLACEMENT MATCH MATRIX
+                          </span>
+                          <span className="text-blue-400 font-mono">TARGET RADAR</span>
+                        </div>
+
+                        <div className="space-y-2 font-mono">
+                          {/* Company 1 */}
+                          <div className="p-2.5 rounded-xl bg-[#0F121E] border border-white/[0.06] flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-bold text-white">Stripe • Core Infrastructure</p>
+                              <p className="text-[10px] text-slate-400">Match: Distributed Systems, Kafka, Go</p>
+                            </div>
+                            <span className="text-sm font-bold text-emerald-400">94%</span>
+                          </div>
+
+                          {/* Company 2 */}
+                          <div className="p-2.5 rounded-xl bg-[#0F121E] border border-white/[0.06] flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-bold text-white">Google • L3/L4 Software Engineer</p>
+                              <p className="text-[10px] text-slate-400">Match: Advanced Graph DSA, C++</p>
+                            </div>
+                            <span className="text-sm font-bold text-emerald-400">88%</span>
+                          </div>
+
+                          {/* Company 3 */}
+                          <div className="p-2.5 rounded-xl bg-[#0F121E] border border-white/[0.06] flex items-center justify-between">
+                            <div>
+                              <p className="text-xs font-bold text-white">Uber • Platform Engineering</p>
+                              <p className="text-[10px] text-amber-400">Missing: Microservices Resiliency (Sprint Active)</p>
+                            </div>
+                            <span className="text-sm font-bold text-amber-400">76%</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Live Telemetry Footer Bar */}
+                    <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[10px] font-mono text-slate-500">
+                      <span>Engine: Gemini 3.8 Multi-modal + Groq 120B</span>
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <Activity className="w-3 h-3 text-emerald-400" /> 0 AI Slop • Real Intelligence
+                      </span>
+                    </div>
+
                   </div>
                 </div>
               </div>
             </div>
-          </motion.div>
+
+          </div>
         </div>
       </section>
 
       {/* ─── Multi-Agent Architecture (Bento Grid) ─── */}
-      <section id="features" className="py-24 px-6 border-t border-white/[0.08] relative">
+      <section id="architecture" className="py-24 px-6 border-t border-white/[0.08] relative">
         <div className="max-w-6xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="font-mono text-[11px] uppercase tracking-widest text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
@@ -412,7 +558,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Protocol Steps ─── */}
-      <section id="workflow" className="py-24 px-6 border-t border-white/[0.08]">
+      <section id="protocol" className="py-24 px-6 border-t border-white/[0.08]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center max-w-xl mx-auto mb-16">
             <h2 className="text-3xl font-bold tracking-tight text-white mb-3">
