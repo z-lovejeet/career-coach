@@ -127,11 +127,11 @@ export default function CompaniesPage() {
   if (loading) {
     return (
       <div className="space-y-6 max-w-6xl mx-auto">
-        <Skeleton className="h-8 w-64 bg-white/[0.04]" />
-        <Skeleton className="h-44 rounded-2xl bg-white/[0.04]" />
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-44 rounded-xl" />
         <div className="grid gap-4 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-40 rounded-2xl bg-white/[0.04]" />
+            <Skeleton key={i} className="h-40 rounded-xl" />
           ))}
         </div>
       </div>
@@ -142,16 +142,16 @@ export default function CompaniesPage() {
   const targets = (recommendations?.target_companies || []) as CompanyMatch[];
 
   return (
-    <div className="space-y-7 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* ─── Header & Telemetry ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.07]">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
               Placement Radar
             </span>
-            <span className="text-muted-foreground/40">•</span>
-            <span className="font-mono text-[11px] text-muted-foreground">Market Alignment</span>
+            <span className="text-[#64748B] text-xs">•</span>
+            <span className="font-mono text-[11px] text-[#8A96AA]">Market Alignment</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
             Company Matches & Live Roles
@@ -162,7 +162,7 @@ export default function CompaniesPage() {
           <Button
             onClick={runAnalysis}
             disabled={analyzing}
-            className="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center gap-2"
+            className="h-9 px-4 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-sm transition-all flex items-center gap-2 cursor-pointer"
           >
             {analyzing ? (
               <>
@@ -180,13 +180,13 @@ export default function CompaniesPage() {
       </div>
 
       {/* ─── Segmented Tab Switcher ─── */}
-      <div className="flex items-center gap-2 p-1 rounded-2xl bg-[#0C0E16] border border-white/[0.08] w-fit">
+      <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#0E111A] border border-white/[0.08] w-fit">
         <button
           onClick={() => setTab("ai")}
-          className={`px-4 py-2 rounded-xl text-xs font-mono tracking-wide uppercase transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-1.5 rounded-md text-xs font-mono tracking-wide uppercase transition-all flex items-center gap-2 cursor-pointer ${
             tab === "ai"
-              ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.35)]"
-              : "text-muted-foreground hover:text-white"
+              ? "bg-white/[0.08] text-white border border-white/[0.1] font-semibold shadow-sm"
+              : "text-[#8A96AA] hover:text-white"
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
@@ -197,10 +197,10 @@ export default function CompaniesPage() {
             setTab("live");
             if (!jobsData && !fetchingJobs) fetchLinkedInJobs();
           }}
-          className={`px-4 py-2 rounded-xl text-xs font-mono tracking-wide uppercase transition-all flex items-center gap-2 ${
+          className={`px-3.5 py-1.5 rounded-md text-xs font-mono tracking-wide uppercase transition-all flex items-center gap-2 cursor-pointer ${
             tab === "live"
-              ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.35)]"
-              : "text-muted-foreground hover:text-white"
+              ? "bg-white/[0.08] text-white border border-white/[0.1] font-semibold shadow-sm"
+              : "text-[#8A96AA] hover:text-white"
           }`}
         >
           <Search className="w-3.5 h-3.5" />
@@ -216,13 +216,13 @@ export default function CompaniesPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="space-y-8"
+            className="space-y-7"
           >
             {/* Current Fit Companies */}
             <div>
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-3.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <h2 className="text-sm font-mono uppercase tracking-wider text-slate-300 font-semibold">
+                <h2 className="text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
                   Immediate High-Fit Companies (70%+ Match)
                 </h2>
               </div>
@@ -234,7 +234,7 @@ export default function CompaniesPage() {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 rounded-2xl bg-[#0C0E16] border border-white/[0.08] text-center text-xs font-mono text-muted-foreground">
+                <div className="p-8 rounded-xl bg-[#0E111A] border border-white/[0.08] text-center text-xs font-mono text-[#8A96AA]">
                   No immediate fit companies recorded. Run the analysis above to calculate matches.
                 </div>
               )}
@@ -242,9 +242,9 @@ export default function CompaniesPage() {
 
             {/* Target Companies (Reach) */}
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Target className="w-4 h-4 text-amber-400" />
-                <h2 className="text-sm font-mono uppercase tracking-wider text-slate-300 font-semibold">
+              <div className="flex items-center gap-2 mb-3.5">
+                <Target className="w-4 h-4 text-amber-300" />
+                <h2 className="text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
                   Target Product Companies (Requires Calibration)
                 </h2>
               </div>
@@ -256,7 +256,7 @@ export default function CompaniesPage() {
                   ))}
                 </div>
               ) : (
-                <div className="p-8 rounded-2xl bg-[#0C0E16] border border-white/[0.08] text-center text-xs font-mono text-muted-foreground">
+                <div className="p-8 rounded-xl bg-[#0E111A] border border-white/[0.08] text-center text-xs font-mono text-[#8A96AA]">
                   No target companies identified. Run analysis to surface stretch placement goals.
                 </div>
               )}
@@ -268,17 +268,17 @@ export default function CompaniesPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="space-y-6"
+            className="space-y-5"
           >
             {/* Live Search Action Bar */}
-            <div className="p-4 rounded-2xl bg-[#0C0E16] border border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-4 rounded-xl bg-[#0E111A] border border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
               <div>
                 <span className="font-mono text-xs text-slate-300 font-semibold">
                   {jobsData
                     ? `${jobsData.total} verified postings • Scraped ${new Date(jobsData.scrapedAt).toLocaleTimeString()}`
                     : "Real-time LinkedIn pipeline matched to candidate profile"}
                 </span>
-                <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                <p className="text-[11px] text-[#8A96AA] font-mono mt-0.5">
                   Synchronized with candidate skills and preferred engineering roles
                 </p>
               </div>
@@ -288,7 +288,7 @@ export default function CompaniesPage() {
                 size="sm"
                 onClick={fetchLinkedInJobs}
                 disabled={fetchingJobs}
-                className="h-9 px-4 border-white/10 hover:border-white/20 text-xs font-mono uppercase tracking-wider text-slate-300"
+                className="h-8.5 px-3.5 border-white/[0.1] hover:border-white/[0.2] text-xs font-mono uppercase tracking-wider text-slate-300 cursor-pointer"
               >
                 {fetchingJobs ? (
                   <>
@@ -305,17 +305,17 @@ export default function CompaniesPage() {
             </div>
 
             {fetchingJobs && !jobsData && (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Loader2 className="w-7 h-7 text-blue-400 animate-spin mb-3" />
                 <h3 className="text-sm font-semibold text-white">Scraping LinkedIn Engineering Feeds...</h3>
-                <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                <p className="text-xs text-[#8A96AA] mt-1 max-w-sm">
                   Apify is matching real job openings with your skill dossier. This takes 15-30 seconds.
                 </p>
               </div>
             )}
 
             {jobsData && jobsData.jobs.length > 0 && (
-              <div className="grid gap-4">
+              <div className="grid gap-3.5">
                 {jobsData.jobs.map((job, i) => (
                   <JobCard key={job.id || i} job={job} index={i} />
                 ))}
@@ -323,7 +323,7 @@ export default function CompaniesPage() {
             )}
 
             {jobsData && jobsData.jobs.length === 0 && (
-              <div className="p-12 text-center rounded-2xl bg-[#0C0E16] border border-white/[0.08] font-mono text-xs text-muted-foreground">
+              <div className="p-10 text-center rounded-xl bg-[#0E111A] border border-white/[0.08] font-mono text-xs text-[#8A96AA]">
                 No active postings found for your current search parameters.
               </div>
             )}
@@ -350,71 +350,69 @@ function CompanyCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
-      className="p-1 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-white/15 transition-all"
+      className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 flex flex-col justify-between hover:border-white/[0.16] transition-all shadow-sm"
     >
-      <div className="p-5 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16] h-full flex flex-col justify-between">
-        <div>
-          <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-mono font-bold text-sm flex-shrink-0">
-                {company.name.charAt(0)}
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-white">{company.name}</h3>
-                <p className="text-xs text-muted-foreground">{company.role}</p>
-              </div>
+      <div>
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-mono font-bold text-sm flex-shrink-0">
+              {company.name.charAt(0)}
             </div>
-
-            <div className={`font-mono text-base font-bold px-2.5 py-1 rounded-lg border ${
-              isHighFit
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-            }`}>
-              {company.match_score}%
+            <div>
+              <h3 className="font-semibold text-sm text-white">{company.name}</h3>
+              <p className="text-xs text-[#8A96AA]">{company.role}</p>
             </div>
           </div>
 
-          <p className="text-xs text-slate-300 leading-relaxed mb-4">
-            {company.reason}
-          </p>
-
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-1.5">
-              {(company.matching_skills || []).map((sk) => (
-                <span
-                  key={sk}
-                  className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                >
-                  ✓ {sk}
-                </span>
-              ))}
-            </div>
-
-            {company.gap_skills && company.gap_skills.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {company.gap_skills.map((sk) => (
-                  <span
-                    key={sk}
-                    className="font-mono text-[10px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                  >
-                    Gap: {sk}
-                  </span>
-                ))}
-              </div>
-            )}
+          <div className={`font-mono text-sm font-bold px-2 py-0.5 rounded-md border tabular-nums ${
+            isHighFit
+              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+              : "bg-amber-500/10 text-amber-300 border-amber-500/20"
+          }`}>
+            {company.match_score}%
           </div>
         </div>
 
-        {type === "target" && company.estimated_timeline && (
-          <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
-              Target Window: {company.estimated_timeline}
-            </span>
-            <span className="text-amber-400">Calibration Sprint</span>
+        <p className="text-xs text-[#D0D6E2] leading-relaxed mb-4">
+          {company.reason}
+        </p>
+
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {(company.matching_skills || []).map((sk) => (
+              <span
+                key={sk}
+                className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+              >
+                ✓ {sk}
+              </span>
+            ))}
           </div>
-        )}
+
+          {company.gap_skills && company.gap_skills.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {company.gap_skills.map((sk) => (
+                <span
+                  key={sk}
+                  className="font-mono text-[10px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/20"
+                >
+                  Gap: {sk}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      {type === "target" && company.estimated_timeline && (
+        <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-[#8A96AA]">
+          <span className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-amber-300" />
+            Target Window: {company.estimated_timeline}
+          </span>
+          <span className="text-amber-300">Calibration Sprint</span>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -433,93 +431,91 @@ function JobCard({ job, index }: { job: LinkedInJob; index: number }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
-      className="p-1 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-white/15 transition-all"
+      className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 hover:border-white/[0.16] transition-all shadow-sm"
     >
-      <div className="p-5 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16]">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#121522] border border-white/[0.08] flex items-center justify-center flex-shrink-0 relative">
-              {job.companyLogo ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={job.companyLogo}
-                  alt={job.companyName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Building2 className="w-6 h-6 text-slate-500" />
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="w-11 h-11 rounded-lg overflow-hidden bg-[#0A0C13] border border-white/[0.08] flex items-center justify-center flex-shrink-0 relative">
+            {job.companyLogo ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={job.companyLogo}
+                alt={job.companyName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Building2 className="w-5 h-5 text-slate-500" />
+            )}
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-sm text-white hover:text-blue-400 transition-colors">
+              {job.title}
+            </h3>
+            <p className="text-xs text-[#8A96AA]">{job.companyName}</p>
+
+            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs font-mono text-[#8A96AA]">
+              {job.location && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                  {job.location}
+                </span>
+              )}
+              {job.employmentType && (
+                <span className="flex items-center gap-1">
+                  <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                  {job.employmentType}
+                </span>
+              )}
+              {postedDate && (
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  {postedDate}
+                </span>
               )}
             </div>
-
-            <div>
-              <h3 className="font-semibold text-sm text-white hover:text-blue-400 transition-colors">
-                {job.title}
-              </h3>
-              <p className="text-xs text-muted-foreground">{job.companyName}</p>
-
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-xs font-mono text-slate-400">
-                {job.location && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-blue-400" />
-                    {job.location}
-                  </span>
-                )}
-                {job.employmentType && (
-                  <span className="flex items-center gap-1">
-                    <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                    {job.employmentType}
-                  </span>
-                )}
-                {postedDate && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    {postedDate}
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
+        </div>
 
-          <a
-            href={job.applyUrl || job.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0"
+        <a
+          href={job.applyUrl || job.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-shrink-0"
+        >
+          <Button
+            size="sm"
+            className="h-8.5 px-3.5 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            <Button
-              size="sm"
-              className="h-9 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all flex items-center gap-1.5"
-            >
-              Apply via LinkedIn <ExternalLink className="w-3 h-3" />
-            </Button>
-          </a>
+            Apply on LinkedIn <ExternalLink className="w-3 h-3" />
+          </Button>
+        </a>
+      </div>
+
+      {job.salaryInfo && job.salaryInfo.length > 0 && (
+        <div className="mt-3 flex items-center gap-1.5 text-xs font-mono text-emerald-400">
+          <DollarSign className="w-3.5 h-3.5" />
+          <span>{job.salaryInfo.join(" — ")}</span>
         </div>
+      )}
 
-        {job.salaryInfo && job.salaryInfo.length > 0 && (
-          <div className="mt-3 flex items-center gap-1.5 text-xs font-mono text-emerald-400">
-            <DollarSign className="w-3.5 h-3.5" />
-            <span>{job.salaryInfo.join(" — ")}</span>
-          </div>
+      {job.description && (
+        <p className="text-xs text-[#8A96AA] mt-3 line-clamp-2 leading-relaxed">
+          {job.description}
+        </p>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-white/[0.04]">
+        {job.benefits?.slice(0, 3).map((b, i) => (
+          <span key={i} className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            {b}
+          </span>
+        ))}
+        {job.applicantsCount && (
+          <span className="text-[10px] font-mono text-[#8A96AA] flex items-center gap-1">
+            <Users className="w-3.5 h-3.5" /> {job.applicantsCount} applicants
+          </span>
         )}
-
-        {job.description && (
-          <p className="text-xs text-muted-foreground mt-3 line-clamp-2 leading-relaxed">
-            {job.description}
-          </p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-white/[0.04]">
-          {job.benefits?.slice(0, 3).map((b, i) => (
-            <span key={i} className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              {b}
-            </span>
-          ))}
-          {job.applicantsCount && (
-            <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
-              <Users className="w-3 h-3" /> {job.applicantsCount} applicants
-            </span>
-          )}
-        </div>
       </div>
     </motion.div>
   );
