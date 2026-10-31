@@ -130,21 +130,21 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-7.5rem)] max-w-5xl mx-auto">
       {/* ─── Chat Console Header ─── */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/[0.06] flex-shrink-0">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/[0.07] flex-shrink-0">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-semibold">
               Interactive Reasoning
             </span>
-            <span className="text-muted-foreground/40">•</span>
-            <span className="font-mono text-[11px] text-muted-foreground">Socratic Career Coach</span>
+            <span className="text-[#64748B] text-xs">•</span>
+            <span className="font-mono text-[11px] text-[#8A96AA]">Socratic Career Coach</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
             AI Placement Mentor
           </h1>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-[11px] px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/10">
+        <div className="flex items-center gap-2 font-mono text-[11px] px-3 py-1.5 rounded-lg bg-[#0E111A] border border-white/[0.08]">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-slate-300">Groq • openai/gpt-oss-120b</span>
         </div>
@@ -157,13 +157,13 @@ export default function ChatPage() {
       >
         {messages.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center h-full text-center py-12 px-4">
-            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4 text-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.15)]">
-              <Bot className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4 text-blue-400 shadow-sm">
+              <Bot className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-bold text-white mb-2">
+            <h2 className="text-base font-bold text-white mb-1.5">
               Career & DSA Intelligence Terminal
             </h2>
-            <p className="text-xs text-muted-foreground max-w-md mb-8 leading-relaxed">
+            <p className="text-xs text-[#8A96AA] max-w-md mb-6 leading-relaxed">
               Powered by Groq 120B reasoning. Ask about algorithm trade-offs, mock interview feedback, resume critique, or salary negotiation strategies.
             </p>
 
@@ -177,7 +177,7 @@ export default function ChatPage() {
                 <button
                   key={i}
                   onClick={() => sendMessage(suggestion)}
-                  className="p-3 rounded-xl bg-[#0C0E16] border border-white/[0.08] hover:border-blue-500/30 text-left text-xs text-slate-300 hover:text-white transition-all font-mono group flex items-start justify-between gap-2"
+                  className="p-3 rounded-lg bg-[#0E111A] border border-white/[0.08] hover:border-blue-500/30 text-left text-xs text-[#8A96AA] hover:text-white transition-all font-mono group flex items-start justify-between gap-2 cursor-pointer"
                 >
                   <span>{suggestion}</span>
                   <Zap className="w-3.5 h-3.5 text-blue-400 opacity-60 group-hover:opacity-100 flex-shrink-0 mt-0.5" />
@@ -193,29 +193,29 @@ export default function ChatPage() {
               key={msg.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex gap-3.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "assistant" && (
-                <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400 mt-1">
-                  <Bot className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400 mt-1">
+                  <Bot className="w-3.5 h-3.5" />
                 </div>
               )}
 
               <div
-                className={`relative group max-w-[85%] rounded-2xl p-4 sm:p-5 ${
+                className={`relative group max-w-[85%] rounded-xl p-4 ${
                   msg.role === "user"
-                    ? "bg-blue-600 text-white font-normal shadow-[0_4px_20px_rgba(59,130,246,0.25)] rounded-br-sm"
-                    : "bg-[#0C0E16] border border-white/[0.08] shadow-[0_10px_30px_rgba(0,0,0,0.5)] rounded-bl-sm"
+                    ? "bg-primary text-white font-normal shadow-sm rounded-br-none"
+                    : "bg-[#0E111A] border border-white/[0.08] shadow-sm rounded-bl-none text-card-foreground"
                 }`}
               >
                 {msg.role === "assistant" && (
-                  <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/[0.06] text-[10px] font-mono text-muted-foreground">
-                    <span className="flex items-center gap-1.5 text-blue-400">
+                  <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-white/[0.06] text-[10px] font-mono text-[#8A96AA]">
+                    <span className="flex items-center gap-1.5 text-blue-400 font-semibold">
                       <Sparkles className="w-3 h-3" /> GPT-OSS 120B
                     </span>
                     <button
                       onClick={() => copyToClipboard(msg.content, msg.id)}
-                      className="hover:text-white transition-colors flex items-center gap-1"
+                      className="hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
                     >
                       {copiedId === msg.id ? (
                         <>
@@ -233,7 +233,7 @@ export default function ChatPage() {
                 )}
 
                 {msg.role === "assistant" ? (
-                  <div className="prose prose-invert prose-xs sm:prose-sm max-w-none [&>p]:leading-relaxed [&>pre]:bg-[#07080D] [&>pre]:border [&>pre]:border-white/[0.08] [&>pre]:p-3 [&>pre]:rounded-xl font-sans text-slate-200">
+                  <div className="prose prose-invert prose-xs sm:prose-sm max-w-none [&>p]:leading-relaxed [&>pre]:bg-[#07080D] [&>pre]:border [&>pre]:border-white/[0.08] [&>pre]:p-3 [&>pre]:rounded-lg font-sans text-slate-200">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 ) : (
@@ -242,8 +242,8 @@ export default function ChatPage() {
               </div>
 
               {msg.role === "user" && (
-                <div className="w-8 h-8 rounded-xl bg-white/[0.08] border border-white/10 flex items-center justify-center flex-shrink-0 text-white mt-1">
-                  <User className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-white/[0.08] border border-white/10 flex items-center justify-center flex-shrink-0 text-white mt-1">
+                  <User className="w-3.5 h-3.5" />
                 </div>
               )}
             </motion.div>
@@ -254,13 +254,13 @@ export default function ChatPage() {
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex gap-3.5"
+            className="flex gap-3"
           >
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400">
-              <Bot className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 text-blue-400">
+              <Bot className="w-3.5 h-3.5" />
             </div>
-            <div className="p-4 rounded-2xl bg-[#0C0E16] border border-white/[0.08] rounded-bl-sm">
-              <div className="flex items-center gap-2.5 font-mono text-xs text-blue-400">
+            <div className="p-3.5 rounded-xl bg-[#0E111A] border border-white/[0.08] rounded-bl-none">
+              <div className="flex items-center gap-2 font-mono text-xs text-blue-400">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>Synthesizing response via Groq 120B...</span>
               </div>
@@ -277,7 +277,7 @@ export default function ChatPage() {
               key={i}
               variant="outline"
               size="sm"
-              className="h-7 px-3 rounded-full border-white/10 bg-white/[0.03] hover:border-blue-500/40 text-[11px] font-mono text-slate-300"
+              className="h-7 px-3 rounded-full border-white/[0.1] bg-[#0E111A] hover:border-blue-500/40 text-[11px] font-mono text-[#8A96AA] hover:text-white cursor-pointer"
               onClick={() => sendMessage(action.text)}
             >
               {action.text}
@@ -286,33 +286,31 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* ─── Double-Bezel Input Area ─── */}
-      <div className="p-1 rounded-2xl bg-white/[0.04] border border-white/10 flex-shrink-0 shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
-        <div className="p-2 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16] flex items-end gap-2">
-          <Textarea
-            placeholder="Type your question or request (e.g. 'Explain Dijkstra with monotonic queue')..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            className="flex-1 bg-transparent border-0 focus-visible:ring-0 text-xs sm:text-sm text-white resize-none min-h-[44px] max-h-[140px] px-3 py-2.5 placeholder:text-muted-foreground/60"
-          />
-          <div className="flex items-center gap-2 pr-1 pb-1">
-            <span className="hidden sm:inline font-mono text-[10px] text-muted-foreground/50">
-              Return ↵
-            </span>
-            <Button
-              onClick={() => sendMessage()}
-              disabled={!input.trim() || sending}
-              className="h-9 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs disabled:opacity-30 transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)]"
-            >
-              {sending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Send className="w-3.5 h-3.5" />
-              )}
-            </Button>
-          </div>
+      {/* ─── Input Area ─── */}
+      <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-2 flex items-end gap-2 flex-shrink-0 shadow-sm">
+        <Textarea
+          placeholder="Ask a technical or architectural question (e.g. 'Explain 0-1 BFS vs Dijkstra with code')..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          rows={1}
+          className="flex-1 bg-transparent border-0 focus-visible:ring-0 text-xs sm:text-sm text-white resize-none min-h-[40px] max-h-[140px] px-3 py-2 placeholder:text-[#64748B]"
+        />
+        <div className="flex items-center gap-2 pr-1 pb-1">
+          <span className="hidden sm:inline font-mono text-[10px] text-[#64748B]">
+            Return ↵
+          </span>
+          <Button
+            onClick={() => sendMessage()}
+            disabled={!input.trim() || sending}
+            className="h-8.5 px-3.5 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs disabled:opacity-40 transition-all cursor-pointer shadow-sm"
+          >
+            {sending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+          </Button>
         </div>
       </div>
     </div>
