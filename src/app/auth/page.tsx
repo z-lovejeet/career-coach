@@ -17,7 +17,6 @@ import {
   AlertCircle,
   Cpu,
   KeyRound,
-  ExternalLink,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -47,7 +46,6 @@ function AuthContent() {
     }
   }, [oauthError]);
 
-  // 1-Click Guest Login Handler (100% Server-Side Session)
   const handleGuestLogin = async () => {
     setFormError(null);
     setGuestLoading(true);
@@ -64,7 +62,6 @@ function AuthContent() {
       }
 
       toast.success("Guest candidate authenticated! Launching Command Center...");
-      // Server-side Route Handler set the session cookies on localhost!
       window.location.href = data.redirect || "/dashboard";
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Guest authentication failed";
@@ -74,7 +71,6 @@ function AuthContent() {
     }
   };
 
-  // Google OAuth Handler with Graceful Fallback
   const handleGoogleAuth = async () => {
     setFormError(null);
     setGoogleLoading(true);
@@ -114,7 +110,6 @@ function AuthContent() {
     }
   };
 
-  // Email / Password Handler (Server-Side Session)
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -122,7 +117,6 @@ function AuthContent() {
 
     try {
       if (isLogin) {
-        // Direct Server Login (sets session cookies on localhost)
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -141,7 +135,6 @@ function AuthContent() {
         toast.success("Identity verified! Entering Command Center...");
         window.location.href = data.redirect || "/dashboard";
       } else {
-        // Direct Server Registration with Auto-Confirm
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -170,256 +163,252 @@ function AuthContent() {
   };
 
   return (
-    <div className="w-full max-w-md relative z-10">
+    <div className="w-full max-w-[420px] relative z-10">
       {/* Brand Header */}
-      <div className="flex flex-col items-center mb-8 text-center">
-        <Link href="/" className="inline-flex items-center gap-3 mb-4 group">
-          <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-white/10 p-0.5 bg-[#0C0E16] shadow-sm group-hover:border-blue-500/40 transition-colors">
-            <Image src="/logo.png" alt="CareerAI" fill className="object-cover rounded-lg" />
+      <div className="flex flex-col items-center mb-6 text-center">
+        <Link href="/" className="inline-flex items-center gap-2.5 mb-3 group">
+          <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/[0.12] p-0.5 bg-[#0D0F17] shadow-sm flex items-center justify-center">
+            <Image src="/logo.png" alt="CareerAI" fill className="object-cover rounded-md" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">
+          <span className="text-lg font-semibold tracking-tight text-white group-hover:text-blue-400 transition-colors">
             CareerAI
           </span>
         </Link>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[11px] font-mono text-slate-400">
+        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[11px] font-mono text-[#8A96AA]">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span>AUTONOMOUS ENGINE AUTH GATEWAY</span>
+          <span>AUTONOMOUS AUTH GATEWAY</span>
         </div>
       </div>
 
       {/* Global Form Error Alert if any */}
       {formError && (
-        <div className="mb-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-xs text-rose-200">
+        <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-xs text-rose-200">
           <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Authentication Notice</p>
+            <p className="font-medium">Authentication Notice</p>
             <p className="text-[11px] text-rose-300/80 mt-0.5 font-mono">{formError}</p>
           </div>
         </div>
       )}
 
-      {/* ─── HIGHLIGHT: 1-Click Instant Guest Access Card ─── */}
-      <div className="mb-5 p-1 rounded-2xl bg-gradient-to-r from-blue-600/30 via-indigo-600/20 to-emerald-600/30 border border-white/10 shadow-[0_0_35px_rgba(59,130,246,0.15)]">
-        <div className="p-4 rounded-[calc(1rem-0.25rem)] bg-[#0C0E18] flex flex-col gap-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400">
-                <Zap className="w-4 h-4" />
-              </span>
-              <div>
-                <h2 className="text-xs font-bold text-white tracking-wide">
-                  1-Click Instant Guest Access
-                </h2>
-                <p className="text-[11px] text-slate-400">
-                  Pre-calibrated L4 Engineer dossier with sample roadmap & tasks
-                </p>
-              </div>
-            </div>
-            <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              Zero Setup
+      {/* ─── 1-Click Instant Guest Access Card ─── */}
+      <div className="mb-4 rounded-xl border border-white/[0.08] bg-[#0E111A] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.4)] flex flex-col gap-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="p-1.5 rounded-md bg-blue-500/15 border border-blue-500/25 text-blue-400">
+              <Zap className="w-4 h-4" />
             </span>
+            <div>
+              <h2 className="text-xs font-semibold text-white tracking-wide">
+                1-Click Instant Guest Access
+              </h2>
+              <p className="text-[11px] text-[#8A96AA]">
+                Pre-calibrated L4 Engineer dossier with sample roadmap & tasks
+              </p>
+            </div>
           </div>
-
-          <button
-            type="button"
-            onClick={handleGuestLogin}
-            disabled={guestLoading || loading || googleLoading}
-            className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-mono font-semibold tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            {guestLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Launching Guest Cockpit...</span>
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-                <span>Explore as Guest Candidate</span>
-                <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
-              </span>
-            )}
-          </button>
+          <span className="text-[9px] font-mono font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+            Zero Setup
+          </span>
         </div>
+
+        <button
+          type="button"
+          onClick={handleGuestLogin}
+          disabled={guestLoading || loading || googleLoading}
+          className="w-full h-10 rounded-lg bg-primary hover:bg-blue-500 text-white text-xs font-medium tracking-wide shadow-[0_2px_12px_rgba(59,130,246,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+        >
+          {guestLoading ? (
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Launching Guest Cockpit...</span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-blue-200" />
+              <span>Explore as Guest Candidate</span>
+              <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Main Authentication Card */}
-      <div className="p-1.5 rounded-3xl bg-white/[0.04] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.7)]">
-        <div className="p-6 sm:p-7 rounded-[calc(1.5rem-0.375rem)] bg-[#0C0E16] border border-white/[0.06]">
-          {/* Prominent Tab Switcher */}
-          <div className="p-1 rounded-xl bg-black/40 border border-white/[0.08] flex items-center gap-1 mb-5">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(true);
-                setFormError(null);
-              }}
-              className={`flex-1 py-2 text-xs font-mono font-semibold rounded-lg transition-all cursor-pointer ${
-                isLogin
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(false);
-                setFormError(null);
-              }}
-              className={`flex-1 py-2 text-xs font-mono font-semibold rounded-lg transition-all cursor-pointer ${
-                !isLogin
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-              }`}
-            >
-              Create Account
-            </button>
-          </div>
-
-          {/* Form Header Description */}
-          <div className="mb-5">
-            <h1 className="text-base font-bold tracking-tight text-white">
-              {isLogin ? "Authenticate Credentials" : "Create Candidate Dossier"}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {isLogin
-                ? "Access your calibrated roadmap & active mentor logs"
-                : "Begin multi-agent placement evaluation & interview practice"}
-            </p>
-          </div>
-
-          {/* Google OAuth Button */}
+      <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+        {/* Tab Switcher */}
+        <div className="p-1 rounded-lg bg-[#0A0C13] border border-white/[0.08] flex items-center gap-1 mb-5">
           <button
             type="button"
-            onClick={handleGoogleAuth}
-            disabled={googleLoading || loading || guestLoading}
-            className="w-full h-11 border border-white/10 bg-white/[0.02] hover:bg-white/[0.07] text-white text-xs font-mono tracking-wide mb-5 flex items-center justify-center gap-3 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+            onClick={() => {
+              setIsLogin(true);
+              setFormError(null);
+            }}
+            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
+              isLogin
+                ? "bg-white/[0.08] text-white border border-white/[0.1] shadow-sm font-semibold"
+                : "text-[#8A96AA] hover:text-white"
+            }`}
           >
-            {googleLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Redirecting to Google...</span>
-              </span>
-            ) : (
-              <>
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-                    fill="#4285F4"
-                  />
-                  <path
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    fill="#34A853"
-                  />
-                  <path
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                    fill="#FBBC05"
-                  />
-                  <path
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    fill="#EA4335"
-                  />
-                </svg>
-                <span>Continue with Google</span>
-              </>
-            )}
+            Sign In
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsLogin(false);
+              setFormError(null);
+            }}
+            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
+              !isLogin
+                ? "bg-white/[0.08] text-white border border-white/[0.1] shadow-sm font-semibold"
+                : "text-[#8A96AA] hover:text-white"
+            }`}
+          >
+            Create Account
+          </button>
+        </div>
 
-          {/* Divider */}
-          <div className="relative mb-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/[0.08]" />
+        {/* Header Description */}
+        <div className="mb-4">
+          <h1 className="text-base font-semibold tracking-tight text-white">
+            {isLogin ? "Authenticate Credentials" : "Create Candidate Dossier"}
+          </h1>
+          <p className="text-xs text-[#8A96AA] mt-0.5">
+            {isLogin
+              ? "Access your calibrated roadmap & active mentor logs"
+              : "Begin multi-agent placement evaluation & interview practice"}
+          </p>
+        </div>
+
+        {/* Google OAuth Button */}
+        <button
+          type="button"
+          onClick={handleGoogleAuth}
+          disabled={googleLoading || loading || guestLoading}
+          className="w-full h-10 border border-white/[0.1] bg-[#0A0C13] hover:bg-white/[0.04] text-white text-xs font-medium mb-4 flex items-center justify-center gap-2.5 rounded-lg transition-all cursor-pointer disabled:opacity-50"
+        >
+          {googleLoading ? (
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Redirecting to Google...</span>
+            </span>
+          ) : (
+            <>
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+              <span>Continue with Google</span>
+            </>
+          )}
+        </button>
+
+        {/* Divider */}
+        <div className="relative mb-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/[0.07]" />
+          </div>
+          <div className="relative flex justify-center text-[10px] font-mono uppercase tracking-widest">
+            <span className="bg-[#0E111A] px-2.5 text-[#64748B]">or email key</span>
+          </div>
+        </div>
+
+        {/* Email / Password Form */}
+        <form onSubmit={handleEmailAuth} className="space-y-3.5">
+          {!isLogin && (
+            <div className="space-y-1">
+              <Label htmlFor="fullName" className="text-xs font-mono text-[#8A96AA]">
+                Candidate Full Name
+              </Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Alex Chen"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="pl-9.5 h-9.5"
+                  required={!isLogin}
+                />
+              </div>
             </div>
-            <div className="relative flex justify-center text-[10px] font-mono uppercase tracking-widest">
-              <span className="bg-[#0C0E16] px-3 text-muted-foreground">or email key</span>
+          )}
+
+          <div className="space-y-1">
+            <Label htmlFor="email" className="text-xs font-mono text-[#8A96AA]">
+              Email Address
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="engineer@domain.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-9.5 h-9.5"
+                required
+              />
             </div>
           </div>
 
-          {/* Email / Password Form */}
-          <form onSubmit={handleEmailAuth} className="space-y-4">
-            {!isLogin && (
-              <div className="space-y-1.5">
-                <Label htmlFor="fullName" className="text-xs font-mono text-slate-400">
-                  Candidate Full Name
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Alex Chen"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="pl-10 h-11 bg-white/[0.02] border-white/10 rounded-xl text-sm focus:border-blue-500/50"
-                    required={!isLogin}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-mono text-slate-400">
-                Email Address
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-xs font-mono text-[#8A96AA]">
+                Password
               </Label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="engineer@domain.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-11 bg-white/[0.02] border-white/10 rounded-xl text-sm focus:border-blue-500/50"
-                  required
-                />
-              </div>
+              <span className="text-[10px] font-mono text-[#64748B]">Min 6 characters</span>
             </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs font-mono text-slate-400">
-                  Password
-                </Label>
-                <span className="text-[10px] font-mono text-muted-foreground">Min 6 characters</span>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-11 bg-white/[0.02] border-white/10 rounded-xl text-sm focus:border-blue-500/50"
-                  required
-                />
-              </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-9.5 h-9.5"
+                required
+              />
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading || guestLoading || googleLoading}
-              className="w-full h-11 mt-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs font-mono tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Verifying Session...</span>
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  {isLogin ? "Sign In to Command Center" : "Create Confirmed Dossier"}
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </span>
-              )}
-            </button>
-          </form>
-        </div>
+          <Button
+            type="submit"
+            disabled={loading || guestLoading || googleLoading}
+            className="w-full h-10 mt-1 font-medium text-xs tracking-wide uppercase transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Verifying Session...</span>
+              </span>
+            ) : (
+              <span className="flex items-center justify-center gap-2">
+                {isLogin ? "Sign In to Command Center" : "Create Confirmed Dossier"}
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            )}
+          </Button>
+        </form>
       </div>
 
       {/* Security & Architecture Telemetry Badges */}
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-[11px] font-mono text-slate-500">
+      <div className="mt-5 flex items-center justify-center gap-3 text-[11px] font-mono text-[#64748B]">
         <span className="flex items-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
           <span>Supabase RLS Protected</span>
@@ -427,33 +416,33 @@ function AuthContent() {
         <span>•</span>
         <span className="flex items-center gap-1.5">
           <Cpu className="w-3.5 h-3.5 text-blue-400" />
-          <span>Groq GPT-OSS 120B & Gemini 3.8</span>
+          <span>Groq 120B & Gemini 3.8</span>
         </span>
       </div>
 
       {/* ─── Google OAuth Setup Guide Modal ─── */}
       {googleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-md p-6 rounded-2xl bg-[#0F121C] border border-white/15 shadow-2xl relative">
+          <div className="w-full max-w-md p-6 rounded-xl bg-[#0E111A] border border-white/[0.1] shadow-2xl relative">
             <button
               onClick={() => setGoogleModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg"
+              className="absolute top-4 right-4 text-[#8A96AA] hover:text-white p-1 rounded-md cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-2.5 mb-3 text-amber-400">
+            <div className="flex items-center gap-2.5 mb-3 text-amber-300">
               <KeyRound className="w-5 h-5" />
-              <h3 className="text-sm font-bold tracking-tight text-white">
+              <h3 className="text-sm font-semibold tracking-tight text-white">
                 Google OAuth Setup Notice
               </h3>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed mb-4">
-              Google Sign-in is not yet active in your Supabase project. To complete setup:
+            <p className="text-xs text-[#8A96AA] leading-relaxed mb-4">
+              Google Sign-in is not yet enabled in your Supabase project. To complete setup:
             </p>
 
-            <div className="p-3 rounded-xl bg-black/40 border border-white/[0.08] text-[11px] font-mono text-slate-300 space-y-2 mb-4">
+            <div className="p-3 rounded-lg bg-[#0A0C13] border border-white/[0.06] text-[11px] font-mono text-slate-300 space-y-2 mb-4">
               <p>1. Open Supabase Dashboard → Authentication → Providers → Google</p>
               <p>2. Enter your Google Client ID & Secret from Google Cloud Console</p>
               <p>3. Click &quot;Save&quot; in Supabase</p>
@@ -465,7 +454,7 @@ function AuthContent() {
                   setGoogleModalOpen(false);
                   handleGuestLogin();
                 }}
-                className="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-2"
+                className="w-full h-10 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-semibold tracking-wide uppercase transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Zap className="w-3.5 h-3.5" />
                 <span>Continue as Guest Instead (1-Click)</span>
@@ -473,7 +462,7 @@ function AuthContent() {
 
               <button
                 onClick={() => setGoogleModalOpen(false)}
-                className="w-full h-9 rounded-xl border border-white/10 hover:bg-white/[0.04] text-slate-400 hover:text-white text-xs font-mono transition-all"
+                className="w-full h-9 rounded-lg border border-white/[0.1] hover:bg-white/[0.04] text-[#8A96AA] hover:text-white text-xs font-mono transition-all cursor-pointer"
               >
                 Close & Use Email Sign-In
               </button>
@@ -487,15 +476,13 @@ function AuthContent() {
 
 export default function AuthPage() {
   return (
-    <div className="min-h-screen bg-[#07080C] text-[#F4F6F9] flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Background Architectural Ambience */}
-      <div className="fixed inset-0 subtle-grid pointer-events-none opacity-30" />
-      <div className="fixed -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="fixed -bottom-20 right-10 w-[400px] h-[300px] bg-emerald-600/5 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#08090C] text-[#F4F6FB] flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      <div className="fixed inset-0 subtle-grid pointer-events-none opacity-25" />
+      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(59,130,246,0.08),transparent)] pointer-events-none" />
 
       <Suspense
         fallback={
-          <div className="w-full max-w-md p-8 rounded-3xl bg-[#0C0E16] border border-white/10 text-center font-mono text-xs text-slate-400">
+          <div className="w-full max-w-[420px] p-8 rounded-xl bg-[#0E111A] border border-white/[0.08] text-center font-mono text-xs text-[#8A96AA]">
             <span className="w-4 h-4 border-2 border-white/30 border-t-blue-500 rounded-full animate-spin inline-block mb-3" />
             <p>Loading Encrypted Gateway...</p>
           </div>
