@@ -9,7 +9,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Check, Plus, X } from "lucide-react";
+import {
+  Code2,
+  Server,
+  Layers,
+  BarChart2,
+  Cpu,
+  Terminal,
+  Smartphone,
+  Cloud,
+  ShieldCheck,
+  Briefcase,
+  Compass,
+  Database,
+  Check,
+  Plus,
+  X,
+} from "lucide-react";
 import type { OnboardingFormData } from "@/types";
 
 interface Props {
@@ -18,18 +34,18 @@ interface Props {
 }
 
 const goalOptions = [
-  { value: "frontend_developer", label: "Frontend Developer", emoji: "🎨" },
-  { value: "backend_developer", label: "Backend Developer", emoji: "⚙️" },
-  { value: "fullstack_developer", label: "Full-Stack Developer", emoji: "🔥" },
-  { value: "data_scientist", label: "Data Scientist", emoji: "📊" },
-  { value: "ml_engineer", label: "ML Engineer", emoji: "🤖" },
-  { value: "devops_engineer", label: "DevOps Engineer", emoji: "🚀" },
-  { value: "mobile_developer", label: "Mobile Developer", emoji: "📱" },
-  { value: "cloud_engineer", label: "Cloud Engineer", emoji: "☁️" },
-  { value: "cybersecurity", label: "Cybersecurity", emoji: "🔒" },
-  { value: "product_manager", label: "Product Manager", emoji: "📋" },
-  { value: "ui_ux_designer", label: "UI/UX Designer", emoji: "✏️" },
-  { value: "blockchain_developer", label: "Blockchain Developer", emoji: "🔗" },
+  { value: "frontend_developer", label: "Frontend Developer", icon: Code2 },
+  { value: "backend_developer", label: "Backend Developer", icon: Server },
+  { value: "fullstack_developer", label: "Full-Stack Developer", icon: Layers },
+  { value: "data_scientist", label: "Data Scientist", icon: BarChart2 },
+  { value: "ml_engineer", label: "ML Engineer", icon: Cpu },
+  { value: "devops_engineer", label: "DevOps Engineer", icon: Terminal },
+  { value: "mobile_developer", label: "Mobile Developer", icon: Smartphone },
+  { value: "cloud_engineer", label: "Cloud Engineer", icon: Cloud },
+  { value: "cybersecurity", label: "Cybersecurity", icon: ShieldCheck },
+  { value: "product_manager", label: "Product Manager", icon: Briefcase },
+  { value: "ui_ux_designer", label: "UI/UX Designer", icon: Compass },
+  { value: "blockchain_developer", label: "Blockchain Developer", icon: Database },
 ];
 
 const roleOptions = [
@@ -78,32 +94,35 @@ export default function StepGoals({ formData, updateFormData }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-1">Goals & Preferences</h2>
-        <p className="text-sm text-muted-foreground">
+        <h2 className="text-lg font-semibold text-white mb-1">Goals & Preferences</h2>
+        <p className="text-xs text-[#8A96AA]">
           What career path interests you? Select all that apply.
         </p>
       </div>
 
       {/* Career Goals */}
       <div className="space-y-2">
-        <Label>Career Goals (select multiple)</Label>
+        <Label className="text-xs font-mono text-[#8A96AA]">Career Goals (select multiple)</Label>
         <div className="grid grid-cols-2 gap-2">
           {goalOptions.map((goal) => {
             const isSelected = formData.goals.includes(goal.value);
+            const Icon = goal.icon;
             return (
               <button
                 key={goal.value}
                 type="button"
                 onClick={() => toggleGoal(goal.value)}
-                className={`flex items-center gap-2 p-3 rounded-xl text-sm text-left transition-all duration-200 ${
+                className={`flex items-center gap-2.5 p-3 rounded-lg text-xs font-medium text-left transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-primary/15 border border-primary/30 text-foreground"
-                    : "bg-accent/50 border border-border text-muted-foreground hover:border-primary/20"
+                    ? "bg-blue-500/10 border border-blue-500/30 text-white font-semibold shadow-xs"
+                    : "bg-[#0A0C13] border border-white/[0.06] text-[#8A96AA] hover:border-white/[0.14] hover:text-white"
                 }`}
               >
-                <span>{goal.emoji}</span>
-                <span className="flex-1 text-xs font-medium">{goal.label}</span>
-                {isSelected && <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                <Icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? "text-blue-400" : "text-[#64748B]"}`} />
+                <span className="flex-1 truncate">{goal.label}</span>
+                {isSelected && (
+                  <Check className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                )}
               </button>
             );
           })}
@@ -112,17 +131,17 @@ export default function StepGoals({ formData, updateFormData }: Props) {
 
       {/* Preferred Role */}
       <div className="space-y-2">
-        <Label>Preferred Job Title</Label>
+        <Label className="text-xs font-mono text-[#8A96AA]">Primary Target Role *</Label>
         <Select
           value={formData.preferred_role}
           onValueChange={(value) => updateFormData({ preferred_role: value || "" })}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Select preferred role" />
+          <SelectTrigger className="w-full h-9.5 bg-[#0A0C13] border-white/[0.1] rounded-lg text-xs sm:text-sm text-white">
+            <SelectValue placeholder="Select target role" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#0E111A] border-white/[0.1] text-white text-xs">
             {roleOptions.map((role) => (
-              <SelectItem key={role} value={role}>
+              <SelectItem key={role} value={role} className="focus:bg-blue-600">
                 {role}
               </SelectItem>
             ))}
@@ -132,37 +151,40 @@ export default function StepGoals({ formData, updateFormData }: Props) {
 
       {/* Preferred Locations */}
       <div className="space-y-2">
-        <Label>Preferred Locations</Label>
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {locationOptions
-            .filter((l) => !formData.preferred_locations.includes(l))
-            .slice(0, 8)
-            .map((location) => (
-              <Badge
-                key={location}
-                variant="outline"
-                className="cursor-pointer hover:bg-primary/10 hover:border-primary/30 transition-colors text-xs"
-                onClick={() => addLocation(location)}
-              >
-                <Plus className="w-3 h-3 mr-1" />
-                {location}
-              </Badge>
-            ))}
-        </div>
+        <Label className="text-xs font-mono text-[#8A96AA]">Preferred Locations</Label>
         {formData.preferred_locations.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {formData.preferred_locations.map((location) => (
-              <Badge
-                key={location}
-                className="bg-primary/15 text-primary border-primary/30 cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors text-xs"
-                onClick={() => removeLocation(location)}
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {formData.preferred_locations.map((loc) => (
+              <span
+                key={loc}
+                className="inline-flex items-center gap-1 font-mono text-[11px] px-2.5 py-0.5 rounded-md bg-[#0A0C13] border border-white/[0.08] text-slate-200"
               >
-                {location}
-                <X className="w-3 h-3 ml-1" />
-              </Badge>
+                {loc}
+                <button
+                  type="button"
+                  onClick={() => removeLocation(loc)}
+                  className="hover:text-rose-400 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
             ))}
           </div>
         )}
+        <Select onValueChange={(val) => typeof val === "string" && val && addLocation(val)}>
+          <SelectTrigger className="w-full h-9.5 bg-[#0A0C13] border-white/[0.1] rounded-lg text-xs sm:text-sm text-white">
+            <SelectValue placeholder="Add a preferred location..." />
+          </SelectTrigger>
+          <SelectContent className="bg-[#0E111A] border-white/[0.1] text-white text-xs">
+            {locationOptions
+              .filter((loc) => !formData.preferred_locations.includes(loc))
+              .map((loc) => (
+                <SelectItem key={loc} value={loc} className="focus:bg-blue-600">
+                  {loc}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

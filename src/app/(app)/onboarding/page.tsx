@@ -31,7 +31,7 @@ import type { OnboardingFormData } from "@/types";
 
 const steps = [
   { id: 1, title: "Candidate Identity", icon: User },
-  { id: 2, title: "Resume Parsing", icon: FileText },
+  { id: 2, title: "Resume Ingestion", icon: FileText },
   { id: 3, title: "Skill Matrix", icon: Code2 },
   { id: 4, title: "Engineering Projects", icon: FolderKanban },
   { id: 5, title: "Placement Targets", icon: Target },
@@ -143,23 +143,22 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#08090D] text-[#F4F6F9] flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden">
-      {/* Background Grid & Light */}
+    <div className="min-h-screen bg-[#08090C] text-[#F4F6FB] flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden">
       <div className="fixed inset-0 subtle-grid pointer-events-none opacity-25" />
-      <div className="fixed -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(59,130,246,0.1),transparent)] pointer-events-none" />
 
       <div className="w-full max-w-3xl relative z-10">
         {/* Brand header */}
-        <div className="flex flex-col items-center text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2.5 mb-3 group">
-            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/10 p-0.5 bg-[#0E1017]">
+        <div className="flex flex-col items-center text-center mb-6">
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-2.5 group">
+            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/[0.12] p-0.5 bg-[#0D0F17] shadow-sm flex items-center justify-center">
               <Image src="/logo.png" alt="CareerAI" fill className="object-cover rounded-md" />
             </div>
             <span className="text-base font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">
               CareerAI
             </span>
           </Link>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[11px] font-mono text-slate-400 mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[11px] font-mono text-[#8A96AA] mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
             <span>STAGE 0{currentStep} OF 0{steps.length} • {steps[currentStep - 1].title.toUpperCase()}</span>
           </div>
@@ -169,8 +168,8 @@ export default function OnboardingPage() {
         </div>
 
         {/* Step Progression Bar */}
-        <div className="p-1 rounded-2xl bg-white/[0.03] border border-white/[0.08] mb-6">
-          <div className="p-3 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16] flex items-center justify-between gap-1 overflow-x-auto">
+        <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-2 mb-5 overflow-x-auto shadow-sm">
+          <div className="flex items-center justify-between gap-1">
             {steps.map((step) => {
               const StepIcon = step.icon;
               const isCompleted = currentStep > step.id;
@@ -181,15 +180,15 @@ export default function OnboardingPage() {
                   key={step.id}
                   onClick={() => step.id <= currentStep && setCurrentStep(step.id)}
                   disabled={step.id > currentStep}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all text-xs font-mono flex-shrink-0 ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all text-xs font-mono flex-shrink-0 cursor-pointer ${
                     isCurrent
-                      ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.35)]"
+                      ? "bg-primary text-white font-semibold shadow-sm"
                       : isCompleted
                       ? "text-emerald-400 hover:bg-white/[0.04]"
-                      : "text-muted-foreground/40 cursor-not-allowed"
+                      : "text-[#64748B] opacity-40 cursor-not-allowed"
                   }`}
                 >
-                  <div className="w-5 h-5 rounded-lg flex items-center justify-center text-xs">
+                  <div className="w-4 h-4 rounded-md flex items-center justify-center text-xs">
                     {isCompleted ? <Check className="w-3.5 h-3.5" /> : <StepIcon className="w-3.5 h-3.5" />}
                   </div>
                   <span className="hidden md:inline">{step.title}</span>
@@ -199,59 +198,57 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        {/* Step Card (Double Bezel) */}
-        <div className="p-1.5 rounded-3xl bg-white/[0.04] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)]">
-          <div className="p-6 sm:p-8 rounded-[calc(1.5rem-0.375rem)] bg-[#0C0E16] min-h-[420px] flex flex-col justify-between">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentStep}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: 0.25 }}
-                className="flex-1"
-              >
-                {renderStep()}
-              </motion.div>
-            </AnimatePresence>
+        {/* Step Card */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-6 sm:p-8 min-h-[420px] flex flex-col justify-between shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1"
+            >
+              {renderStep()}
+            </motion.div>
+          </AnimatePresence>
 
-            {/* Bottom Step Actions */}
-            <div className="flex items-center justify-between pt-6 mt-6 border-t border-white/[0.06]">
+          {/* Bottom Step Actions */}
+          <div className="flex items-center justify-between pt-6 mt-6 border-t border-white/[0.06]">
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={currentStep === 1}
+              className="h-9 px-4 rounded-lg border-white/[0.1] text-xs font-mono uppercase tracking-wider text-[#8A96AA] hover:text-white disabled:opacity-30 cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Back
+            </Button>
+
+            {currentStep < steps.length ? (
               <Button
-                variant="outline"
-                onClick={handleBack}
-                disabled={currentStep === 1}
-                className="h-10 px-5 rounded-xl border-white/10 text-xs font-mono uppercase tracking-wider text-slate-400 hover:text-white disabled:opacity-30"
+                onClick={handleNext}
+                className="h-9 px-5 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Back
+                Continue <ArrowRight className="w-3.5 h-3.5" />
               </Button>
-
-              {currentStep < steps.length ? (
-                <Button
-                  onClick={handleNext}
-                  className="h-10 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center gap-1.5"
-                >
-                  Continue <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleComplete}
-                  disabled={saving}
-                  className="h-10 px-7 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs uppercase tracking-wider shadow-[0_0_25px_rgba(16,185,129,0.3)] transition-all flex items-center gap-1.5"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Calibrating...
-                    </>
-                  ) : (
-                    <>
-                      Complete Setup <Sparkles className="w-3.5 h-3.5" />
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+            ) : (
+              <Button
+                onClick={handleComplete}
+                disabled={saving}
+                className="h-9 px-6 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Calibrating...
+                  </>
+                ) : (
+                  <>
+                    Complete Setup <Sparkles className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </div>
