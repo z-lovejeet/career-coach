@@ -60,14 +60,8 @@ export default function LandingPage() {
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Failed to initialize guest session");
       }
-      const { email: guestEmail, password: guestPassword } = data.credentials;
-      const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: guestEmail,
-        password: guestPassword,
-      });
-      if (signInError) throw signInError;
-      window.location.href = "/dashboard";
+      // Server-side Route Handler sets the session cookies on localhost directly
+      window.location.href = data.redirect || "/dashboard";
     } catch (err: unknown) {
       console.error("Guest login error:", err);
       setGuestLoading(false);

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { createClient as createServerSupabase } from '@/lib/supabase/server';
 
 const GUEST_EMAIL = 'guest.candidate@careerai.local';
 const GUEST_PASSWORD = 'GuestCandidate123!Secure';
@@ -16,11 +17,11 @@ export async function POST() {
       );
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+    const supabaseAdmin = createAdminClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // 1. Check if guest user already exists in auth.users
+    // 1. Ensure guest user exists and is confirmed
     const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
     if (listError) {
       console.error('Error listing users:', listError);
@@ -28,7 +29,6 @@ export async function POST() {
 
     let guestUser = users?.find((u) => u.email === GUEST_EMAIL);
 
-    // 2. If not found, create confirmed guest user
     if (!guestUser) {
       const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: GUEST_EMAIL,
@@ -46,8 +46,8 @@ export async function POST() {
 
     const guestId = guestUser.id;
 
-    // 3. Ensure candidate profile exists and is pre-calibrated
-    const { error: profileError } = await supabaseAdmin.from('profiles').upsert({
+    // 2. Ensure guest candidate profile is fully calibrated
+    await supabaseAdmin.from('profiles').upsert({
       id: guestId,
       email: GUEST_EMAIL,
       full_name: 'Guest Engineer (L4 Demo)',
@@ -87,11 +87,7 @@ export async function POST() {
       updated_at: new Date().toISOString(),
     });
 
-    if (profileError) {
-      console.error('Error upserting guest profile:', profileError);
-    }
-
-    // 4. Ensure initial analysis exists
+    // 3. Ensure initial analysis exists
     const { data: existingAnalyses } = await supabaseAdmin
       .from('analyses')
       .select('id')
@@ -139,7 +135,7 @@ export async function POST() {
       }
     }
 
-    // 5. Ensure company recommendations exist
+    // 4. Ensure company recommendations exist
     const { data: existingRecs } = await supabaseAdmin
       .from('company_recommendations')
       .select('id')
@@ -168,7 +164,7 @@ export async function POST() {
       });
     }
 
-    // 6. Ensure sample active tasks exist
+    // 5. Ensure sample active tasks exist
     const { data: existingTasks } = await supabaseAdmin
       .from('tasks')
       .select('id')
@@ -221,11 +217,27 @@ export async function POST() {
       ]);
     }
 
+    // 6. Sign in directly on the SERVER using @supabase/ssr!
+    // This writes the session cookies directly to the HTTP response on localhost!
+    // No cross-origin browser requests, no CORS, no adblocker interference.
+    const serverSupabase = await createServerSupabase();
+    const { data: authData, error: authError } = await serverSupabase.auth.signInWithPassword({
+      email: GUEST_EMAIL,
+      password: GUEST_PASSWORD,
+    });
+
+    if (authError) {
+      console.error('Server signInWithPassword error:', authError);
+      return NextResponse.json({ success: false, error: authError.message }, { status: 401 });
+    }
+
     return NextResponse.json({
       success: true,
-      credentials: {
-        email: GUEST_EMAIL,
-        password: GUEST_PASSWORD,
+      message: 'Guest session initialized and authenticated',
+      redirect: '/dashboard',
+      user: {
+        id: authData.user?.id,
+        email: authData.user?.email,
       },
     });
   } catch (error: unknown) {

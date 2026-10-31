@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { createClient as createServerSupabase } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
   try {
@@ -29,22 +30,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+    const supabaseAdmin = createAdminClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Create confirmed user immediately so they can log in without email verification blocking
+    // 1. Create confirmed user with Admin API (auto-confirmed = no email verification trap!)
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: email.trim(),
       password,
       email_confirm: true,
       user_metadata: {
-        full_name: fullName || '',
+        full_name: fullName?.trim() || '',
       },
     });
 
     if (createError) {
-      // Check if user already exists
       if (
         createError.message.includes('already been registered') ||
         createError.message.includes('already exists')
@@ -60,21 +60,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: createError.message }, { status: 400 });
     }
 
-    // Ensure candidate row exists in profiles table
+    // 2. Ensure initial candidate profile exists in profiles table
     if (newUser?.user?.id) {
       await supabaseAdmin.from('profiles').upsert({
         id: newUser.user.id,
-        email,
-        full_name: fullName || '',
+        email: email.trim(),
+        full_name: fullName?.trim() || '',
         onboarding_complete: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
     }
 
+    // 3. Immediately sign in on the server to issue session cookies directly
+    const serverSupabase = await createServerSupabase();
+    const { data: authData, error: signInError } = await serverSupabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (signInError) {
+      console.warn('Auto sign-in notice:', signInError.message);
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Account created and confirmed successfully',
+      message: 'Account created and authenticated successfully',
+      redirect: '/onboarding',
+      user: {
+        id: authData?.user?.id || newUser.user.id,
+        email: authData?.user?.email || email,
+      },
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Internal server error during registration';

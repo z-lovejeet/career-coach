@@ -15,8 +15,10 @@ import {
   Zap,
   Sparkles,
   AlertCircle,
-  CheckCircle2,
   Cpu,
+  KeyRound,
+  ExternalLink,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,6 +32,8 @@ function AuthContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [googleModalOpen, setGoogleModalOpen] = useState(false);
 
   const searchParams = useSearchParams();
   const oauthError = searchParams.get("error");
@@ -37,12 +41,15 @@ function AuthContent() {
 
   useEffect(() => {
     if (oauthError) {
-      toast.error(`Authentication notice: ${decodeURIComponent(oauthError)}`);
+      const decoded = decodeURIComponent(oauthError);
+      setFormError(`OAuth Error: ${decoded}`);
+      toast.error(`Authentication notice: ${decoded}`);
     }
   }, [oauthError]);
 
-  // 1-Click Guest Login Handler
+  // 1-Click Guest Login Handler (100% Server-Side Session)
   const handleGuestLogin = async () => {
+    setFormError(null);
     setGuestLoading(true);
     try {
       toast.info("Calibrating pre-seeded L4 Guest candidate dossier...");
@@ -56,30 +63,24 @@ function AuthContent() {
         throw new Error(data.error || "Failed to initialize guest session");
       }
 
-      const { email: guestEmail, password: guestPassword } = data.credentials;
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: guestEmail,
-        password: guestPassword,
-      });
-
-      if (signInError) throw signInError;
-
       toast.success("Guest candidate authenticated! Launching Command Center...");
-      window.location.href = "/dashboard";
+      // Server-side Route Handler set the session cookies on localhost!
+      window.location.href = data.redirect || "/dashboard";
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Guest authentication failed";
+      setFormError(message);
       toast.error(message);
       setGuestLoading(false);
     }
   };
 
-  // Google OAuth Handler
+  // Google OAuth Handler with Graceful Fallback
   const handleGoogleAuth = async () => {
+    setFormError(null);
     setGoogleLoading(true);
     try {
       const origin = window.location.origin;
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${origin}/auth/callback`,
@@ -89,40 +90,58 @@ function AuthContent() {
           },
         },
       });
-      if (error) throw error;
+
+      if (error) {
+        if (
+          error.message.includes("provider is not enabled") ||
+          error.message.includes("Unsupported provider")
+        ) {
+          setGoogleModalOpen(true);
+          setGoogleLoading(false);
+          return;
+        }
+        throw error;
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Google sign-in failed";
+      setFormError(message);
       toast.error(message);
       setGoogleLoading(false);
     }
   };
 
-  // Email / Password Handler
+  // Email / Password Handler (Server-Side Session)
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     setLoading(true);
 
     try {
       if (isLogin) {
-        // Direct Sign In
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
+        // Direct Server Login (sets session cookies on localhost)
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim(),
+            password,
+          }),
         });
 
-        if (error) {
-          if (error.message.includes("Email not confirmed")) {
-            throw new Error(
-              "Email confirmation is pending. You can also click 'Instant Guest Access' above to explore immediately."
-            );
-          }
-          throw error;
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Invalid credentials. If new, click 'Create Account' tab.");
         }
 
         toast.success("Identity verified! Entering Command Center...");
-        window.location.href = "/dashboard";
+        window.location.href = data.redirect || "/dashboard";
       } else {
-        // Registration via auto-confirm API
+        // Direct Server Registration with Auto-Confirm
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -139,19 +158,12 @@ function AuthContent() {
           throw new Error(data.error || "Registration failed");
         }
 
-        // Immediately sign in with the new confirmed account
-        const { error: autoSignInError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
-
-        if (autoSignInError) throw autoSignInError;
-
         toast.success("Account initialized! Calibrating candidate dossier...");
-        window.location.href = "/onboarding";
+        window.location.href = data.redirect || "/onboarding";
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Authentication failed";
+      setFormError(message);
       toast.error(message);
       setLoading(false);
     }
@@ -175,15 +187,13 @@ function AuthContent() {
         </div>
       </div>
 
-      {/* OAuth Error Alert if any */}
-      {oauthError && (
-        <div className="mb-4 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2.5 text-xs text-amber-200">
-          <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+      {/* Global Form Error Alert if any */}
+      {formError && (
+        <div className="mb-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-xs text-rose-200">
+          <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Provider Notification</p>
-            <p className="text-[11px] text-amber-300/80 mt-0.5 font-mono">
-              {decodeURIComponent(oauthError)}
-            </p>
+            <p className="font-semibold">Authentication Notice</p>
+            <p className="text-[11px] text-rose-300/80 mt-0.5 font-mono">{formError}</p>
           </div>
         </div>
       )}
@@ -210,11 +220,11 @@ function AuthContent() {
             </span>
           </div>
 
-          <Button
+          <button
             type="button"
             onClick={handleGuestLogin}
             disabled={guestLoading || loading || googleLoading}
-            className="w-full h-10 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-mono font-semibold tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center justify-center gap-2"
+            className="w-full h-11 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-mono font-semibold tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {guestLoading ? (
               <span className="flex items-center gap-2">
@@ -228,34 +238,63 @@ function AuthContent() {
                 <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
               </span>
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Main Authentication Card */}
       <div className="p-1.5 rounded-3xl bg-white/[0.04] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.7)]">
         <div className="p-6 sm:p-7 rounded-[calc(1.5rem-0.375rem)] bg-[#0C0E16] border border-white/[0.06]">
-          {/* Form Header */}
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-white">
-                {isLogin ? "Authenticate Credentials" : "Create Candidate Dossier"}
-              </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {isLogin
-                  ? "Access your calibrated roadmap & active mentor logs"
-                  : "Begin multi-agent placement evaluation & interview practice"}
-              </p>
-            </div>
+          {/* Prominent Tab Switcher */}
+          <div className="p-1 rounded-xl bg-black/40 border border-white/[0.08] flex items-center gap-1 mb-5">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(true);
+                setFormError(null);
+              }}
+              className={`flex-1 py-2 text-xs font-mono font-semibold rounded-lg transition-all cursor-pointer ${
+                isLogin
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(false);
+                setFormError(null);
+              }}
+              className={`flex-1 py-2 text-xs font-mono font-semibold rounded-lg transition-all cursor-pointer ${
+                !isLogin
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+
+          {/* Form Header Description */}
+          <div className="mb-5">
+            <h1 className="text-base font-bold tracking-tight text-white">
+              {isLogin ? "Authenticate Credentials" : "Create Candidate Dossier"}
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {isLogin
+                ? "Access your calibrated roadmap & active mentor logs"
+                : "Begin multi-agent placement evaluation & interview practice"}
+            </p>
           </div>
 
           {/* Google OAuth Button */}
-          <Button
+          <button
             type="button"
-            variant="outline"
-            className="w-full h-11 border-white/10 bg-white/[0.02] hover:bg-white/[0.07] text-white text-xs font-mono tracking-wide mb-5 flex items-center justify-center gap-3 rounded-xl transition-all"
             onClick={handleGoogleAuth}
             disabled={googleLoading || loading || guestLoading}
+            className="w-full h-11 border border-white/10 bg-white/[0.02] hover:bg-white/[0.07] text-white text-xs font-mono tracking-wide mb-5 flex items-center justify-center gap-3 rounded-xl transition-all cursor-pointer disabled:opacity-50"
           >
             {googleLoading ? (
               <span className="flex items-center gap-2">
@@ -285,7 +324,7 @@ function AuthContent() {
                 <span>Continue with Google</span>
               </>
             )}
-          </Button>
+          </button>
 
           {/* Divider */}
           <div className="relative mb-5">
@@ -358,10 +397,10 @@ function AuthContent() {
               </div>
             </div>
 
-            <Button
+            <button
               type="submit"
-              className="w-full h-11 mt-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs font-mono tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all"
               disabled={loading || guestLoading || googleLoading}
+              className="w-full h-11 mt-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs font-mono tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -370,37 +409,12 @@ function AuthContent() {
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
-                  {isLogin ? "Sign In to Command Center" : "Create & Confirm Dossier"}
+                  {isLogin ? "Sign In to Command Center" : "Create Confirmed Dossier"}
                   <ArrowRight className="w-3.5 h-3.5" />
                 </span>
               )}
-            </Button>
-          </form>
-
-          {/* Toggle Login / Register */}
-          <div className="mt-5 pt-4 border-t border-white/[0.06] text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-xs text-muted-foreground hover:text-white transition-colors font-mono"
-            >
-              {isLogin ? (
-                <>
-                  New candidate?{" "}
-                  <span className="text-blue-400 font-semibold underline underline-offset-4">
-                    Create confirmed account
-                  </span>
-                </>
-              ) : (
-                <>
-                  Already registered?{" "}
-                  <span className="text-blue-400 font-semibold underline underline-offset-4">
-                    Sign in to existing account
-                  </span>
-                </>
-              )}
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
@@ -416,6 +430,57 @@ function AuthContent() {
           <span>Groq GPT-OSS 120B & Gemini 3.8</span>
         </span>
       </div>
+
+      {/* ─── Google OAuth Setup Guide Modal ─── */}
+      {googleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-[#0F121C] border border-white/15 shadow-2xl relative">
+            <button
+              onClick={() => setGoogleModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2.5 mb-3 text-amber-400">
+              <KeyRound className="w-5 h-5" />
+              <h3 className="text-sm font-bold tracking-tight text-white">
+                Google OAuth Setup Notice
+              </h3>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed mb-4">
+              Google Sign-in is not yet active in your Supabase project. To complete setup:
+            </p>
+
+            <div className="p-3 rounded-xl bg-black/40 border border-white/[0.08] text-[11px] font-mono text-slate-300 space-y-2 mb-4">
+              <p>1. Open Supabase Dashboard → Authentication → Providers → Google</p>
+              <p>2. Enter your Google Client ID & Secret from Google Cloud Console</p>
+              <p>3. Click &quot;Save&quot; in Supabase</p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  setGoogleModalOpen(false);
+                  handleGuestLogin();
+                }}
+                className="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-2"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>Continue as Guest Instead (1-Click)</span>
+              </button>
+
+              <button
+                onClick={() => setGoogleModalOpen(false)}
+                className="w-full h-9 rounded-xl border border-white/10 hover:bg-white/[0.04] text-slate-400 hover:text-white text-xs font-mono transition-all"
+              >
+                Close & Use Email Sign-In
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
