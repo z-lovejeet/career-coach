@@ -34,7 +34,7 @@ import type { Task } from "@/types";
 const categoryConfig: Record<string, { icon: typeof Code2; label: string; color: string }> = {
   dsa: { icon: Code2, label: "DSA", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
   web_dev: { icon: Globe, label: "Web Dev", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-  system_design: { icon: Server, label: "System Design", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+  system_design: { icon: Server, label: "System Design", color: "text-amber-300 bg-amber-500/10 border-amber-500/20" },
   soft_skills: { icon: Users, label: "Soft Skills", color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
   project: { icon: FolderKanban, label: "Project", color: "text-rose-400 bg-rose-500/10 border-rose-500/20" },
   other: { icon: BarChart3, label: "Other", color: "text-slate-400 bg-slate-500/10 border-slate-500/20" },
@@ -42,7 +42,7 @@ const categoryConfig: Record<string, { icon: typeof Code2; label: string; color:
 
 const difficultyColors: Record<string, string> = {
   easy: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
-  medium: "text-amber-400 border-amber-500/20 bg-amber-500/5",
+  medium: "text-amber-300 border-amber-500/20 bg-amber-500/5",
   hard: "text-rose-400 border-rose-500/20 bg-rose-500/5",
 };
 
@@ -155,16 +155,16 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="space-y-7 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* ─── Header ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-white/[0.06]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.07]">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
               Active Sprint
             </span>
-            <span className="text-muted-foreground/40">•</span>
-            <span className="font-mono text-[11px] text-muted-foreground">Week {latestWeek || 1} Curriculum</span>
+            <span className="text-[#64748B] text-xs">•</span>
+            <span className="font-mono text-[11px] text-[#8A96AA]">Week {latestWeek || 1} Curriculum</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
             Daily Preparation Tasks
@@ -174,7 +174,7 @@ export default function TasksPage() {
         <Button
           onClick={generateTasks}
           disabled={generating}
-          className="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center gap-2"
+          className="h-9 px-4 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-sm transition-all flex items-center gap-2 cursor-pointer"
         >
           {generating ? (
             <>
@@ -190,55 +190,53 @@ export default function TasksPage() {
         </Button>
       </div>
 
-      {/* ─── Sprint Progress Overview (Double Bezel) ─── */}
-      <div className="p-1.5 rounded-3xl bg-white/[0.04] border border-white/10">
-        <div className="p-6 rounded-[calc(1.5rem-0.375rem)] bg-[#0C0E16]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-            <div>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Sprint Completion Index</span>
-              <p className="text-sm font-semibold text-white mt-0.5">
-                {completedTasks} of {totalTasks} tasks verified complete
-              </p>
-            </div>
-            <span className="font-mono text-2xl font-bold text-emerald-400">
-              {completionRate}%
-            </span>
+      {/* ─── Sprint Progress Overview ─── */}
+      <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-[#8A96AA]">Sprint Completion Index</span>
+            <p className="text-sm font-semibold text-white mt-0.5">
+              <span className="tabular-nums">{completedTasks}</span> of <span className="tabular-nums">{totalTasks}</span> tasks verified complete
+            </p>
           </div>
+          <span className="font-mono text-2xl font-bold text-emerald-400 tabular-nums">
+            {completionRate}%
+          </span>
+        </div>
 
-          <div className="h-2 bg-[#08090D] rounded-full overflow-hidden border border-white/[0.06]">
-            <motion.div
-              className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${completionRate}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-            />
-          </div>
+        <div className="h-2 bg-[#0A0C13] rounded-full overflow-hidden border border-white/[0.06]">
+          <motion.div
+            className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${completionRate}%` }}
+            transition={{ duration: 0.9, ease: "easeOut" }}
+          />
+        </div>
 
-          <div className="flex flex-wrap gap-4 mt-4 pt-3 border-t border-white/[0.06] text-xs font-mono">
-            {Object.entries(categoryConfig).map(([key, config]) => {
-              const count = filteredTasks.filter(t => t.category === key).length;
-              if (count === 0) return null;
-              const done = filteredTasks.filter(t => t.category === key && t.completed).length;
-              return (
-                <div key={key} className="flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${config.color.split(" ")[0].replace("text-", "bg-")}`} />
-                  <span className="text-slate-400">{config.label}:</span>
-                  <span className="text-white font-semibold">{done}/{count}</span>
-                </div>
-              );
-            })}
-          </div>
+        <div className="flex flex-wrap gap-4 mt-4 pt-3 border-t border-white/[0.06] text-xs font-mono">
+          {Object.entries(categoryConfig).map(([key, config]) => {
+            const count = filteredTasks.filter(t => t.category === key).length;
+            if (count === 0) return null;
+            const done = filteredTasks.filter(t => t.category === key && t.completed).length;
+            return (
+              <div key={key} className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${config.color.split(" ")[0].replace("text-", "bg-")}`} />
+                <span className="text-[#8A96AA]">{config.label}:</span>
+                <span className="text-white font-semibold tabular-nums">{done}/{count}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* ─── Filters Bar ─── */}
       <div className="flex gap-3 flex-wrap items-center">
         <Select value={filter} onValueChange={(v) => setFilter(v || "all")}>
-          <SelectTrigger className="w-[180px] h-10 bg-[#0C0E16] border-white/10 rounded-xl text-xs font-mono text-slate-300">
+          <SelectTrigger className="w-[180px] h-9 bg-[#0E111A] border-white/[0.1] rounded-lg text-xs font-mono text-slate-300">
             <Filter className="w-3.5 h-3.5 mr-2 text-blue-400" />
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-[#0C0E16] border-white/10 text-white text-xs font-mono">
+          <SelectContent className="bg-[#0E111A] border-white/[0.1] text-white text-xs font-mono">
             <SelectItem value="all">All Domains</SelectItem>
             {Object.entries(categoryConfig).map(([key, config]) => (
               <SelectItem key={key} value={key}>{config.label}</SelectItem>
@@ -248,11 +246,11 @@ export default function TasksPage() {
 
         {weeks.length > 1 && (
           <Select value={weekFilter} onValueChange={(v) => setWeekFilter(v || "latest")}>
-            <SelectTrigger className="w-[150px] h-10 bg-[#0C0E16] border-white/10 rounded-xl text-xs font-mono text-slate-300">
+            <SelectTrigger className="w-[150px] h-9 bg-[#0E111A] border-white/[0.1] rounded-lg text-xs font-mono text-slate-300">
               <Calendar className="w-3.5 h-3.5 mr-2 text-emerald-400" />
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#0C0E16] border-white/10 text-white text-xs font-mono">
+            <SelectContent className="bg-[#0E111A] border-white/[0.1] text-white text-xs font-mono">
               <SelectItem value="latest">Latest Week</SelectItem>
               <SelectItem value="all">All Sprints</SelectItem>
               {weeks.map(w => (
@@ -264,32 +262,30 @@ export default function TasksPage() {
       </div>
 
       {/* ─── Tasks Grouped by Day ─── */}
-      <div className="space-y-6">
+      <div className="space-y-5">
         {sortedDays.map(day => (
-          <div key={day} className="p-1 rounded-2xl bg-white/[0.03] border border-white/[0.08]">
-            <div className="p-5 rounded-[calc(1rem-0.125rem)] bg-[#0C0E16]">
-              <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-white/[0.06]">
-                <h3 className="text-xs font-mono uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-blue-400" />
-                  {dayNames[day] || `Day ${day}`}
-                </h3>
-                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06]">
-                  {tasksByDay[day].filter(t => t.completed).length} / {tasksByDay[day].length} Done
-                </span>
-              </div>
+          <div key={day} className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-white/[0.06]">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-blue-400" />
+                {dayNames[day] || `Day ${day}`}
+              </h3>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-[#8A96AA] border border-white/[0.06] tabular-nums">
+                {tasksByDay[day].filter(t => t.completed).length} / {tasksByDay[day].length} Done
+              </span>
+            </div>
 
-              <div className="space-y-2.5">
-                <AnimatePresence>
-                  {tasksByDay[day].map((task, i) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onToggle={() => toggleTask(task)}
-                      index={i}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
+            <div className="space-y-2">
+              <AnimatePresence>
+                {tasksByDay[day].map((task, i) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onToggle={() => toggleTask(task)}
+                    index={i}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         ))}
@@ -318,39 +314,39 @@ function TaskCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -15 }}
       transition={{ delay: index * 0.02 }}
-      className={`p-3.5 rounded-xl border transition-all ${
+      className={`p-3.5 rounded-lg border transition-all ${
         task.completed
-          ? "bg-[#090A10] border-white/[0.04] opacity-50"
-          : "bg-[#0F121C] border-white/[0.06] hover:border-white/15"
+          ? "bg-[#0A0C13] border-white/[0.04] opacity-45"
+          : "bg-[#0A0C13] border-white/[0.06] hover:border-white/[0.14]"
       }`}
     >
-      <div className="flex items-start gap-3.5">
+      <div className="flex items-start gap-3">
         <button
           onClick={onToggle}
-          className="mt-0.5 flex-shrink-0 transition-transform active:scale-90 p-0.5"
+          className="mt-0.5 flex-shrink-0 transition-transform active:scale-90 p-0.5 cursor-pointer"
         >
           {task.completed ? (
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
           ) : (
-            <Circle className="w-5 h-5 text-muted-foreground/60 hover:text-blue-400 transition-colors" />
+            <Circle className="w-5 h-5 text-[#64748B] hover:text-blue-400 transition-colors" />
           )}
         </button>
 
         <div className="flex-1 min-w-0">
           <p
             className={`text-xs sm:text-sm font-medium leading-snug ${
-              task.completed ? "line-through text-muted-foreground" : "text-white"
+              task.completed ? "line-through text-[#64748B]" : "text-white"
             }`}
           >
             {task.title}
           </p>
           {task.description && (
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            <p className="text-xs text-[#8A96AA] mt-1 leading-relaxed">
               {task.description}
             </p>
           )}
 
-          <div className="flex items-center gap-2 mt-2.5 font-mono text-[10px]">
+          <div className="flex items-center gap-2 mt-2 font-mono text-[10px]">
             <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${config.color}`}>
               <CategoryIcon className="w-3 h-3" />
               {config.label}
@@ -371,20 +367,20 @@ function EmptyState({
 }: {
   generating: boolean;
   onGenerate: () => void;
-  }) {
+}) {
   return (
     <div className="max-w-2xl mx-auto py-16 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-6 text-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
-        <Layers className="w-8 h-8" />
+      <div className="w-14 h-14 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-5 text-blue-400 shadow-sm">
+        <Layers className="w-7 h-7" />
       </div>
       <h2 className="text-2xl font-bold text-white mb-2">No Active Sprint Plan</h2>
-      <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto mb-8 leading-relaxed font-sans">
+      <p className="text-xs sm:text-sm text-[#8A96AA] max-w-md mx-auto mb-6 leading-relaxed font-sans">
         Synthesize your first customized weekly curriculum. Groq 120B will inspect your dossier gaps and schedule daily targeted problem sets.
       </p>
       <Button
         onClick={onGenerate}
         disabled={generating}
-        className="h-11 px-8 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-[0_0_25px_rgba(59,130,246,0.35)] transition-all"
+        className="h-10 px-6 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-sm transition-all cursor-pointer"
       >
         {generating ? (
           <span className="flex items-center gap-2">
@@ -405,11 +401,11 @@ function EmptyState({
 function LoadingSkeleton() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <Skeleton className="h-8 w-44 bg-white/[0.04]" />
-      <Skeleton className="h-28 rounded-2xl bg-white/[0.04]" />
+      <Skeleton className="h-8 w-44" />
+      <Skeleton className="h-28 rounded-xl" />
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 rounded-xl bg-white/[0.04]" />
+          <Skeleton key={i} className="h-16 rounded-lg" />
         ))}
       </div>
     </div>
