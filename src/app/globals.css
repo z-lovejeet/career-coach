@@ -1,5 +1,11 @@
+/* Hallmark · shape: Split Studio · genre: modern-minimal · theme: Cobalt (by request) · redesign: full
+ * hero: Settled · nav: edge-aligned · footer: mast · imagery: the product · signature: interactive technical interview workbench
+ * axes: light/grotesk-sans/cool · posture: restrained · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5 · weakest: S, anchored directly to real distributed systems interview rubrics */
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./tokens.css";
+@import "./base.css" layer(base);
 
 @custom-variant dark (&:is(.dark *));
 
