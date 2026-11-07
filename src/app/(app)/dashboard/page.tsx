@@ -1,553 +1,197 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import useSWR from "swr";
-import {
-  Sparkles,
-  TrendingUp,
-  Target,
-  CheckCircle2,
-  Circle,
-  Building2,
-  Code2,
-  ArrowRight,
-  Zap,
-  BookOpen,
-  Flame,
-  Star,
-  X,
-  ChevronRight,
-  Cpu,
-  Layers,
-  ArrowUpRight,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { Analysis, Task, CompanyRecommendation, CompanyMatch } from "@/types";
+import { ArrowRight, ArrowUpRight, Building2, CheckCircle2, ClipboardList, Flame, Map, Mic, Sparkles, Target, User, X } from "lucide-react";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { ReadinessLens } from "@/components/studio/readiness-lens";
+import { ActivityBars, type ProgressOverview } from "@/components/workspace/activity";
+import { request } from "@/components/workspace/api";
+import { ActionLink, clampPercent, ErrorNotice, IconTile, Notice, Panel, PanelHeading, PercentBar, prettyLabel, Tag, WorkspaceHeading, WorkspaceSkeleton } from "@/components/workspace/ui";
+import type { Analysis, CompanyRecommendation, Task } from "@/types";
 
-interface StreakInfo {
-  streak: { current: number; longest: number };
-  xp: { total: number; level: number; xpProgress: number };
+interface DashboardData {
+  profile: { full_name: string | null; onboarding_complete: boolean; skills?: string[]; goals?: string[] } | null;
+  analysis: Analysis | null;
+  tasks: Task[];
+  taskStats?: { total: number; completed: number };
+  recommendations: CompanyRecommendation | null;
+  streakInfo: { streak: { current: number }; xp: { level: number; total: number } } | null;
 }
 
-interface AgenticAlert {
+interface Alert {
   id: string;
-  type: 'action' | 'warning' | 'critical' | 'info' | 'motivation';
   title: string;
   message: string;
   action?: { label: string; href: string };
-  icon: string;
 }
-
-interface DashboardData {
-  analysis: Analysis | null;
-  tasks: Task[];
-  recommendations: CompanyRecommendation | null;
-  profile: { full_name: string; onboarding_complete: boolean } | null;
-  streakInfo: StreakInfo | null;
-}
-
-const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function DashboardPage() {
-  const { data: dashboardRes, isLoading: loadingDb } = useSWR('/api/dashboard', fetcher);
-  const { data: alertsRes } = useSWR('/api/alerts/check', fetcher);
+  const { data, error, isLoading, mutate } = useSWR("/api/dashboard", request<DashboardData>);
+  const { data: alertData } = useSWR("/api/alerts/check", request<{ alerts: Alert[] }>, { shouldRetryOnError: false });
+  const { data: progress, error: progressError, isLoading: loadingProgress, mutate: refreshProgress } = useSWR("/api/streak", request<ProgressOverview>);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  if (isLoading) return <WorkspaceSkeleton />;
+  if (!data) return <div className="workspace-page"><ErrorNotice error={error} retry={() => void mutate()} /></div>;
 
-  const data: DashboardData = dashboardRes?.success ? dashboardRes.data : {
-    analysis: null,
-    tasks: [],
-    recommendations: null,
-    profile: null,
-    streakInfo: null,
-  };
-
-  const alerts: AgenticAlert[] = alertsRes?.success ? alertsRes.data.alerts : [];
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
-  const router = useRouter();
-
-  const dismissAlert = (id: string) => {
-    setDismissedAlerts(prev => new Set(prev).add(id));
-  };
-
-  const visibleAlerts = alerts.filter(a => !dismissedAlerts.has(a.id));
-  const loading = loadingDb && !dashboardRes;
-
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
-
-  if (!data.analysis) {
-    return (
-      <GettingStarted
-        name={data.profile?.full_name}
-        onboardingComplete={data.profile?.onboarding_complete || false}
-        hasAnalysis={false}
-        hasRecommendations={!!data.recommendations}
-        hasTasks={data.tasks.length > 0}
-      />
-    );
-  }
-
-  const { analysis, tasks, recommendations } = data;
-  const completedTasks = tasks.filter(t => t.completed).length;
-  const totalTasks = tasks.length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const currentFit = (recommendations?.current_fit_companies || []) as CompanyMatch[];
-  const targets = (recommendations?.target_companies || []) as CompanyMatch[];
-
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* ─── Executive Command Header ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.07]">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-              Command HQ
-            </span>
-            <span className="text-[#64748B] text-xs">•</span>
-            <span className="font-mono text-[11px] text-[#8A96AA]">Placement Telemetry Active</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            Welcome back, {data.profile?.full_name?.split(" ")[0] || "Candidate"}
-          </h1>
-        </div>
-
-        {data.streakInfo && (
-          <div className="flex items-center gap-2 font-mono">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0E111A] border border-orange-500/25 text-orange-400">
-              <Flame className="w-3.5 h-3.5 fill-orange-500/30" />
-              <span className="text-xs font-semibold tabular-nums">{data.streakInfo.streak.current}</span>
-              <span className="text-[10px] text-[#8A96AA]">DAY STREAK</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0E111A] border border-blue-500/25 text-blue-400">
-              <Star className="w-3.5 h-3.5 fill-blue-500/30" />
-              <span className="text-xs font-semibold tabular-nums">Level {data.streakInfo.xp.level}</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ─── High-Priority Autonomous Alerts ─── */}
-      {visibleAlerts.length > 0 && (
-        <div className="rounded-xl border border-amber-500/25 bg-[#0E111A] overflow-hidden divide-y divide-white/[0.06] shadow-sm">
-          <div className="px-4 py-2.5 bg-amber-500/5 flex items-center justify-between">
-            <div className="flex items-center gap-2 font-mono text-xs">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span className="text-amber-300 font-semibold uppercase tracking-wider text-[11px]">
-                Proactive Mentor Telemetry
-              </span>
-            </div>
-            <span className="text-[10px] font-mono text-[#8A96AA]">
-              {visibleAlerts.length} unresolved {visibleAlerts.length > 1 ? 'items' : 'item'}
-            </span>
-          </div>
-          {visibleAlerts.slice(0, 2).map((alert) => (
-            <div key={alert.id} className="p-4 flex items-start gap-3.5 hover:bg-white/[0.02] transition-colors">
-              <span className="text-lg flex-shrink-0 mt-0.5">{alert.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white mb-0.5">{alert.title}</p>
-                <p className="text-xs text-[#8A96AA] leading-relaxed">{alert.message}</p>
-                {alert.action && (
-                  <Button
-                    size="sm"
-                    className="mt-2.5 h-7 px-3 rounded-md text-xs font-mono bg-primary hover:bg-blue-500 text-white cursor-pointer"
-                    onClick={() => router.push(alert.action!.href)}
-                  >
-                    {alert.action.label} <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
-                )}
-              </div>
-              <button
-                onClick={() => dismissAlert(alert.id)}
-                className="text-[#64748B] hover:text-white transition-colors p-1 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ─── Score & Readiness Metrics (Precision Bento) ─── */}
-      <div className="grid gap-5 md:grid-cols-12">
-        {/* Circular Gauge Card */}
-        <motion.div
-          className="md:col-span-4 rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 flex flex-col items-center justify-between text-center shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <div className="w-full flex items-center justify-between mb-1">
-            <span className="font-mono text-[10px] tracking-wider uppercase text-[#8A96AA]">Placement Gauge</span>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
-              DYNAMIC
-            </span>
-          </div>
-
-          <div className="relative w-36 h-36 my-2">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-              <motion.circle
-                cx="60" cy="60" r="50" fill="none"
-                stroke="url(#blueGaugeGrad)" strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 50}`}
-                initial={{ strokeDashoffset: 2 * Math.PI * 50 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 50 * (1 - analysis.readiness_score / 100) }}
-                transition={{ duration: 1.4, ease: "easeOut" }}
-              />
-              <defs>
-                <linearGradient id="blueGaugeGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#60A5FA" />
-                  <stop offset="60%" stopColor="#3B82F6" />
-                  <stop offset="100%" stopColor="#06B6D4" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center font-mono">
-              <span className="text-4xl font-bold tracking-tight text-white tabular-nums">{analysis.readiness_score}</span>
-              <span className="text-[10px] text-[#8A96AA] uppercase tracking-wider">READINESS</span>
-            </div>
-          </div>
-
-          <div className="w-full pt-3 border-t border-white/[0.06]">
-            <p className="text-xs font-semibold text-white">
-              {analysis.readiness_score >= 75
-                ? "Tier-1 Product Placement Ready"
-                : analysis.readiness_score >= 45
-                ? "High Potential • Close Target Gaps"
-                : "Foundation Stage • Complete Daily Tasks"}
-            </p>
-            <p className="text-[11px] text-[#8A96AA] mt-1 font-mono">
-              Calibrated against Google, Uber & Stripe rubrics
-            </p>
-          </div>
-        </motion.div>
-
-        {/* 6 KPI Stat Tiles */}
-        <div className="md:col-span-8 grid gap-3.5 grid-cols-2 sm:grid-cols-3">
-          <StatTile
-            icon={CheckCircle2}
-            label="Tasks Complete"
-            value={`${completedTasks}/${totalTasks}`}
-            sub={`${completionRate}% completion rate`}
-            color="text-emerald-400"
-          />
-          <StatTile
-            icon={Building2}
-            label="Matched Orgs"
-            value={String(currentFit.length + targets.length)}
-            sub={`${currentFit.length} fit, ${targets.length} target`}
-            color="text-blue-400"
-          />
-          <StatTile
-            icon={TrendingUp}
-            label="Core Strength"
-            value={analysis.strengths[0]?.skill || "DSA"}
-            sub="Verified via dossier"
-            color="text-sky-400"
-          />
-          <StatTile
-            icon={Target}
-            label="Primary Gap"
-            value={analysis.missing_skills[0]?.skill || "System Design"}
-            sub="High priority sprint"
-            color="text-amber-400"
-          />
-          <StatTile
-            icon={Code2}
-            label="Extracted Skills"
-            value={String(analysis.extracted_skills.length)}
-            sub="Gemini multi-modal"
-            color="text-indigo-400"
-          />
-          <StatTile
-            icon={Zap}
-            label="Top Target"
-            value={targets[0]?.name || currentFit[0]?.name || "Google"}
-            sub={targets[0] ? `${targets[0].match_score}% target fit` : "In analysis"}
-            color="text-rose-400"
-          />
-        </div>
-      </div>
-
-      {/* ─── AI Assessment Dossier ─── */}
-      <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-3 border-b border-white/[0.06] pb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-400" />
-            <h3 className="font-semibold text-sm text-white">Synthesized Placement Assessment</h3>
-          </div>
-          <span className="font-mono text-[10px] text-[#64748B]">ENGINE: GEMINI 3.8 FLASH</span>
-        </div>
-        <p className="text-xs sm:text-sm text-[#D0D6E2] leading-relaxed font-sans">
-          {analysis.summary}
-        </p>
-      </div>
-
-      {/* ─── Lower Split: High-Yield Tasks & Company Opportunities ─── */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Tasks Section */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 flex flex-col justify-between shadow-sm">
-          <div>
-            <div className="flex items-center justify-between mb-4 border-b border-white/[0.06] pb-3">
-              <h3 className="font-semibold text-sm text-white flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                High-Yield Practice Tasks
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/tasks")}
-                className="text-xs font-mono text-[#8A96AA] hover:text-white h-7 px-2 cursor-pointer"
-              >
-                All Tasks <ChevronRight className="w-3.5 h-3.5 ml-1" />
-              </Button>
-            </div>
-
-            {tasks.length > 0 ? (
-              <div className="space-y-2">
-                {tasks.slice(0, 5).map(task => (
-                  <div
-                    key={task.id}
-                    className={`p-3 rounded-lg border border-white/[0.05] bg-[#0A0C13] flex items-center gap-3 transition-all ${
-                      task.completed ? "opacity-40" : "hover:border-white/[0.12]"
-                    }`}
-                  >
-                    {task.completed ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-[#64748B] flex-shrink-0" />
-                    )}
-                    <span className={`text-xs font-medium flex-1 truncate ${task.completed ? "line-through text-[#64748B]" : "text-slate-200"}`}>
-                      {task.title}
-                    </span>
-                    <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-[#8A96AA] uppercase">
-                      {task.category}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-10 text-[#64748B] text-xs font-mono">
-                <BookOpen className="w-6 h-6 mx-auto mb-2 opacity-30" />
-                No tasks generated for this week.
-              </div>
-            )}
-          </div>
-
-          <Button
-            onClick={() => router.push("/tasks")}
-            variant="outline"
-            className="w-full mt-4 h-9 rounded-lg border-white/[0.1] text-xs font-mono tracking-wider uppercase text-slate-300 hover:bg-white/[0.04] cursor-pointer"
-          >
-            Open Full Task Board
-          </Button>
-        </div>
-
-        {/* Company Matches Section */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 flex flex-col justify-between shadow-sm">
-          <div>
-            <div className="flex items-center justify-between mb-4 border-b border-white/[0.06] pb-3">
-              <h3 className="font-semibold text-sm text-white flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-blue-400" />
-                Company Compatibility Radar
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/companies")}
-                className="text-xs font-mono text-[#8A96AA] hover:text-white h-7 px-2 cursor-pointer"
-              >
-                View Radar <ChevronRight className="w-3.5 h-3.5 ml-1" />
-              </Button>
-            </div>
-
-            {currentFit.length > 0 || targets.length > 0 ? (
-              <div className="space-y-2">
-                {[...currentFit.slice(0, 3), ...targets.slice(0, 2)].map((company, i) => (
-                  <div
-                    key={i}
-                    className="p-3 rounded-lg border border-white/[0.05] bg-[#0A0C13] flex items-center gap-3.5 hover:border-white/[0.12] transition-all"
-                  >
-                    <div className="w-9 h-9 rounded-md bg-blue-500/10 border border-blue-500/20 flex items-center justify-center font-mono text-xs font-bold text-blue-400 flex-shrink-0 tabular-nums">
-                      {company.match_score}%
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white truncate">{company.name}</p>
-                      <p className="text-[11px] text-[#8A96AA] truncate">{company.role}</p>
-                    </div>
-                    <span className={`font-mono text-[10px] px-2 py-0.5 rounded border uppercase ${
-                      company.match_score >= 60
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                        : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                    }`}>
-                      {company.match_score >= 60 ? "Current Fit" : "Target"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-10 text-[#64748B] text-xs font-mono">
-                <Building2 className="w-6 h-6 mx-auto mb-2 opacity-30" />
-                No company matches recorded.
-              </div>
-            )}
-          </div>
-
-          <Button
-            onClick={() => router.push("/companies")}
-            variant="outline"
-            className="w-full mt-4 h-9 rounded-lg border-white/[0.1] text-xs font-mono tracking-wider uppercase text-slate-300 hover:bg-white/[0.04] cursor-pointer"
-          >
-            Analyze Live Job Listings
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatTile({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  color,
-}: {
-  icon: typeof CheckCircle2;
-  label: string;
-  value: string;
-  sub: string;
-  color: string;
-}) {
-  return (
-    <div className="p-4 rounded-xl bg-[#0E111A] border border-white/[0.08] hover:border-white/[0.15] transition-colors flex flex-col justify-between">
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className={`w-3.5 h-3.5 ${color}`} />
-        <span className="font-mono text-[10px] uppercase tracking-wider text-[#8A96AA] truncate">{label}</span>
-      </div>
-      <div>
-        <p className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-white truncate tabular-nums">{value}</p>
-        <p className="text-[11px] text-[#8A96AA] truncate mt-0.5">{sub}</p>
-      </div>
-    </div>
-  );
-}
-
-function GettingStarted({
-  name,
-  onboardingComplete,
-  hasAnalysis,
-  hasRecommendations,
-  hasTasks,
-}: {
-  name?: string | null;
-  onboardingComplete: boolean;
-  hasAnalysis: boolean;
-  hasRecommendations: boolean;
-  hasTasks: boolean;
-}) {
-  const router = useRouter();
-  const steps = [
-    { title: "Complete Onboarding Dossier", desc: "Ingest resume, self-rate proficiencies, and specify target tiers", href: "/onboarding", done: onboardingComplete },
-    { title: "Run Deep AI Analysis", desc: "Let Gemini 3.8 decode gaps and calculate your readiness index", href: "/companies", done: hasAnalysis },
-    { title: "Establish Target Company Match", desc: "Map your skillset against real product company criteria", href: "/companies", done: hasRecommendations },
-    { title: "Generate Adaptive Task Plan", desc: "Groq 120B synthesizes a personalized weekly prep agenda", href: "/tasks", done: hasTasks },
+  const { profile, analysis, tasks, recommendations, streakInfo } = data;
+  const total = data.taskStats?.total ?? tasks.length;
+  const completed = data.taskStats?.completed ?? tasks.filter((task) => task.completed).length;
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0];
+  const readiness = analysis ? clampPercent(analysis.readiness_score) : null;
+  const alerts = (alertData?.alerts ?? []).filter((alert) => !dismissed.has(alert.id));
+  const matches = recommendations?.current_fit_companies ?? [];
+  const recentDays = progress?.heatmap?.slice(-7) ?? [];
+  const recentActivity = recentDays.reduce((sum, day) => sum + day.count, 0);
+  const activeDays = recentDays.filter((day) => day.count > 0).length;
+  const queued = tasks.filter((task) => !task.completed).sort((left, right) => (left.priority || 5) - (right.priority || 5));
+  const priorities = (analysis?.missing_skills ?? []).slice(0, 3);
+  const preparationSteps = [
+    { title: "Introduce yourself", detail: "Skills, projects, and career goals", href: "/profile", done: !!profile?.onboarding_complete },
+    { title: "Understand your starting point", detail: "A strengths and gaps assessment", href: "/profile", done: !!analysis },
+    { title: "Set up your practice", detail: "A plan with concrete weekly tasks", href: "/tasks", done: total > 0 },
+    { title: "Explore your opportunities", detail: "Companies matched to your profile", href: "/companies", done: !!recommendations },
   ];
-
-  const nextStep = steps.find(s => !s.done);
+  const next = !profile?.onboarding_complete
+    ? { title: "Complete your profile", description: "Add your skills and goals to make the workspace yours.", href: "/onboarding", icon: User }
+    : !analysis
+      ? { title: "Get a readiness assessment", description: "See your strengths and decide what to work on next.", href: "/profile", icon: Sparkles }
+      : { title: "Keep your plan moving", description: "Pick up your next practice task or build a weekly plan.", href: "/tasks", icon: ClipboardList };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[11px] font-mono text-blue-400 mb-2">
-          <span>ONBOARDING CALIBRATION</span>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">
-          Welcome to CareerAI, {name?.split(" ")[0] || "Candidate"}
-        </h1>
-        <p className="text-sm text-[#8A96AA] mt-1">
-          Follow the 4-step initialization protocol to calibrate your placement pipeline.
-        </p>
-      </div>
+    <div className="workspace-page space-y-7">
+      <WorkspaceHeading label="Overview" title={firstName ? `Welcome, ${firstName}.` : "Your career workspace."} description="A clear view of where you stand and what to work on next." actions={<ActionLink href="/progress">View progress</ActionLink>} />
 
-      <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2 font-mono">
-          <Cpu className="w-4 h-4 text-blue-400" />
-          Initialization Checklist
-        </h2>
-        <div className="space-y-2">
-          {steps.map((step, i) => (
-            <button
-              key={i}
-              onClick={() => !step.done && router.push(step.href)}
-              className={`w-full flex items-center gap-4 p-4 rounded-lg border border-white/[0.06] text-left transition-all ${
-                step.done ? "opacity-50 bg-[#0A0C13] cursor-default" : "hover:border-blue-500/30 bg-[#0D0F17] cursor-pointer"
-              }`}
-            >
-              {step.done ? (
-                <div className="w-7 h-7 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-mono text-xs font-bold flex-shrink-0">
-                  0{i + 1}
+      <div className="grid gap-5 lg:grid-cols-[1.55fr_1fr]">
+        <Panel className="relative isolate overflow-hidden">
+          <div className="flex h-full min-h-52 flex-wrap items-center justify-between gap-6">
+            <div className="max-w-sm">
+              <p className="eyebrow mb-3">Your next step</p>
+              <h2 className="text-balance text-2xl font-semibold sm:text-3xl">{next.title}</h2>
+              <p className="mb-5 mt-2 text-sm leading-relaxed text-muted-foreground">{next.description}</p>
+              <Link href={next.href} className={buttonVariants()}>{next.title === "Keep your plan moving" ? "Open practice" : "Get started"}<ArrowRight /></Link>
+            </div>
+            <ReadinessLens>
+              {readiness === null ? <next.icon className="size-11 text-primary/85" aria-hidden="true" /> : (
+                <div className="relative text-center">
+                  <p className="text-4xl font-semibold tabular-nums text-primary">{readiness}<span className="text-base">%</span></p>
+                  <p className="mt-1 text-xs font-medium text-muted-foreground">Readiness</p>
                 </div>
               )}
-              <div className="flex-1">
-                <p className={`font-semibold text-sm ${step.done ? "line-through text-slate-400" : "text-white"}`}>
-                  {step.title}
-                </p>
-                <p className="text-xs text-[#8A96AA] mt-0.5">{step.desc}</p>
-              </div>
-              {!step.done && <ChevronRight className="w-4 h-4 text-slate-400" />}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {nextStep && (
-        <div className="rounded-xl border border-blue-500/30 bg-[#0E111A] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-          <div>
-            <span className="font-mono text-[10px] uppercase tracking-wider text-blue-400">Next Action</span>
-            <h4 className="text-sm font-semibold text-white mt-0.5">{nextStep.title}</h4>
-            <p className="text-xs text-[#8A96AA]">{nextStep.desc}</p>
+            </ReadinessLens>
           </div>
-          <Button
-            onClick={() => router.push(nextStep.href)}
-            className="h-9 px-5 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-sm cursor-pointer"
-          >
-            Execute <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
+        </Panel>
 
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <Skeleton className="h-8 w-64 mb-2" />
-        <Skeleton className="h-4 w-44" />
+        <Panel>
+          <PanelHeading title="At a glance" />
+          <dl className="divide-y divide-border">
+            {[
+              { icon: CheckCircle2, label: "Practice completed", value: `${completed} / ${total}` },
+              { icon: Flame, label: "Current streak", value: `${streakInfo?.streak.current ?? 0} days` },
+              { icon: Sparkles, label: "Experience", value: `${streakInfo?.xp.total ?? 0} XP` },
+              { icon: Target, label: "Company matches", value: String(matches.length) },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="flex items-center justify-between gap-3 py-3 first:pt-0">
+                <dt className="flex items-center gap-2.5 text-sm text-muted-foreground"><Icon className="size-4 text-primary" />{label}</dt>
+                <dd className="font-semibold tabular-nums">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-4 border-t border-border pt-4">
+            <div className="mb-2 flex justify-between gap-2 text-xs text-muted-foreground"><span>Practice completion</span><span>{total ? Math.round(completed * 100 / total) : 0}%</span></div>
+            <PercentBar value={total ? completed * 100 / total : 0} label="All practice completion" />
+          </div>
+        </Panel>
       </div>
-      <div className="grid gap-5 md:grid-cols-12">
-        <div className="md:col-span-4 p-6 rounded-xl border border-white/[0.08] bg-[#0E111A]">
-          <Skeleton className="w-36 h-36 rounded-full mx-auto mb-4" />
-          <Skeleton className="h-4 w-32 mx-auto" />
-        </div>
-        <div className="md:col-span-8 grid gap-3.5 grid-cols-2 sm:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="p-4 rounded-xl border border-white/[0.08] bg-[#0E111A]">
-              <Skeleton className="h-3 w-16 mb-3" />
-              <Skeleton className="h-6 w-20 mb-1" />
-              <Skeleton className="h-3 w-28" />
-            </div>
-          ))}
-        </div>
+
+      <div className="grid items-start gap-5 lg:grid-cols-[1.55fr_1fr]">
+        <Panel>
+          <PanelHeading title="Your week in practice" description="Completed tasks and interview sessions started over the last seven days." action={progress && <Tag tone="accent">{recentActivity} activities</Tag>} />
+          {loadingProgress ? <p role="status" className="text-sm text-muted-foreground">Loading your activity…</p> : progressError ? <ErrorNotice error={progressError} retry={() => void refreshProgress()} /> : recentDays.length ? <ActivityBars days={recentDays} /> : <p className="text-sm text-muted-foreground">Your daily activity will appear here as you practice.</p>}
+          {progress && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4 text-sm">
+            <p className="text-muted-foreground">{activeDays} active {activeDays === 1 ? "day" : "days"} this week</p>
+            <ActionLink href="/progress" variant="ghost">Explore activity</ActionLink>
+          </div>}
+        </Panel>
+        <Panel>
+          <PanelHeading title="A focus worth your time" description="Suggested from your latest assessment." action={<IconTile icon={Target} />} />
+          {priorities.length ? <ul className="space-y-4">{priorities.map((gap, index) => <li key={index}>
+            <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-medium">{typeof gap === "string" ? gap : gap.skill}</p>{typeof gap !== "string" && gap.importance && <Tag tone={gap.importance === "critical" ? "warning" : "neutral"}>{prettyLabel(gap.importance)}</Tag>}</div>
+            {typeof gap !== "string" && gap.reason && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{gap.reason}</p>}
+          </li>)}</ul> : <p className="text-sm leading-relaxed text-muted-foreground">{analysis ? "Build on the strengths in your latest assessment, or refresh it after adding new experience." : "Run a profile assessment to see which skills deserve the most attention."}</p>}
+          <div className="mt-5"><ActionLink href={analysis ? "/roadmap" : "/profile"} variant="outline">{analysis ? "Plan your focus" : "Open profile"}</ActionLink></div>
+        </Panel>
+      </div>
+
+      {alerts.length > 0 && (
+        <Panel>
+          <PanelHeading title="Worth your attention" />
+          <ul className="divide-y divide-border">
+            {alerts.map((alert) => (
+              <li className="flex flex-wrap items-start gap-3 py-3 first:pt-0 last:pb-0" key={alert.id}>
+                <div className="min-w-48 flex-1">
+                  <p className="text-sm font-semibold">{alert.title.replace(/^[^\p{L}\p{N}]+/u, "")}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{alert.message}</p>
+                </div>
+                {alert.action && <ActionLink href={alert.action.href} variant="ghost">{alert.action.label}</ActionLink>}
+                <Button variant="ghost" size="icon" aria-label={`Dismiss ${alert.title}`} onClick={() => setDismissed((current) => new Set(current).add(alert.id))}><X /></Button>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Panel>
+          <PanelHeading title="Up next on your board" description="Unfinished tasks from your recent practice, ordered by priority." action={<ActionLink href="/tasks" variant="ghost">View board</ActionLink>} />
+          {queued.length ? (
+            <ul className="divide-y divide-border">
+              {queued.slice(0, 4).map((task) => (
+                <li key={task.id} className="flex items-center justify-between gap-3 py-3 first:pt-0">
+                  <div className="min-w-0"><p className="break-words text-sm font-medium">{task.title}</p><p className="mt-1 text-xs text-muted-foreground">{prettyLabel(task.category)}{task.week_number ? ` · Week ${task.week_number}` : ""}</p></div>
+                  <Tag tone={task.priority === 1 ? "warning" : "neutral"}>{task.priority === 1 ? "High priority" : prettyLabel(task.difficulty) || "To do"}</Tag>
+                </li>
+              ))}
+            </ul>
+          ) : <Notice icon={ClipboardList} title={total ? "Your recent practice is complete" : "Room for your first task"} description={total ? "Open the board to revisit previous work or generate another week." : "Generate a weekly practice plan once your profile is assessed."} />}
+        </Panel>
+        <Panel>
+          <PanelHeading title="Company matches" action={<ActionLink href="/companies" variant="ghost">Explore</ActionLink>} />
+          {matches.length ? (
+            <ul className="divide-y divide-border">
+              {matches.slice(0, 3).map((match, index) => (
+                <li key={`${match.name}-${index}`} className="flex items-center justify-between gap-3 py-3 first:pt-0">
+                  <div><p className="font-medium">{match.name}</p><p className="text-sm text-muted-foreground">{match.role}</p></div>
+                  <Tag tone="accent">{clampPercent(match.match_score)}% fit</Tag>
+                </li>
+              ))}
+            </ul>
+          ) : <Notice icon={Building2} title="Explore where you fit" description="Get suggested companies based on your skills and preferences." />}
+        </Panel>
+      </div>
+
+      {analysis?.summary && <Panel><PanelHeading title="Readiness assessment" action={<ActionLink href="/profile" variant="ghost">Full assessment</ActionLink>} /><p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">{analysis.summary}</p></Panel>}
+
+      <Panel>
+        <PanelHeading title="Your preparation, connected" description="Each step adds useful context to the next. Choose any step to revisit it." action={<Tag>{preparationSteps.filter((step) => step.done).length} of {preparationSteps.length} ready</Tag>} />
+        <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {preparationSteps.map((step, index) => <li key={step.title}><Link href={step.href} className="flex h-full items-start gap-3 rounded-2xl border border-border p-4 transition-colors hover:bg-background/45">
+            <span className="grid size-7 shrink-0 place-items-center rounded-full border border-border text-xs font-semibold text-primary">{step.done ? <CheckCircle2 className="size-4" /> : `0${index + 1}`}</span>
+            <span><span className="block text-sm font-semibold">{step.title}</span><span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{step.detail}</span></span>
+          </Link></li>)}
+        </ol>
+      </Panel>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {[
+          { href: "/roadmap", icon: Map, title: "Plan your next milestone" },
+          { href: "/interview", icon: Mic, title: "Practice an interview" },
+        ].map(({ href, icon, title }) => (
+          <Link key={href} href={href} className="glass-panel flex items-center gap-3 p-4 text-sm font-medium transition-colors hover:bg-background/45">
+            <IconTile icon={icon} />{title}<ArrowUpRight className="ml-auto size-4 text-primary" />
+          </Link>
+        ))}
       </div>
     </div>
   );
