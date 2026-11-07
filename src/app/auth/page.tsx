@@ -1,495 +1,415 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { Suspense, useState, type FormEvent } from "react";
+import { ArrowLeft, ArrowRight, Check, Mail, UserRound } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { Brand } from "@/components/studio/brand";
+import { SiteFooter } from "@/components/studio/site-footer";
+import { openGuestWorkspace } from "@/components/studio/guest-action";
+import { Turnstile } from "@/components/studio/turnstile";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Mail,
-  Lock,
-  User,
-  ArrowRight,
-  ShieldCheck,
-  Zap,
-  Sparkles,
-  AlertCircle,
-  Cpu,
-  KeyRound,
-  X,
-} from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
-import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
-function AuthContent() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [guestLoading, setGuestLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+const modes = {
+  login: {
+    label: "Sign in",
+    heading: "Welcome back",
+    description: "Pick up your preparation where you left off.",
+  },
+  register: {
+    label: "Create account",
+    heading: "Create an account",
+    description: "Set up your own preparation workspace.",
+  },
+  guest: {
+    label: "Guest",
+    heading: "Try the workspace",
+    description:
+      "Explore a sample profile and practice plan in a guest session.",
+  },
+};
+
+type Mode = keyof typeof modes;
+
+function GoogleMark() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.2 3.6l6.86-6.86C35.9 2.38 30.48 0 24 0 14.62 0 6.51 5.38 2.56 13.22l8 6.21C12.45 13.72 17.74 9.5 24 9.5Z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.24 5.48-4.75 7.17l7.73 6C44.43 38 46.98 31.87 46.98 24.55Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.57A14.4 14.4 0 0 1 9.77 24c0-1.59.27-3.13.76-4.57l-8-6.21A24 24 0 0 0 0 24c0 3.87.92 7.53 2.56 10.78l7.97-6.21Z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.92-5.81l-7.73-6c-2.15 1.45-4.92 2.31-8.19 2.31-6.26 0-11.55-4.22-13.44-9.93l-8 6.21C6.51 42.62 14.62 48 24 48Z"
+      />
+    </svg>
+  );
+}
+
+function AuthForm({
+  mode,
+  callbackError,
+}: {
+  mode: Mode;
+  callbackError: string | null;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
-  const [googleModalOpen, setGoogleModalOpen] = useState(false);
+  const [error, setError] = useState(callbackError);
+  const [pending, setPending] = useState<"form" | "google" | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaAttempt, setCaptchaAttempt] = useState(0);
+  const { heading, description } = modes[mode];
 
-  const searchParams = useSearchParams();
-  const oauthError = searchParams.get("error");
-  const supabase = createClient();
-
-  useEffect(() => {
-    if (oauthError) {
-      const decoded = decodeURIComponent(oauthError);
-      setFormError(`OAuth Error: ${decoded}`);
-      toast.error(`Authentication notice: ${decoded}`);
-    }
-  }, [oauthError]);
-
-  const handleGuestLogin = async () => {
-    setFormError(null);
-    setGuestLoading(true);
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setPending("form");
     try {
-      toast.info("Calibrating pre-seeded L4 Guest candidate dossier...");
-      const res = await fetch("/api/auth/guest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to initialize guest session");
+      if (mode === "guest") {
+        await openGuestWorkspace(captchaToken || undefined);
+        return;
       }
-
-      toast.success("Guest candidate authenticated! Launching Command Center...");
-      window.location.href = data.redirect || "/dashboard";
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Guest authentication failed";
-      setFormError(message);
-      toast.error(message);
-      setGuestLoading(false);
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    setFormError(null);
-    setGoogleLoading(true);
-    try {
-      const origin = window.location.origin;
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${origin}/auth/callback`,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
-      });
-
-      if (error) {
-        if (
-          error.message.includes("provider is not enabled") ||
-          error.message.includes("Unsupported provider")
-        ) {
-          setGoogleModalOpen(true);
-          setGoogleLoading(false);
-          return;
-        }
-        throw error;
-      }
-
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Google sign-in failed";
-      setFormError(message);
-      toast.error(message);
-      setGoogleLoading(false);
-    }
-  };
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-    setLoading(true);
-
-    try {
-      if (isLogin) {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: email.trim(),
-            password,
-          }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || "Invalid credentials. If new, click 'Create Account' tab.");
-        }
-
-        toast.success("Identity verified! Entering Command Center...");
-        window.location.href = data.redirect || "/dashboard";
-      } else {
-        const res = await fetch("/api/auth/register", {
+      const response = await fetch(
+        mode === "register" ? "/api/auth/register" : "/api/auth/login",
+        {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: email.trim(),
             password,
             fullName: fullName.trim(),
+            captchaToken,
           }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || "Registration failed");
-        }
-
-        toast.success("Account initialized! Calibrating candidate dossier...");
-        window.location.href = data.redirect || "/onboarding";
+        },
+      );
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(
+          typeof result.error === "string"
+            ? result.error
+            : "We couldn’t complete your request. Try again.",
+        );
       }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Authentication failed";
-      setFormError(message);
-      toast.error(message);
-      setLoading(false);
+      if (mode === "register") {
+        setPassword("");
+        setConfirmed(true);
+        setPending(null);
+        return;
+      }
+      const destination =
+        result.redirect === "/onboarding" ? "/onboarding" : "/dashboard";
+      window.location.assign(new URL(destination, window.location.origin));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "We couldn’t complete your request. Try again.",
+      );
+      setCaptchaToken("");
+      setCaptchaAttempt((attempt) => attempt + 1);
+      setPending(null);
     }
-  };
+  }
+
+  async function googleSignIn() {
+    setError(null);
+    setPending("google");
+    try {
+      const { data, error } = await createClient().auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error || !data.url)
+        throw new Error(
+          "Google sign-in is unavailable right now. You can continue with email.",
+        );
+      window.location.assign(data.url);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Google sign-in is unavailable right now.",
+      );
+      setPending(null);
+    }
+  }
+
+  if (confirmed) {
+    return (
+      <section
+        className="auth-form glass-panel space-y-4"
+        aria-labelledby="auth-title"
+      >
+        <div className="flex size-12 items-center justify-center rounded-xl bg-accent text-primary">
+          <Mail size={22} aria-hidden />
+        </div>
+        <h1 id="auth-title" className="text-3xl font-extrabold">
+          Check your inbox
+        </h1>
+        <p
+          role="status"
+          className="text-sm leading-relaxed text-muted-foreground"
+        >
+          If this address can be registered, a confirmation email will arrive at{" "}
+          <strong className="break-all text-foreground">{email}</strong>. Open
+          the link in this browser to finish creating your account.
+        </p>
+        <Link href="/auth" className="studio-link -ml-3">
+          <ArrowLeft size={16} aria-hidden /> Back to sign in
+        </Link>
+      </section>
+    );
+  }
 
   return (
-    <div className="w-full max-w-[420px] relative z-10">
-      {/* Brand Header */}
-      <div className="flex flex-col items-center mb-6 text-center">
-        <Link href="/" className="inline-flex items-center gap-2.5 mb-3 group">
-          <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/[0.12] p-0.5 bg-[#0D0F17] shadow-sm flex items-center justify-center">
-            <Image src="/logo.png" alt="CareerAI" fill className="object-cover rounded-md" />
-          </div>
-          <span className="text-lg font-semibold tracking-tight text-white group-hover:text-blue-400 transition-colors">
-            CareerAI
-          </span>
-        </Link>
-        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[11px] font-mono text-[#8A96AA]">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span>AUTONOMOUS AUTH GATEWAY</span>
-        </div>
+    <section
+      className="auth-form glass-panel space-y-5"
+      aria-labelledby="auth-title"
+    >
+      <nav className="auth-tablist" aria-label="Account options">
+        {Object.entries(modes).map(([key, value]) => (
+          <Link
+            key={key}
+            href={key === "login" ? "/auth" : `/auth?mode=${key}`}
+            aria-current={mode === key ? "page" : undefined}
+            scroll={false}
+          >
+            {value.label}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="space-y-1.5">
+        <h1 id="auth-title" className="text-3xl font-extrabold">
+          {heading}
+        </h1>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
 
-      {/* Global Form Error Alert if any */}
-      {formError && (
-        <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/25 flex items-start gap-2.5 text-xs text-rose-200">
-          <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium">Authentication Notice</p>
-            <p className="text-[11px] text-rose-300/80 mt-0.5 font-mono">{formError}</p>
-          </div>
-        </div>
+      {error && (
+        <p
+          role="alert"
+          className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-destructive"
+        >
+          {error}
+        </p>
       )}
 
-      {/* ─── 1-Click Instant Guest Access Card ─── */}
-      <div className="mb-4 rounded-xl border border-white/[0.08] bg-[#0E111A] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.4)] flex flex-col gap-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="p-1.5 rounded-md bg-blue-500/15 border border-blue-500/25 text-blue-400">
-              <Zap className="w-4 h-4" />
-            </span>
-            <div>
-              <h2 className="text-xs font-semibold text-white tracking-wide">
-                1-Click Instant Guest Access
-              </h2>
-              <p className="text-[11px] text-[#8A96AA]">
-                Pre-calibrated L4 Engineer dossier with sample roadmap & tasks
-              </p>
-            </div>
+      <form className="space-y-4" onSubmit={submit}>
+        {mode === "register" && (
+          <div className="space-y-2">
+            <Label htmlFor="full-name">Name</Label>
+            <Input
+              id="full-name"
+              name="name"
+              autoComplete="name"
+              required
+              maxLength={100}
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+            />
           </div>
-          <span className="text-[9px] font-mono font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
-            Zero Setup
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleGuestLogin}
-          disabled={guestLoading || loading || googleLoading}
-          className="w-full h-10 rounded-lg bg-primary hover:bg-blue-500 text-white text-xs font-medium tracking-wide shadow-[0_2px_12px_rgba(59,130,246,0.3)] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-        >
-          {guestLoading ? (
-            <span className="flex items-center gap-2">
-              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>Launching Guest Cockpit...</span>
-            </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-              <span>Explore as Guest Candidate</span>
-              <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Main Authentication Card */}
-      <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 sm:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-        {/* Tab Switcher */}
-        <div className="p-1 rounded-lg bg-[#0A0C13] border border-white/[0.08] flex items-center gap-1 mb-5">
-          <button
-            type="button"
-            onClick={() => {
-              setIsLogin(true);
-              setFormError(null);
-            }}
-            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
-              isLogin
-                ? "bg-white/[0.08] text-white border border-white/[0.1] shadow-sm font-semibold"
-                : "text-[#8A96AA] hover:text-white"
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsLogin(false);
-              setFormError(null);
-            }}
-            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all cursor-pointer ${
-              !isLogin
-                ? "bg-white/[0.08] text-white border border-white/[0.1] shadow-sm font-semibold"
-                : "text-[#8A96AA] hover:text-white"
-            }`}
-          >
-            Create Account
-          </button>
-        </div>
-
-        {/* Header Description */}
-        <div className="mb-4">
-          <h1 className="text-base font-semibold tracking-tight text-white">
-            {isLogin ? "Authenticate Credentials" : "Create Candidate Dossier"}
-          </h1>
-          <p className="text-xs text-[#8A96AA] mt-0.5">
-            {isLogin
-              ? "Access your calibrated roadmap & active mentor logs"
-              : "Begin multi-agent placement evaluation & interview practice"}
-          </p>
-        </div>
-
-        {/* Google OAuth Button */}
-        <button
-          type="button"
-          onClick={handleGoogleAuth}
-          disabled={googleLoading || loading || guestLoading}
-          className="w-full h-10 border border-white/[0.1] bg-[#0A0C13] hover:bg-white/[0.04] text-white text-xs font-medium mb-4 flex items-center justify-center gap-2.5 rounded-lg transition-all cursor-pointer disabled:opacity-50"
-        >
-          {googleLoading ? (
-            <span className="flex items-center gap-2">
-              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>Redirecting to Google...</span>
-            </span>
-          ) : (
-            <>
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
-              </svg>
-              <span>Continue with Google</span>
-            </>
-          )}
-        </button>
-
-        {/* Divider */}
-        <div className="relative mb-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/[0.07]" />
-          </div>
-          <div className="relative flex justify-center text-[10px] font-mono uppercase tracking-widest">
-            <span className="bg-[#0E111A] px-2.5 text-[#64748B]">or email key</span>
-          </div>
-        </div>
-
-        {/* Email / Password Form */}
-        <form onSubmit={handleEmailAuth} className="space-y-3.5">
-          {!isLogin && (
-            <div className="space-y-1">
-              <Label htmlFor="fullName" className="text-xs font-mono text-[#8A96AA]">
-                Candidate Full Name
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Alex Chen"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="pl-9.5 h-9.5"
-                  required={!isLogin}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-1">
-            <Label htmlFor="email" className="text-xs font-mono text-[#8A96AA]">
-              Email Address
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+        )}
+        {mode !== "guest" && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email address</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
-                placeholder="engineer@domain.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-9.5 h-9.5"
+                autoComplete="email"
                 required
+                maxLength={254}
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
               />
             </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-xs font-mono text-[#8A96AA]">
-                Password
-              </Label>
-              <span className="text-[10px] font-mono text-[#64748B]">Min 6 characters</span>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                placeholder="••••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-9.5 h-9.5"
+                autoComplete={
+                  mode === "register" ? "new-password" : "current-password"
+                }
+                minLength={mode === "register" ? 8 : undefined}
                 required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
               />
+              {mode === "register" && (
+                <p className="text-xs text-muted-foreground">
+                  Use at least 8 characters.
+                </p>
+              )}
             </div>
-          </div>
+          </>
+        )}
+        {mode === "guest" && (
+          <ul className="space-y-2.5 text-sm text-muted-foreground">
+            <li className="flex gap-2">
+              <Check
+                className="mt-0.5 shrink-0 text-primary"
+                size={15}
+                aria-hidden
+              />{" "}
+              Explore with sample data.
+            </li>
+            <li className="flex gap-2">
+              <Check
+                className="mt-0.5 shrink-0 text-primary"
+                size={15}
+                aria-hidden
+              />{" "}
+              Use this browser to return to your session.
+            </li>
+          </ul>
+        )}
+        {siteKey && (
+          <Turnstile
+            key={captchaAttempt}
+            siteKey={siteKey}
+            onToken={setCaptchaToken}
+          />
+        )}
+        <button
+          type="submit"
+          className="studio-button w-full"
+          disabled={pending !== null || Boolean(siteKey && !captchaToken)}
+        >
+          {pending === "form"
+            ? "Please wait…"
+            : mode === "guest"
+              ? "Open guest workspace"
+              : mode === "register"
+                ? "Send confirmation email"
+                : "Sign in"}
+          <ArrowRight size={16} aria-hidden />
+        </button>
+      </form>
 
-          <Button
-            type="submit"
-            disabled={loading || guestLoading || googleLoading}
-            className="w-full h-10 mt-1 font-medium text-xs tracking-wide uppercase transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Verifying Session...</span>
-              </span>
-            ) : (
-              <span className="flex items-center justify-center gap-2">
-                {isLogin ? "Sign In to Command Center" : "Create Confirmed Dossier"}
-                <ArrowRight className="w-3.5 h-3.5" />
-              </span>
-            )}
-          </Button>
-        </form>
-      </div>
-
-      {/* Security & Architecture Telemetry Badges */}
-      <div className="mt-5 flex items-center justify-center gap-3 text-[11px] font-mono text-[#64748B]">
-        <span className="flex items-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Supabase RLS Protected</span>
-        </span>
-        <span>•</span>
-        <span className="flex items-center gap-1.5">
-          <Cpu className="w-3.5 h-3.5 text-blue-400" />
-          <span>Groq 120B & Gemini 3.8</span>
-        </span>
-      </div>
-
-      {/* ─── Google OAuth Setup Guide Modal ─── */}
-      {googleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-md p-6 rounded-xl bg-[#0E111A] border border-white/[0.1] shadow-2xl relative">
-            <button
-              onClick={() => setGoogleModalOpen(false)}
-              className="absolute top-4 right-4 text-[#8A96AA] hover:text-white p-1 rounded-md cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-2.5 mb-3 text-amber-300">
-              <KeyRound className="w-5 h-5" />
-              <h3 className="text-sm font-semibold tracking-tight text-white">
-                Google OAuth Setup Notice
-              </h3>
-            </div>
-
-            <p className="text-xs text-[#8A96AA] leading-relaxed mb-4">
-              Google Sign-in is not yet enabled in your Supabase project. To complete setup:
-            </p>
-
-            <div className="p-3 rounded-lg bg-[#0A0C13] border border-white/[0.06] text-[11px] font-mono text-slate-300 space-y-2 mb-4">
-              <p>1. Open Supabase Dashboard → Authentication → Providers → Google</p>
-              <p>2. Enter your Google Client ID & Secret from Google Cloud Console</p>
-              <p>3. Click &quot;Save&quot; in Supabase</p>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => {
-                  setGoogleModalOpen(false);
-                  handleGuestLogin();
-                }}
-                className="w-full h-10 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-semibold tracking-wide uppercase transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Zap className="w-3.5 h-3.5" />
-                <span>Continue as Guest Instead (1-Click)</span>
-              </button>
-
-              <button
-                onClick={() => setGoogleModalOpen(false)}
-                className="w-full h-9 rounded-lg border border-white/[0.1] hover:bg-white/[0.04] text-[#8A96AA] hover:text-white text-xs font-mono transition-all cursor-pointer"
-              >
-                Close & Use Email Sign-In
-              </button>
-            </div>
-          </div>
-        </div>
+      {mode !== "guest" && (
+        <button
+          type="button"
+          className="studio-link w-full border border-border bg-card/45"
+          onClick={googleSignIn}
+          disabled={pending !== null}
+        >
+          <GoogleMark />
+          {pending === "google" ? "Connecting…" : "Continue with Google"}
+        </button>
       )}
-    </div>
+    </section>
+  );
+}
+
+function AuthRouter() {
+  const params = useSearchParams();
+  const requestedMode = params.get("mode");
+  const mode =
+    requestedMode === "guest" || requestedMode === "register"
+      ? requestedMode
+      : "login";
+  const error = params.get("error");
+  return (
+    <AuthForm
+      key={mode + (error || "")}
+      mode={mode}
+      callbackError={error?.slice(0, 240) || null}
+    />
   );
 }
 
 export default function AuthPage() {
   return (
-    <div className="min-h-screen bg-[#08090C] text-[#F4F6FB] flex items-center justify-center px-4 py-12 relative overflow-hidden">
-      <div className="fixed inset-0 subtle-grid pointer-events-none opacity-25" />
-      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(59,130,246,0.08),transparent)] pointer-events-none" />
-
-      <Suspense
-        fallback={
-          <div className="w-full max-w-[420px] p-8 rounded-xl bg-[#0E111A] border border-white/[0.08] text-center font-mono text-xs text-[#8A96AA]">
-            <span className="w-4 h-4 border-2 border-white/30 border-t-blue-500 rounded-full animate-spin inline-block mb-3" />
-            <p>Loading Encrypted Gateway...</p>
+    <>
+      <header className="studio-frame studio-nav">
+        <div className="studio-nav-inner glass-raised">
+          <Brand />
+          <Link href="/" className="studio-link">
+            <ArrowLeft size={15} aria-hidden /> Back to home
+          </Link>
+        </div>
+      </header>
+      <main id="main-content" className="studio-frame auth-layout">
+        <div className="auth-art glass-shell" data-liquid-surface>
+          <div className="space-y-5">
+            <p className="eyebrow flex items-center gap-2">
+              <UserRound size={14} aria-hidden /> A space for your next chapter
+            </p>
+            <h2 className="max-w-[13ch] text-4xl font-semibold leading-[1.05] tracking-tight lg:text-5xl">
+              A little clarity.
+              <br />A steady way forward.
+            </h2>
+            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Bring your goals, experience, and questions. Shape a preparation
+              routine that fits the role you want and the time you have.
+            </p>
+            <ul className="glass-inset grid gap-4 p-5 text-sm">
+              {[
+                [
+                  "Know your starting point",
+                  "Bring your skills and experience into one profile.",
+                ],
+                [
+                  "Build a practical plan",
+                  "Turn your goals into weekly milestones and practice.",
+                ],
+                [
+                  "Get feedback as you go",
+                  "Review your answers, refine your thinking, and return to what matters.",
+                ],
+              ].map(([title, description]) => (
+                <li key={title} className="flex items-start gap-3">
+                  <Check
+                    size={15}
+                    className="mt-1 shrink-0 text-primary"
+                    aria-hidden
+                  />
+                  <div>
+                    <p className="font-semibold">{title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-        }
-      >
-        <AuthContent />
-      </Suspense>
-    </div>
+        </div>
+        <Suspense
+          fallback={
+            <div
+              className="auth-form glass-panel min-h-80 animate-pulse"
+              role="status"
+            >
+              <span className="sr-only">Loading account options</span>
+            </div>
+          }
+        >
+          <AuthRouter />
+        </Suspense>
+      </main>
+      <SiteFooter />
+    </>
   );
 }
