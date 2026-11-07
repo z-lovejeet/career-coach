@@ -1,195 +1,185 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
+import { NextResponse } from 'next/server';
+import { readResumeWithGemini } from '@/lib/agents/resume';
 import { createClient } from '@/lib/supabase/server';
+import { enforceAIQuota } from '@/lib/supabase/ai-quota';
+import { getResumePath, isPdf, MAX_RESUME_BYTES, openResumeStream, readBoundedStream, RESUME_BUCKET, RESUME_ENDPOINT } from '@/lib/supabase/resume';
 
-const RESUME_EXTRACTION_PROMPT = `You are an expert resume parser. Extract the following information from this resume PDF.
-
-Return ONLY valid JSON matching this exact schema — no extra text, no markdown:
+const MAX_MULTIPART_BYTES = MAX_RESUME_BYTES + 64 * 1024;
+const extractionPrompt = `Extract only information supported by the attached resume. Return a JSON object with these fields:
 {
-  "full_name": "string or empty",
-  "skills": ["string array of all technical and soft skills mentioned"],
-  "skill_ratings": { "skillName": 1-10 },
-  "projects": [
-    { "name": "string", "tech": ["tech stack"], "description": "1 sentence", "url": "" }
-  ],
-  "education_level": "B.Tech|M.Tech|BCA|MCA|BSc|MSc|PhD|Other",
-  "field_of_study": "string like Computer Science",
-  "experience_level": "fresher|junior|mid|senior",
-  "preferred_role": "best matching role like Full Stack Developer",
-  "summary": "2-3 sentence professional summary of the candidate"
+  "full_name": "",
+  "skills": ["technical or soft skill"],
+  "skill_ratings": { "skillName": 5 },
+  "projects": [{ "name": "", "tech": [], "description": "", "url": "" }],
+  "education_level": "High School|Diploma|B.Tech / B.E.|B.Sc|BCA|M.Tech / M.E.|M.Sc|MCA|MBA|PhD|Other",
+  "field_of_study": "",
+  "experience_level": "fresher|intern|0-1|1-3|3+",
+  "preferred_role": "",
+  "summary": ""
+}
+Rate skills from 1 to 10 based on evidence. Leave unsupported fields empty.`;
+
+function failure(status: number, code: string, message: string) {
+  return NextResponse.json({ success: false, error: { code, message } }, { status });
 }
 
-RULES:
-- Rate each skill 1-10 based on evidence in resume (projects, experience, certifications)
-- If a skill is just listed with no evidence, rate it 3-4
-- If demonstrated in projects/work, rate it 5-7
-- If extensive experience or certifications, rate 8-10
-- Extract ALL skills — programming languages, frameworks, tools, soft skills
-- For projects, extract name, tech stack, and a brief description
-- Be accurate. Only extract what's actually in the resume.`;
+async function currentResume() {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return { response: failure(401, 'unauthorized', 'Sign in to manage your resume.') };
+  const { data: profile, error } = await supabase.from('profiles').select('resume_url').eq('id', user.id).maybeSingle();
+  if (error) return { response: failure(503, 'profile_unavailable', 'Your profile is temporarily unavailable.') };
+  if (!profile) return { response: failure(404, 'no_profile', 'Your candidate profile could not be found.') };
+  const reference: string | null = profile.resume_url;
+  return { supabase, user, reference };
+}
 
-export async function POST(request: NextRequest) {
+const asText = (value: unknown, max = 300) => typeof value === 'string' ? value.trim().slice(0, max) : '';
+const asStrings = (value: unknown, max = 50) => Array.isArray(value) ? value.slice(0, max).map((item) => asText(item, 80)).filter(Boolean) : [];
+
+function parseExtraction(text: string) {
+  if (!text) return null;
+  const value: unknown = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/gi, ''));
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  const ratings = raw.skill_ratings && typeof raw.skill_ratings === 'object' && !Array.isArray(raw.skill_ratings)
+    ? Object.entries(raw.skill_ratings).slice(0, 50).filter(([name, rating]) => name.length <= 80 && typeof rating === 'number' && Number.isFinite(rating))
+    : [];
+  const projects = Array.isArray(raw.projects) ? raw.projects.slice(0, 12).flatMap((entry: unknown) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+    const project = entry as Record<string, unknown>;
+    const name = asText(project.name, 120);
+    const url = asText(project.url, 400);
+    if (!name) return [];
+    return [{ name, tech: asStrings(project.tech ?? project.tech_stack, 12), description: asText(project.description), url: /^https?:\/\//i.test(url) ? url : '' }];
+  }) : [];
+
+  return {
+    full_name: asText(raw.full_name, 120),
+    skills: asStrings(raw.skills),
+    skill_ratings: Object.fromEntries(ratings.map(([name, rating]) => [name, Math.max(1, Math.min(10, Math.round(rating as number)))])),
+    projects,
+    education_level: asText(raw.education_level, 80),
+    field_of_study: asText(raw.field_of_study, 80),
+    experience_level: asText(raw.experience_level, 20),
+    preferred_role: asText(raw.preferred_role, 120),
+    summary: asText(raw.summary, 1200),
+  };
+}
+
+export async function GET() {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const context = await currentResume();
+    if (context.response) return context.response;
+    const { supabase, user, reference } = context;
+    const pdf = await openResumeStream(supabase, reference, user.id, 30000);
+    if (!pdf) return failure(404, 'resume_not_found', 'An attached PDF could not be found.');
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: { code: 'unauthorized', message: 'Not authenticated' } },
-        { status: 401 }
-      );
-    }
-
-    const formData = await request.formData();
-    const file = formData.get('resume') as File;
-
-    if (!file) {
-      return NextResponse.json(
-        { success: false, error: { code: 'no_file', message: 'No resume file provided' } },
-        { status: 400 }
-      );
-    }
-
-    if (file.type !== 'application/pdf') {
-      return NextResponse.json(
-        { success: false, error: { code: 'invalid_type', message: 'Only PDF files are accepted' } },
-        { status: 400 }
-      );
-    }
-
-    // Read file buffer for both upload and AI analysis
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // 1. Upload to Supabase Storage
-    const fileName = `${user.id}/${Date.now()}-${file.name}`;
-
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('resumes')
-      .upload(fileName, buffer, {
-        contentType: 'application/pdf',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error('Storage upload error:', uploadError);
-      return NextResponse.json(
-        { success: false, error: { code: 'upload_failed', message: uploadError.message } },
-        { status: 500 }
-      );
-    }
-
-    const { data: signedUrlData } = await supabase.storage
-      .from('resumes')
-      .createSignedUrl(uploadData.path, 60 * 60 * 24 * 365); // 1-year secure signed URL
-
-    const fileUrl = signedUrlData?.signedUrl || supabase.storage.from('resumes').getPublicUrl(uploadData.path).data.publicUrl;
-
-    // Update profile with resume URL
-    await supabase
-      .from('profiles')
-      .upsert({
-        id: user.id,
-        resume_url: fileUrl,
-        updated_at: new Date().toISOString(),
-      });
-
-    // 2. Analyze PDF with Gemini (direct — not through callGemini since we need multimodal)
-    let analysis = null;
-    try {
-      const base64Pdf = buffer.toString('base64');
-
-      const { GoogleGenAI } = await import('@google/genai');
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-      const { getGemini38Usage, recordGemini38Request } = await import('@/lib/agents/ai');
-
-      const usage = getGemini38Usage();
-      const modelsToTry = usage.allowed ? ['gemini-3.8-flash', 'gemini-3.5-flash-lite'] : ['gemini-3.5-flash-lite'];
-
-      let resultText = '';
-      for (const model of modelsToTry) {
-        try {
-          const result = await ai.models.generateContent({
-            model,
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  {
-                    inlineData: {
-                      mimeType: 'application/pdf',
-                      data: base64Pdf,
-                    },
-                  },
-                  {
-                    text: RESUME_EXTRACTION_PROMPT,
-                  },
-                ],
-              },
-            ],
-            config: {
-              responseMimeType: 'application/json',
-              temperature: 0.3,
-              maxOutputTokens: 4096,
-            },
-          });
-          resultText = result.text || '';
-          if (model === 'gemini-3.8-flash') {
-            recordGemini38Request();
-          }
-          if (resultText) break;
-        } catch (mErr) {
-          console.warn(`[Resume Extraction] Model ${model} failed, trying fallback:`, (mErr as Error).message || mErr);
-        }
-      }
-
-      const text = resultText;
-      
-      try {
-        analysis = JSON.parse(text);
-      } catch {
-        // Try extracting JSON from markdown code blocks
-        const jsonMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-        if (jsonMatch) {
-          analysis = JSON.parse(jsonMatch[1]);
-        }
-      }
-
-      // Normalize the analysis to prevent UI crashes
-      if (analysis) {
-        analysis.skills = Array.isArray(analysis.skills) ? analysis.skills : [];
-        analysis.skill_ratings = analysis.skill_ratings && typeof analysis.skill_ratings === 'object' ? analysis.skill_ratings : {};
-        analysis.projects = Array.isArray(analysis.projects) ? analysis.projects.map((p: Record<string, unknown>) => ({
-          name: p.name || 'Untitled Project',
-          tech: Array.isArray(p.tech) ? p.tech : (Array.isArray(p.tech_stack) ? p.tech_stack : []),
-          description: p.description || '',
-          url: p.url || '',
-        })) : [];
-        analysis.full_name = analysis.full_name || '';
-        analysis.education_level = analysis.education_level || '';
-        analysis.field_of_study = analysis.field_of_study || '';
-        analysis.experience_level = analysis.experience_level || 'fresher';
-        analysis.preferred_role = analysis.preferred_role || '';
-        analysis.summary = analysis.summary || '';
-      }
-
-      console.log(`Resume AI analysis complete: ${analysis?.skills?.length || 0} skills, ${analysis?.projects?.length || 0} projects extracted`);
-    } catch (aiErr) {
-      console.error('Resume AI analysis failed:', aiErr);
-      // Analysis is optional — upload still succeeded
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        resume_url: fileUrl,
-        analysis,
+    return new Response(pdf, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="resume.pdf"',
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
       },
     });
-  } catch (err) {
-    console.error('Resume upload error:', err);
-    return NextResponse.json(
-      { success: false, error: { code: 'server_error', message: 'Failed to process resume. Please try again.' } },
-      { status: 500 }
-    );
+  } catch {
+    return failure(503, 'download_failed', 'Your resume is temporarily unavailable.');
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const context = await currentResume();
+    if (context.response) return context.response;
+    const { supabase, user, reference } = context;
+    const contentType = request.headers.get('content-type');
+    if (!contentType?.toLowerCase().startsWith('multipart/form-data;')) {
+      return failure(400, 'invalid_upload', 'Select a PDF file to upload.');
+    }
+    const tooLarge = () => failure(413, 'file_too_large', 'Upload a PDF of 4 MB or smaller.');
+    if (Number(request.headers.get('content-length')) > MAX_MULTIPART_BYTES) return tooLarge();
+    const multipart = await readBoundedStream(request.body, MAX_MULTIPART_BYTES);
+    if (!multipart) return tooLarge();
+
+    const formData = await new Response(new Uint8Array(multipart), { headers: { 'Content-Type': contentType } }).formData().catch(() => null);
+    const file = formData?.get('resume');
+    if (!(file instanceof File)) return failure(400, 'no_file', 'Select a PDF file to upload.');
+    if (file.size > MAX_RESUME_BYTES) return tooLarge();
+    const pdf = Buffer.from(await file.arrayBuffer());
+    if (!isPdf(pdf)) return failure(400, 'invalid_type', 'Only PDF files are accepted.');
+
+    const quota = await enforceAIQuota(supabase, 'resume');
+    if (quota) return quota;
+
+    const bucket = supabase.storage.from(RESUME_BUCKET);
+    const path = `${user.id}/${randomUUID()}.pdf`;
+    const { error: uploadError } = await bucket.upload(path, pdf, { contentType: 'application/pdf', cacheControl: '0' });
+    if (uploadError) return failure(503, 'upload_failed', 'The PDF could not be saved. Please try again.');
+
+    const update = supabase.from('profiles').update({ resume_url: path, updated_at: new Date().toISOString() }).eq('id', user.id);
+    const { data: saved, error: saveError } = await (reference === null ? update.is('resume_url', null) : update.eq('resume_url', reference)).select('id').maybeSingle();
+    if (saveError) {
+      // A network failure can hide a committed write. Check before deleting the uploaded object.
+      const { data: profile, error } = await supabase.from('profiles').select('resume_url').eq('id', user.id).maybeSingle();
+      if (error || profile?.resume_url !== path) {
+        if (!error) await bucket.remove([path]);
+        return failure(503, 'attachment_failed', 'The PDF could not be attached. Please try again.');
+      }
+    } else if (!saved) {
+      await bucket.remove([path]);
+      return failure(409, 'resume_changed', 'Your resume changed during the upload. Refresh and try again.');
+    }
+
+    const oldPath = getResumePath(reference, user.id);
+    if (oldPath) {
+      try {
+        const { error } = await bucket.remove([oldPath]);
+        if (error) throw error;
+      } catch {
+        console.warn('[Resume] Replaced file cleanup failed.');
+      }
+    }
+
+    let analysis = null;
+    try {
+      analysis = parseExtraction(await readResumeWithGemini(pdf, extractionPrompt, true));
+    } catch {
+      console.warn('[Resume] Could not parse the extraction result.');
+    }
+
+    return NextResponse.json({ success: true, data: { resume_url: RESUME_ENDPOINT, analysis } });
+  } catch {
+    return failure(503, 'upload_failed', 'The PDF could not be saved. Please try again.');
+  }
+}
+
+export async function DELETE() {
+  try {
+    const context = await currentResume();
+    if (context.response) return context.response;
+    const { supabase, user, reference } = context;
+    if (reference) {
+      const path = getResumePath(reference, user.id);
+      if (path) {
+        const { error } = await supabase.storage.from(RESUME_BUCKET).remove([path]);
+        if (error) return failure(503, 'delete_failed', 'The PDF could not be removed. Please try again.');
+      }
+      const { data: profile, error } = await supabase.from('profiles')
+        .update({ resume_url: null, updated_at: new Date().toISOString() })
+        .eq('id', user.id).eq('resume_url', reference).select('id').maybeSingle();
+      if (error) return failure(503, 'detach_failed', 'The PDF could not be detached. Please try again.');
+      if (!profile) {
+        const { data: current, error: readError } = await supabase.from('profiles')
+          .select('resume_url').eq('id', user.id).maybeSingle();
+        if (readError || current?.resume_url) {
+          return failure(409, 'resume_changed', 'Your resume changed during removal. Refresh and try again.');
+        }
+      }
+    }
+    return NextResponse.json({ success: true, data: { resume_url: null } });
+  } catch {
+    return failure(503, 'delete_failed', 'The PDF could not be removed. Please try again.');
   }
 }

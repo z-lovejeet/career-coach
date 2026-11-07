@@ -1,14 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ApifyClient } from 'apify-client';
 import { createClient } from '@/lib/supabase/server';
+import { enforceAIQuota } from '@/lib/supabase/ai-quota';
 
-const ACTOR_ID = 'cheap_scraper/linkedin-job-scraper';
+const JOB_LIMIT = 15;
+const ACTOR_TIMEOUT = 15;
+const ACTOR_URL = 'https://api.apify.com/v2/actors/cheap_scraper~linkedin-job-scraper/run-sync-get-dataset-items';
+
+function getWebUrl(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  try {
+    const url = new URL(value);
+    return (url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password
+      ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
+function getLinkedInSearch(keywords: string[], location: string, searchUrl: unknown) {
+  if (searchUrl !== undefined) {
+    const safeUrl = getWebUrl(searchUrl);
+    if (!safeUrl) return null;
+    const url = new URL(safeUrl);
+    if (url.protocol !== 'https:' || url.port
+      || (url.hostname !== 'linkedin.com' && !url.hostname.endsWith('.linkedin.com'))
+      || !url.pathname.startsWith('/jobs/')) return null;
+    return url;
+  }
+  const url = new URL('https://www.linkedin.com/jobs/search/');
+  url.searchParams.set('keywords', keywords.join(' '));
+  url.searchParams.set('location', location);
+  return url;
+}
+
+function text(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
     if (authError || !user) {
       return NextResponse.json(
         { success: false, error: { code: 'unauthorized', message: 'Not authenticated' } },
@@ -16,172 +48,117 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiToken = process.env.APIFY_API_TOKEN;
-    if (!apiToken) {
-      return NextResponse.json(
-        { success: false, error: { code: 'config_error', message: 'Apify API token not configured' } },
-        { status: 500 }
-      );
-    }
-
-    // Get search params from request body or auto-generate from profile
-    const body = await request.json().catch(() => ({}));
-
-    // Fetch profile for auto-generating search params
-    const { data: profile } = await supabase
+    const body = await request.json().catch(() => null);
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('skills, preferred_role, preferred_locations, experience_level')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+    if (profileError) throw profileError;
 
-    if (!profile) {
+    const keywordInput: unknown[] = Array.isArray(body?.keywords) ? body.keywords : [body?.keywords];
+    const requestedKeywords = keywordInput
+      .slice(0, 5).map(value => text(value).trim().slice(0, 120)).filter(Boolean);
+    const keywords = requestedKeywords.length > 0 ? requestedKeywords : [
+      profile?.preferred_role || profile?.skills?.slice(0, 3).join(' ') || 'software engineer',
+    ];
+    const location = text(body?.location).trim().slice(0, 120) || profile?.preferred_locations?.[0] || 'India';
+    const searchUrl = getLinkedInSearch(keywords, location, body?.searchUrl);
+    if (!searchUrl) {
       return NextResponse.json(
-        { success: false, error: { code: 'no_profile', message: 'Complete your profile first' } },
+        { success: false, error: { code: 'invalid_search', message: 'Enter a valid LinkedIn jobs URL.' } },
         { status: 400 }
       );
     }
 
-    // Build search input for cheap_scraper/linkedin-job-scraper
-    const keywords = body.keywords || profile.preferred_role || profile.skills?.slice(0, 3).join(' ') || 'software engineer';
-    const location = body.location || profile.preferred_locations?.[0] || 'India';
-    const experienceLevel = getExperienceFilter(profile.experience_level);
+    const fallback = () => NextResponse.json({
+      success: true,
+      data: { jobs: [], total: 0, source: 'search', searchUrl: searchUrl.href },
+    });
+    const apiToken = process.env.APIFY_API_TOKEN;
+    if (!apiToken) return fallback();
+    const quota = await enforceAIQuota(supabase, 'jobs');
+    if (quota) return quota;
 
-    const actorInput: Record<string, unknown> = {
-      keyword: Array.isArray(keywords) ? keywords : [keywords],
+    const actorInput = {
+      keyword: keywords,
       location,
-      publishedAt: 'r604800', // Past 7 days
-      experienceLevel: experienceLevel,
+      publishedAt: 'r604800',
+      experienceLevel: getExperienceFilter(profile?.experience_level),
       jobType: ['full-time'],
-      maxItems: 15,
+      maxItems: JOB_LIMIT,
       saveOnlyUniqueItems: true,
-      enrichCompanyData: false, // Faster without company enrichment
+      enrichCompanyData: false,
+      ...(body?.searchUrl ? { startUrls: [{ url: searchUrl.href }] } : {}),
     };
 
-    // If user provided a direct URL, use that instead
-    if (body.searchUrl) {
-      actorInput.startUrls = [{ url: body.searchUrl }];
-    }
-
-    // Initialize Apify client and run the actor with timeout guard for serverless functions
-    const client = new ApifyClient({ token: apiToken });
-
-    // Race against a 12s timeout so Vercel does not terminate with a 504 before the AI fallback
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('LinkedIn scraping timed out, using AI fallback')), 12000)
-    );
-
-    const run = await Promise.race([
-      client.actor(ACTOR_ID).call(actorInput, {
-        timeout: 15,
-        memory: 256,
-      }),
-      timeoutPromise,
-    ]);
-
-    // Fetch results from the dataset
-    const { items } = await client.dataset(run.defaultDatasetId).listItems();
-
-    // Transform cheap_scraper output to our frontend format
-    const jobs = items.map((item: Record<string, unknown>) => ({
-      id: item.jobId as string || String(Math.random()),
-      title: item.jobTitle as string || 'Untitled',
-      companyName: item.companyName as string || 'Unknown',
-      companyLogo: item.companyLogo as string || null,
-      companyUrl: item.companyUrl as string || null,
-      companyWebsite: (item.companyWebsite as string) || null,
-      companyDescription: typeof item.companyDescription === 'string'
-        ? item.companyDescription.substring(0, 200)
-        : null,
-      companyEmployeesCount: item.companyEmployeeCount as number || null,
-      location: item.location as string || '',
-      salaryInfo: item.salaryInfo as string[] || [],
-      postedAt: item.postedTime as string || item.publishedAt as string || '',
-      benefits: [],
-      applyUrl: item.applyUrl as string || item.jobUrl as string || '',
-      link: item.jobUrl as string || '',
-      description: typeof item.jobDescription === 'string'
-        ? (item.jobDescription as string).substring(0, 500)
-        : '',
-      seniorityLevel: item.experienceLevel as string || null,
-      employmentType: item.contractType as string || null,
-      jobFunction: item.workType as string || null,
-      industries: item.sector as string || null,
-      applicantsCount: item.applicationsCount as string || null,
-      applyType: item.applyType as string || null,
-      recruiter: item.posterFullName ? {
-        name: item.posterFullName as string,
-        title: '',
-        photo: null,
-        profileUrl: item.posterProfileUrl as string || null,
-      } : null,
-    }));
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        jobs,
-        total: jobs.length,
-        source: 'linkedin',
-        scrapedAt: new Date().toISOString(),
-      }
-    });
-  } catch (err) {
-    console.error('LinkedIn scraping failed, falling back to AI suggestions:', err);
-
-    // === FALLBACK: Use Gemini to generate job suggestions ===
     try {
-      const supabaseFallback = await createClient();
-      const { data: { user: fallbackUser } } = await supabaseFallback.auth.getUser();
-
-      if (!fallbackUser) {
-        return NextResponse.json(
-          { success: false, error: { code: 'unauthorized', message: 'Not authenticated' } },
-          { status: 401 }
-        );
-      }
-
-      const { data: profile } = await supabaseFallback
-        .from('profiles')
-        .select('skills, preferred_role, experience_level, goals')
-        .eq('id', fallbackUser.id)
-        .single();
-
-      const skills = profile?.skills?.join(', ') || 'software development';
-      const role = profile?.preferred_role || 'Software Engineer';
-      const level = profile?.experience_level || 'fresher';
-
-      const { callGemini } = await import('@/lib/agents/gemini');
-      const result = await callGemini<{ jobs: Array<{
-        id: string; title: string; companyName: string; location: string;
-        employmentType: string; salaryInfo: string[]; description: string;
-        applyUrl: string; postedAt: string; seniorityLevel: string;
-      }> }>({
-        systemPrompt: 'You are a job market expert for the Indian tech industry. Generate realistic job listings from REAL companies hiring in India.',
-        userPrompt: `Generate 10 realistic job listings for a ${level} with skills: ${skills}, targeting ${role} roles. Goals: ${(profile?.goals || []).join(', ')}.
-
-Return JSON: { "jobs": [{ "id": "1", "title": "...", "companyName": "Real Indian company", "location": "City, India", "employmentType": "Full-time", "salaryInfo": ["₹X-Y LPA"], "description": "2-3 sentences", "applyUrl": "https://careers.company.com", "postedAt": "2 days ago", "seniorityLevel": "Entry level" }] }
-
-Use REAL companies: TCS, Infosys, Google India, Microsoft, Amazon, Flipkart, Razorpay, CRED, PhonePe, Swiggy, etc.`,
-        jsonMode: true,
-        temperature: 0.8,
+      const actorUrl = new URL(ACTOR_URL);
+      actorUrl.search = new URLSearchParams({
+        timeout: String(ACTOR_TIMEOUT),
+        memory: '256',
+        maxItems: String(JOB_LIMIT),
+        limit: String(JOB_LIMIT),
+        format: 'json',
+      }).toString();
+      const result = await fetch(actorUrl, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(actorInput),
+        cache: 'no-store',
+        redirect: 'error',
+        signal: AbortSignal.timeout((ACTOR_TIMEOUT + 3) * 1000),
       });
+      if (!result.ok) throw new Error(`Apify returned status ${result.status}`);
+      const items: unknown = await result.json();
+      if (!Array.isArray(items)) throw new Error('Apify returned an invalid dataset');
+
+      const records = items.slice(0, JOB_LIMIT).filter((item): item is Record<string, unknown> =>
+        !!item && typeof item === 'object' && !Array.isArray(item));
+      const jobs = records.map(item => ({
+        id: text(item.jobId) || crypto.randomUUID(),
+        title: text(item.jobTitle) || 'Untitled role',
+        companyName: text(item.companyName) || 'Unknown company',
+        companyLogo: getWebUrl(item.companyLogo) || null,
+        companyUrl: getWebUrl(item.companyUrl) || null,
+        companyWebsite: getWebUrl(item.companyWebsite) || null,
+        companyDescription: text(item.companyDescription).slice(0, 200) || null,
+        companyEmployeesCount: typeof item.companyEmployeeCount === 'number' ? item.companyEmployeeCount : null,
+        location: text(item.location),
+        salaryInfo: Array.isArray(item.salaryInfo) ? item.salaryInfo.filter((value): value is string => typeof value === 'string') : [],
+        postedAt: text(item.postedTime) || text(item.publishedAt),
+        benefits: [],
+        applyUrl: getWebUrl(item.applyUrl) || getWebUrl(item.jobUrl),
+        link: getWebUrl(item.jobUrl),
+        description: text(item.jobDescription).slice(0, 500),
+        seniorityLevel: text(item.experienceLevel) || null,
+        employmentType: text(item.contractType) || null,
+        jobFunction: text(item.workType) || null,
+        industries: text(item.sector) || null,
+        applicantsCount: text(item.applicationsCount) || null,
+        applyType: text(item.applyType) || null,
+        recruiter: item.posterFullName ? {
+          name: text(item.posterFullName),
+          title: '',
+          photo: null,
+          profileUrl: getWebUrl(item.posterProfileUrl) || null,
+        } : null,
+      }));
 
       return NextResponse.json({
         success: true,
-        data: {
-          jobs: (result.jobs || []).map(j => ({ ...j, link: j.applyUrl, companyLogo: null, companyUrl: null, companyWebsite: null, companyDescription: null, companyEmployeesCount: null, benefits: [], recruiter: null, jobFunction: null, industries: null, applicantsCount: null })),
-          total: result.jobs?.length || 0,
-          source: 'ai',
-          generatedAt: new Date().toISOString(),
-        },
+        data: { jobs, total: jobs.length, source: 'linkedin', scrapedAt: new Date().toISOString(), searchUrl: searchUrl.href },
       });
-    } catch (fallbackErr) {
-      console.error('AI fallback also failed:', fallbackErr);
-      return NextResponse.json(
-        { success: false, error: { code: 'scrape_error', message: 'Job search temporarily unavailable. Please try again.' } },
-        { status: 500 }
-      );
+    } catch (err) {
+      console.warn('LinkedIn search failed:', err instanceof Error ? err.name : 'unknown_error');
+      return fallback();
     }
+  } catch (err) {
+    console.error('Job search failed:', err instanceof Error ? err.name : 'database_error');
+    return NextResponse.json(
+      { success: false, error: { code: 'search_error', message: 'Job search is unavailable. Please try again.' } },
+      { status: 500 }
+    );
   }
 }
 
