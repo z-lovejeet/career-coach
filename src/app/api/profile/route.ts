@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getResumePath, RESUME_ENDPOINT } from '@/lib/supabase/resume';
+
+function profileResponse(profile: Record<string, unknown>, userId: string) {
+  return NextResponse.json({
+    success: true,
+    data: { ...profile, resume_url: getResumePath(profile.resume_url, userId) ? RESUME_ENDPOINT : null },
+  }, { headers: { 'Cache-Control': 'private, no-store' } });
+}
 
 export async function GET() {
   try {
@@ -17,16 +25,23 @@ export async function GET() {
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error) {
+      return NextResponse.json(
+        { success: false, error: { code: 'profile_unavailable', message: 'Your profile is temporarily unavailable.' } },
+        { status: 503 }
+      );
+    }
+
+    if (!profile) {
       return NextResponse.json(
         { success: false, error: { code: 'not_found', message: 'Profile not found' } },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: profile });
+    return profileResponse(profile, user.id);
   } catch {
     return NextResponse.json(
       { success: false, error: { code: 'server_error', message: 'Internal server error' } },
@@ -47,7 +62,10 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ success: false, error: { code: 'invalid_body', message: 'Provide profile fields to update.' } }, { status: 400 });
+    }
 
     // Whitelist allowed fields to prevent mass assignment vulnerabilities
     const allowedFields = [
@@ -62,7 +80,6 @@ export async function PUT(request: NextRequest) {
       'github_url',
       'portfolio_url',
       'linkedin_url',
-      'resume_url',
       'projects',
       'preferred_role',
       'preferred_locations',
@@ -74,7 +91,7 @@ export async function PUT(request: NextRequest) {
     };
 
     for (const field of allowedFields) {
-      if (field in body) {
+      if (Object.hasOwn(body, field)) {
         sanitizedUpdates[field] = body[field];
       }
     }
@@ -96,7 +113,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, data: profile });
+    return profileResponse(profile, user.id);
   } catch {
     return NextResponse.json(
       { success: false, error: { code: 'server_error', message: 'Internal server error' } },

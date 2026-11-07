@@ -21,7 +21,7 @@ export async function POST() {
         updated_at: new Date().toISOString(),
       })
       .eq('id', user.id)
-      .select()
+      .select('id, onboarding_complete')
       .single();
 
     if (error) {
