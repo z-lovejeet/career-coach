@@ -73,9 +73,18 @@ ${ANALYZER_OUTPUT_SCHEMA}`;
     'gemini'
   );
 
-  // Validate and clamp readiness score
-  if (result.readiness_score < 0) result.readiness_score = 0;
-  if (result.readiness_score > 100) result.readiness_score = 100;
+  if (!result || typeof result.summary !== 'string' || !result.summary.trim()
+    || !Number.isFinite(result.readiness_score)
+    || !Array.isArray(result.extracted_skills) || !Array.isArray(result.strengths)
+    || !Array.isArray(result.weaknesses) || !Array.isArray(result.missing_skills)
+    || result.extracted_skills.some(skill => !skill || typeof skill.name !== 'string'
+      || !['beginner', 'intermediate', 'advanced', 'expert'].includes(skill.level)
+      || !Number.isFinite(skill.confidence) || skill.confidence < 0 || skill.confidence > 1)
+    || [...result.strengths, ...result.weaknesses, ...result.missing_skills]
+      .some(item => !item || typeof item.skill !== 'string' || typeof item.reason !== 'string')
+    || result.missing_skills.some(item => !['low', 'medium', 'high', 'critical'].includes(item.importance))) {
+    throw new Error('Analyzer model returned an invalid profile assessment');
+  }
 
-  return result;
+  return { ...result, readiness_score: Math.max(0, Math.min(100, Math.round(result.readiness_score))) };
 }
