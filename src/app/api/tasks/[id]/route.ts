@@ -24,8 +24,12 @@ export async function PATCH(
       updates.completed = body.completed;
       updates.completed_at = body.completed ? new Date().toISOString() : null;
     }
-    if (body.title) updates.title = body.title;
-    if (body.description !== undefined) updates.description = body.description;
+    if (typeof body.title === 'string' && body.title.trim()) {
+      updates.title = body.title.trim().slice(0, 160);
+    }
+    if (typeof body.description === 'string') {
+      updates.description = body.description.trim().slice(0, 2000);
+    }
 
     const { data: task, error } = await supabase
       .from('tasks')

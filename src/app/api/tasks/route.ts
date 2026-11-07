@@ -18,12 +18,16 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const completed = searchParams.get('completed');
 
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? Math.max(1, Math.min(1000, parseInt(limitParam) || 500)) : 500;
+
     let query = supabase
       .from('tasks')
       .select('*')
       .eq('profile_id', user.id)
       .order('priority', { ascending: true })
-      .order('day_number', { ascending: true });
+      .order('day_number', { ascending: true })
+      .limit(limit);
 
     if (week) {
       query = query.eq('week_number', parseInt(week));
