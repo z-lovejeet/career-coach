@@ -1,413 +1,221 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  CheckCircle2,
-  Circle,
-  Clock,
-  Filter,
-  Loader2,
-  Plus,
-  Sparkles,
-  Code2,
-  Globe,
-  Server,
-  Users,
-  FolderKanban,
-  BarChart3,
-  Calendar,
-  Layers,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useState } from "react";
+import useSWR, { useSWRConfig } from "swr";
+import { ArrowDown, CalendarDays, Check, ClipboardList, Focus, Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { jsonRequest, request } from "@/components/workspace/api";
+import { ActionLink, ErrorNotice, IconTile, Notice, Panel, PanelHeading, PercentBar, prettyLabel, selectClass, Tag, WorkspaceHeading, WorkspaceSkeleton } from "@/components/workspace/ui";
 import type { Task } from "@/types";
 
-const categoryConfig: Record<string, { icon: typeof Code2; label: string; color: string }> = {
-  dsa: { icon: Code2, label: "DSA", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-  web_dev: { icon: Globe, label: "Web Dev", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-  system_design: { icon: Server, label: "System Design", color: "text-amber-300 bg-amber-500/10 border-amber-500/20" },
-  soft_skills: { icon: Users, label: "Soft Skills", color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
-  project: { icon: FolderKanban, label: "Project", color: "text-rose-400 bg-rose-500/10 border-rose-500/20" },
-  other: { icon: BarChart3, label: "Other", color: "text-slate-400 bg-slate-500/10 border-slate-500/20" },
+const categories: Record<string, string> = {
+  dsa: "Algorithms", web_dev: "Web development", system_design: "System design",
+  soft_skills: "Soft skills", project: "Projects", other: "Other",
 };
-
-const difficultyColors: Record<string, string> = {
-  easy: "text-emerald-400 border-emerald-500/20 bg-emerald-500/5",
-  medium: "text-amber-300 border-amber-500/20 bg-amber-500/5",
-  hard: "text-rose-400 border-rose-500/20 bg-rose-500/5",
-};
+const dueDateFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: "UTC" });
+const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading, error, mutate } = useSWR("/api/tasks", request<Task[]>);
+  const { mutate: revalidate } = useSWRConfig();
   const [generating, setGenerating] = useState(false);
-  const [filter, setFilter] = useState<string>("all");
-  const [weekFilter, setWeekFilter] = useState<string>("latest");
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [pending, setPending] = useState<Set<string>>(new Set());
+  const [week, setWeek] = useState("latest");
+  const [category, setCategory] = useState("all");
+  const [status, setStatus] = useState("all");
+  const [day, setDay] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  if (isLoading) return <WorkspaceSkeleton />;
+  if (!data) return <div className="workspace-page"><ErrorNotice error={error} retry={() => void mutate()} /></div>;
 
-  const fetchTasks = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/tasks");
-      const data = await res.json();
-      if (data.success) {
-        setTasks(data.data || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch tasks:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const weeks = [...new Set(data.flatMap((task) => task.week_number === null ? [] : [task.week_number]))].sort((a, b) => b - a);
+  const activeWeek = week === "latest" ? weeks[0] : Number(week);
+  const categoriesInUse = [...new Set(data.map((task) => task.category || "other"))];
+  const weekTasks = data.filter((task) => week === "all" || activeWeek === undefined || task.week_number === activeWeek);
+  const query = search.trim().toLowerCase();
+  const filtered = weekTasks.filter((task) => (
+    (category === "all" || (task.category || "other") === category)
+    && (status === "all" || (status === "done" ? task.completed : !task.completed))
+    && (day === null || task.day_number === day)
+    && (!query || `${task.title} ${task.description || ""}`.toLowerCase().includes(query))
+  ));
+  const weekCompleted = weekTasks.filter((task) => task.completed).length;
+  const weeklyDays = dayNames.map((name, index) => {
+    const tasks = weekTasks.filter((task) => task.day_number === index + 1);
+    return { name, number: index + 1, total: tasks.length, completed: tasks.filter((task) => task.completed).length };
+  });
+  const focusMix = [...new Set(weekTasks.map((task) => task.category || "other"))].map((name) => {
+    const tasks = weekTasks.filter((task) => (task.category || "other") === name);
+    return { name, total: tasks.length, completed: tasks.filter((task) => task.completed).length };
+  }).sort((left, right) => right.total - left.total);
+  const nextTask = weekTasks.filter((task) => !task.completed).sort((left, right) => (left.priority || 5) - (right.priority || 5) || (left.day_number || 8) - (right.day_number || 8))[0];
+  const weeklyLabel = week === "all" ? "All practice weeks" : activeWeek === undefined ? "Your practice week" : `Week ${activeWeek}`;
+  const done = filtered.filter((task) => task.completed).length;
+  const groups = [...dayNames, "Unscheduled"].map((day, index) => ({
+    day, tasks: filtered.filter((task) => index === 7 ? !task.day_number || task.day_number < 1 || task.day_number > 7 : task.day_number === index + 1),
+  })).filter((group) => group.tasks.length);
 
-  const generateTasks = async () => {
+  async function generate() {
     setGenerating(true);
+    setGenerateError(null);
     try {
-      toast.info("Synthesizing next week's calibration plan via Groq 120B...");
-      const res = await fetch("/api/tasks/generate", { method: "POST" });
-      const data = await res.json();
-
-      if (!data.success) {
-        throw new Error(data.error?.message || "Failed to generate");
-      }
-
-      toast.success(`Week ${data.data.week_number} plan generated: ${data.data.theme}`);
-      await fetchTasks();
-    } catch (err) {
-      console.error("Generate error:", err);
-      toast.error("Failed to generate tasks. Please run analysis first.");
+      const result = await request<{ week_number: number }>("/api/tasks/generate", { method: "POST" });
+      setWeek("latest");
+      setCategory("all");
+      setStatus("all");
+      setDay(null);
+      setSearch("");
+      await mutate();
+      toast.success(`Week ${result.week_number} is ready.`);
+    } catch (failure) {
+      setGenerateError(failure instanceof Error ? failure.message : "The weekly plan could not be generated.");
     } finally {
       setGenerating(false);
     }
-  };
+  }
 
-  const toggleTask = async (task: Task) => {
-    const newCompleted = !task.completed;
-    
-    setTasks(prev =>
-      prev.map(t => t.id === task.id ? { ...t, completed: newCompleted } : t)
-    );
-
+  async function toggle(task: Task) {
+    if (pending.has(task.id)) return;
+    setPending((ids) => new Set(ids).add(task.id));
     try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: newCompleted }),
+      const saved = await request<Task>(`/api/tasks/${task.id}`, jsonRequest("PATCH", { completed: !task.completed }));
+      await mutate((tasks) => tasks?.map((item) => item.id === task.id ? saved : item), { revalidate: false });
+      void revalidate("/api/streak");
+      void revalidate("/api/dashboard");
+    } catch (failure) {
+      toast.error(failure instanceof Error ? failure.message : "The task could not be updated.");
+    } finally {
+      setPending((ids) => {
+        const next = new Set(ids);
+        next.delete(task.id);
+        return next;
       });
-
-      if (!res.ok) throw new Error("Failed to update");
-
-      if (newCompleted) {
-        toast.success(`"${task.title}" completed! XP added.`);
-      }
-    } catch {
-      setTasks(prev =>
-        prev.map(t => t.id === task.id ? { ...t, completed: !newCompleted } : t)
-      );
-      toast.error("Failed to update task status");
     }
-  };
-
-  const weeks = [...new Set(tasks.map(t => t.week_number))].sort((a, b) => (b || 0) - (a || 0));
-  const latestWeek = weeks[0];
-
-  let filteredTasks = tasks;
-  if (weekFilter === "latest" && latestWeek) {
-    filteredTasks = filteredTasks.filter(t => t.week_number === latestWeek);
-  } else if (weekFilter !== "all") {
-    filteredTasks = filteredTasks.filter(t => t.week_number === parseInt(weekFilter));
-  }
-  if (filter !== "all") {
-    filteredTasks = filteredTasks.filter(t => t.category === filter);
-  }
-
-  const totalTasks = filteredTasks.length;
-  const completedTasks = filteredTasks.filter(t => t.completed).length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-  const tasksByDay: Record<number, Task[]> = {};
-  filteredTasks.forEach(t => {
-    const day = t.day_number || 0;
-    if (!tasksByDay[day]) tasksByDay[day] = [];
-    tasksByDay[day].push(t);
-  });
-  const sortedDays = Object.keys(tasksByDay).map(Number).sort((a, b) => a - b);
-  const dayNames = ["", "Monday Sprint", "Tuesday Sprint", "Wednesday Sprint", "Thursday Sprint", "Friday Sprint", "Saturday Sprint", "Sunday Review"];
-
-  if (loading) {
-    return <LoadingSkeleton />;
-  }
-
-  if (tasks.length === 0) {
-    return <EmptyState generating={generating} onGenerate={generateTasks} />;
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* ─── Header ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.07]">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
-              Active Sprint
-            </span>
-            <span className="text-[#64748B] text-xs">•</span>
-            <span className="font-mono text-[11px] text-[#8A96AA]">Week {latestWeek || 1} Curriculum</span>
+    <div className="workspace-page space-y-6">
+      <WorkspaceHeading label="Practice" title="Your practice board." description="Build a week of focused work and keep track of what you finish." actions={
+        <Button onClick={() => void generate()} disabled={generating}>{generating ? <Loader2 className="motion-safe:animate-spin" /> : <Plus />}{generating ? "Building plan…" : "Generate a week"}</Button>
+      } />
+      {generateError && <ErrorNotice error={new Error(generateError)} />}
+      {data.length === 0 ? (
+        <Panel><Notice icon={ClipboardList} title="Start your first week" description="Run a profile assessment, then generate tasks tailored to your skills and goals." action={<ActionLink href="/profile">Open profile</ActionLink>} /></Panel>
+      ) : (
+        <>
+          <Panel>
+            <PanelHeading title={weeklyLabel} description="See how your work is spread across the week. Select a day to focus your board." action={<Tag tone="accent">{weekCompleted} / {weekTasks.length} complete</Tag>} />
+            <PercentBar label="Selected week completion" value={weekTasks.length ? 100 * weekCompleted / weekTasks.length : 0} />
+            <div className="mt-5 grid grid-cols-3 gap-2 min-[400px]:grid-cols-4 sm:grid-cols-7" role="group" aria-label="Filter practice by day">
+              {weeklyDays.map(({ name, number, total, completed }) => <button key={name} type="button" aria-pressed={day === number} onClick={() => setDay(day === number ? null : number)} className={`min-w-0 rounded-[14px] border p-3 text-left transition-colors ${day === number ? "border-primary/35 bg-primary/10" : "border-border bg-background/15 hover:bg-background/40"}`}>
+                <span className="text-xs font-medium text-muted-foreground">{name.slice(0, 3)}</span>
+                <span className="mt-2 block text-xl font-semibold tabular-nums">{completed}<span className="text-sm font-normal text-muted-foreground"> / {total}</span></span>
+                <span className="mt-1 block text-[10px] text-muted-foreground">{total ? completed === total ? "Complete" : `${total - completed} remaining` : "Open day"}</span>
+              </button>)}
+            </div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"><p>{weeklyDays.filter((item) => item.total > 0).length} days with planned work · {weekTasks.filter((task) => !task.completed && task.priority === 1).length} high-priority tasks remaining</p>{day !== null && <Button variant="ghost" size="sm" onClick={() => setDay(null)}>Show all days</Button>}</div>
+          </Panel>
+
+          <div className="grid items-start gap-5 lg:grid-cols-[1.3fr_1fr]">
+            <Panel>
+              <PanelHeading title="A good place to start" description="Your highest-priority unfinished task from the selected practice weeks." action={<IconTile icon={Focus} />} />
+              {nextTask ? <>
+                <h3 className="text-lg font-semibold">{nextTask.title}</h3>
+                {nextTask.description && <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">{nextTask.description}</p>}
+                <div className="mt-3 flex flex-wrap gap-2"><Tag>{categories[nextTask.category] || prettyLabel(nextTask.category)}</Tag>{nextTask.difficulty && <Tag>{prettyLabel(nextTask.difficulty)}</Tag>}</div>
+                <div className="mt-5 flex flex-wrap gap-2"><Button variant="outline" onClick={() => { setCategory("all"); setStatus("todo"); setDay(nextTask.day_number && nextTask.day_number >= 1 && nextTask.day_number <= 7 ? nextTask.day_number : null); setSearch(nextTask.title); document.getElementById("practice-board")?.scrollIntoView({ block: "start" }); }}>Show task<ArrowDown /></Button><ActionLink href="/chat" variant="ghost">Get a hint</ActionLink></div>
+              </> : <p className="text-sm leading-relaxed text-muted-foreground">{weekTasks.length ? "The tasks in these practice weeks are complete. Revisit a difficult topic or generate a fresh plan when you’re ready." : "Choose another practice week or generate a fresh plan to find your next task."}</p>}
+            </Panel>
+            <Panel>
+              <PanelHeading title="Your practice mix" description="Planned tasks by topic in the selected week." />
+              <ul className="space-y-3">{focusMix.map((focus) => <li key={focus.name}>
+                <div className="mb-1.5 flex justify-between gap-3 text-sm"><p>{categories[focus.name] || prettyLabel(focus.name)}</p><p className="tabular-nums text-muted-foreground">{focus.completed} / {focus.total}</p></div>
+                <PercentBar label={`${categories[focus.name] || focus.name} completion`} value={100 * focus.completed / focus.total} />
+              </li>)}</ul>
+            </Panel>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            Daily Preparation Tasks
-          </h1>
-        </div>
 
-        <Button
-          onClick={generateTasks}
-          disabled={generating}
-          className="h-9 px-4 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-sm transition-all flex items-center gap-2 cursor-pointer"
-        >
-          {generating ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              Synthesizing...
-            </>
-          ) : (
-            <>
-              <Plus className="w-3.5 h-3.5" />
-              Generate Next Week
-            </>
-          )}
-        </Button>
-      </div>
-
-      {/* ─── Sprint Progress Overview ─── */}
-      <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-          <div>
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[#8A96AA]">Sprint Completion Index</span>
-            <p className="text-sm font-semibold text-white mt-0.5">
-              <span className="tabular-nums">{completedTasks}</span> of <span className="tabular-nums">{totalTasks}</span> tasks verified complete
-            </p>
-          </div>
-          <span className="font-mono text-2xl font-bold text-emerald-400 tabular-nums">
-            {completionRate}%
-          </span>
-        </div>
-
-        <div className="h-2 bg-[#0A0C13] rounded-full overflow-hidden border border-white/[0.06]">
-          <motion.div
-            className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${completionRate}%` }}
-            transition={{ duration: 0.9, ease: "easeOut" }}
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-4 mt-4 pt-3 border-t border-white/[0.06] text-xs font-mono">
-          {Object.entries(categoryConfig).map(([key, config]) => {
-            const count = filteredTasks.filter(t => t.category === key).length;
-            if (count === 0) return null;
-            const done = filteredTasks.filter(t => t.category === key && t.completed).length;
-            return (
-              <div key={key} className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${config.color.split(" ")[0].replace("text-", "bg-")}`} />
-                <span className="text-[#8A96AA]">{config.label}:</span>
-                <span className="text-white font-semibold tabular-nums">{done}/{count}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ─── Filters Bar ─── */}
-      <div className="flex gap-3 flex-wrap items-center">
-        <Select value={filter} onValueChange={(v) => setFilter(v || "all")}>
-          <SelectTrigger className="w-[180px] h-9 bg-[#0E111A] border-white/[0.1] rounded-lg text-xs font-mono text-slate-300">
-            <Filter className="w-3.5 h-3.5 mr-2 text-blue-400" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-[#0E111A] border-white/[0.1] text-white text-xs font-mono">
-            <SelectItem value="all">All Domains</SelectItem>
-            {Object.entries(categoryConfig).map(([key, config]) => (
-              <SelectItem key={key} value={key}>{config.label}</SelectItem>
+          <Panel className="scroll-mt-28" >
+            <div id="practice-board" className="scroll-mt-28" />
+            <PanelHeading title="Your task board" description={`${done} of ${filtered.length} displayed tasks complete. Refine the view to find the work you want to do.`} />
+            <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <label className="grid gap-1.5 text-sm font-medium">Search tasks
+                <span className="relative"><Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} className="pl-9" placeholder="Search your practice" /></span>
+              </label>
+              <label className="grid gap-1.5 text-sm font-medium">Week
+                <select className={selectClass} value={week} onChange={(event) => { setWeek(event.target.value); setDay(null); }}>
+                  <option value="latest">Latest week</option><option value="all">All weeks</option>
+                  {weeks.map((number) => <option key={number} value={number}>Week {number}</option>)}
+                </select>
+              </label>
+              <label className="grid gap-1.5 text-sm font-medium">Focus
+                <select className={selectClass} value={category} onChange={(event) => setCategory(event.target.value)}>
+                  <option value="all">All topics</option>
+                  {categoriesInUse.map((item) => <option key={item} value={item}>{categories[item] || prettyLabel(item)}</option>)}
+                </select>
+              </label>
+              <label className="grid gap-1.5 text-sm font-medium">Status
+                <select className={selectClass} value={status} onChange={(event) => setStatus(event.target.value)}>
+                  <option value="all">All tasks</option><option value="todo">To do</option><option value="done">Completed</option>
+                </select>
+              </label>
+            </div>
+          </Panel>
+          {groups.length === 0 && <Notice icon={CalendarDays} title="Nothing in this view" description="Clear your search or choose a different day, topic, or status." />}
+          <div className="space-y-5">
+            {groups.map((group) => (
+              <section key={group.day} className="glass-panel p-5 sm:p-7">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold">{group.day}</h2>
+                  <Tag>{group.tasks.filter((task) => task.completed).length} / {group.tasks.length} complete</Tag>
+                </div>
+                <ul className="divide-y divide-border">
+                  {group.tasks.map((task) => (
+                    <li key={task.id} className="flex items-start gap-3 py-4 last:pb-0">
+                      <Button
+                        variant={task.completed ? "default" : "outline"}
+                        size="icon"
+                        aria-pressed={task.completed}
+                        aria-label={`${task.completed ? "Mark incomplete" : "Complete"}: ${task.title}`}
+                        disabled={pending.has(task.id)}
+                        onClick={() => void toggle(task)}
+                      >
+                        {pending.has(task.id) ? <Loader2 className="motion-safe:animate-spin" /> : <Check className={task.completed ? "" : "opacity-45"} />}
+                      </Button>
+                      <div className="min-w-0 flex-1">
+                        <p className={`break-words text-sm font-semibold ${task.completed ? "text-muted-foreground line-through" : ""}`}>{task.title}</p>
+                        {task.description && <p className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">{task.description}</p>}
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <Tag>{categories[task.category] || prettyLabel(task.category) || "Other"}</Tag>
+                          {task.difficulty && <Tag tone={task.difficulty === "hard" ? "warning" : "neutral"}>{prettyLabel(task.difficulty)}</Tag>}
+                          {task.priority === 1 && <Tag tone="warning">High priority</Tag>}
+                          {week === "all" && task.week_number !== null && <Tag>Week {task.week_number}</Tag>}
+                          {task.type && <Tag>{prettyLabel(task.type)}</Tag>}
+                        </div>
+                        {task.due_date && Number.isFinite(new Date(task.due_date).getTime()) && <p className="mt-2 text-xs text-muted-foreground">Due {dueDateFormat.format(new Date(task.due_date))}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </SelectContent>
-        </Select>
-
-        {weeks.length > 1 && (
-          <Select value={weekFilter} onValueChange={(v) => setWeekFilter(v || "latest")}>
-            <SelectTrigger className="w-[150px] h-9 bg-[#0E111A] border-white/[0.1] rounded-lg text-xs font-mono text-slate-300">
-              <Calendar className="w-3.5 h-3.5 mr-2 text-emerald-400" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-[#0E111A] border-white/[0.1] text-white text-xs font-mono">
-              <SelectItem value="latest">Latest Week</SelectItem>
-              <SelectItem value="all">All Sprints</SelectItem>
-              {weeks.map(w => (
-                <SelectItem key={w} value={String(w)}>Week {w}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-
-      {/* ─── Tasks Grouped by Day ─── */}
-      <div className="space-y-5">
-        {sortedDays.map(day => (
-          <div key={day} className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-white/[0.06]">
-              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-blue-400" />
-                {dayNames[day] || `Day ${day}`}
-              </h3>
-              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-[#8A96AA] border border-white/[0.06] tabular-nums">
-                {tasksByDay[day].filter(t => t.completed).length} / {tasksByDay[day].length} Done
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              <AnimatePresence>
-                {tasksByDay[day].map((task, i) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onToggle={() => toggleTask(task)}
-                    index={i}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TaskCard({
-  task,
-  onToggle,
-  index,
-}: {
-  task: Task;
-  onToggle: () => void;
-  index: number;
-}) {
-  const config = categoryConfig[task.category] || categoryConfig.other;
-  const CategoryIcon = config.icon;
-  const diffClass = difficultyColors[task.difficulty] || difficultyColors.medium;
-
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -15 }}
-      transition={{ delay: index * 0.02 }}
-      className={`p-3.5 rounded-lg border transition-all ${
-        task.completed
-          ? "bg-[#0A0C13] border-white/[0.04] opacity-45"
-          : "bg-[#0A0C13] border-white/[0.06] hover:border-white/[0.14]"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <button
-          onClick={onToggle}
-          className="mt-0.5 flex-shrink-0 transition-transform active:scale-90 p-0.5 cursor-pointer"
-        >
-          {task.completed ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          ) : (
-            <Circle className="w-5 h-5 text-[#64748B] hover:text-blue-400 transition-colors" />
-          )}
-        </button>
-
-        <div className="flex-1 min-w-0">
-          <p
-            className={`text-xs sm:text-sm font-medium leading-snug ${
-              task.completed ? "line-through text-[#64748B]" : "text-white"
-            }`}
-          >
-            {task.title}
-          </p>
-          {task.description && (
-            <p className="text-xs text-[#8A96AA] mt-1 leading-relaxed">
-              {task.description}
-            </p>
-          )}
-
-          <div className="flex items-center gap-2 mt-2 font-mono text-[10px]">
-            <span className={`px-2 py-0.5 rounded border flex items-center gap-1 ${config.color}`}>
-              <CategoryIcon className="w-3 h-3" />
-              {config.label}
-            </span>
-            <span className={`px-2 py-0.5 rounded border uppercase ${diffClass}`}>
-              {task.difficulty}
-            </span>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function EmptyState({
-  generating,
-  onGenerate,
-}: {
-  generating: boolean;
-  onGenerate: () => void;
-}) {
-  return (
-    <div className="max-w-2xl mx-auto py-16 text-center">
-      <div className="w-14 h-14 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-5 text-blue-400 shadow-sm">
-        <Layers className="w-7 h-7" />
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">No Active Sprint Plan</h2>
-      <p className="text-xs sm:text-sm text-[#8A96AA] max-w-md mx-auto mb-6 leading-relaxed font-sans">
-        Synthesize your first customized weekly curriculum. Groq 120B will inspect your dossier gaps and schedule daily targeted problem sets.
-      </p>
-      <Button
-        onClick={onGenerate}
-        disabled={generating}
-        className="h-10 px-6 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs tracking-wider uppercase shadow-sm transition-all cursor-pointer"
-      >
-        {generating ? (
-          <span className="flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Synthesizing Week 1 Plan...
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            Generate Week 1 Sprint
-          </span>
-        )}
-      </Button>
-    </div>
-  );
-}
-
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <Skeleton className="h-8 w-44" />
-      <Skeleton className="h-28 rounded-xl" />
-      <div className="space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 rounded-lg" />
-        ))}
-      </div>
+          <Panel>
+            <PanelHeading title="Make each practice session count" description="A small routine that works across coding, system design, and communication tasks." />
+            <ol className="grid gap-4 sm:grid-cols-3">
+              {[
+                { title: "Set a clear outcome", detail: "Read the task and decide what you should be able to explain or demonstrate by the end." },
+                { title: "Try before asking", detail: "Work through an approach, record where you get stuck, then ask your mentor for a focused hint." },
+                { title: "Close with a recap", detail: "Check the result, explain one decision aloud, and mark the task complete when you can repeat it." },
+              ].map((step, index) => <li key={step.title} className="border-t border-border pt-4"><p className="eyebrow mb-2">0{index + 1}</p><h3 className="text-sm font-semibold">{step.title}</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{step.detail}</p></li>)}
+            </ol>
+          </Panel>
+        </>
+      )}
     </div>
   );
 }
