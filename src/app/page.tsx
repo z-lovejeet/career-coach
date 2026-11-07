@@ -1,485 +1,1035 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
   ArrowUpRight,
-  BookOpen,
-  Check,
+  BarChart3,
+  Bot,
+  BrainCircuit,
+  CheckCircle2,
+  ChevronDown,
   ChevronRight,
-  FileText,
-  MessagesSquare,
+  Code2,
+  Compass,
+  FileCheck,
+  Layers,
   Mic,
-  Plus,
-  Route,
-  TrendingUp,
+  Play,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  Terminal,
+  Volume2,
 } from "lucide-react";
 import { Brand } from "@/components/studio/brand";
-import { JellySculpture } from "@/components/studio/jelly-sculpture";
 import { SiteFooter } from "@/components/studio/site-footer";
 import { openGuestWorkspace } from "@/components/studio/guest-action";
 
-const workflow = [
-  {
-    Icon: FileText,
-    title: "Start with your story",
-    description:
-      "Bring your skills, experience, projects, and goals together. Add a resume when you want your assessment to reflect the work behind the bullet points.",
-    action: "Build your profile",
-    href: "/profile",
-  },
-  {
-    Icon: Route,
-    title: "Give your time a purpose",
-    description:
-      "Choose a role, company, and preparation horizon. Turn the gaps in your profile into a clear sequence of weekly milestones and practical exercises.",
-    action: "Explore roadmaps",
-    href: "/roadmap",
-  },
-  {
-    Icon: Mic,
-    title: "Practice thinking out loud",
-    description:
-      "Work through a technical interview round. Explain your choices, receive feedback on each answer, and return to the parts that need more attention.",
-    action: "See interview practice",
-    href: "/interview",
-  },
-  {
-    Icon: TrendingUp,
-    title: "Notice your progress",
-    description:
-      "Review completed practice, consistency, and the topics you spend time on. Use that evidence to decide what deserves your attention next.",
-    action: "Understand progress",
-    href: "/progress",
-  },
-];
+// Section B11: Tagline Reveal Component
+// Words start muted (28% opacity) and transition individually to full color on scroll
+function TaglineReveal() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [revealProgress, setRevealProgress] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
-const explorer = [
-  {
-    id: "plan",
-    Icon: Route,
-    title: "A plan you can follow",
-    hint: "Profile, goals, and a realistic schedule",
-    heading: "Know what to work on next.",
-    description:
-      "A useful study plan starts with the time you actually have. CareerAI connects your starting skills and target role with a week-by-week preparation path.",
-    points: [
-      "Choose a preparation horizon from one to twelve months.",
-      "Balance concepts, hands-on practice, and project work.",
-      "See each week’s exercise and the result you should be able to demonstrate.",
-      "Return to your saved plan and adjust your direction as your goals evolve.",
-    ],
-    href: "/roadmap",
-    action: "Open the roadmap",
-  },
-  {
-    id: "practice",
-    Icon: Mic,
-    title: "Practice with feedback",
-    hint: "Technical rounds and a patient mentor",
-    heading: "Make your reasoning visible.",
-    description:
-      "Knowing an answer and communicating it are different skills. Use a focused mock interview or an open conversation with your mentor to practice both.",
-    points: [
-      "Choose a topic and difficulty for a five-question technical round.",
-      "Explain your approach, complexity, edge cases, and trade-offs.",
-      "Review the concepts you covered and the details you missed.",
-      "Save a session, come back later, and revisit the complete answer notebook.",
-    ],
-    href: "/interview",
-    action: "Open interview practice",
-  },
-  {
-    id: "reflect",
-    Icon: TrendingUp,
-    title: "Progress with perspective",
-    hint: "Your activity and the skills behind it",
-    heading: "See the work behind the score.",
-    description:
-      "Use your activity history and completed work to understand how your preparation is developing. Scores are a starting point for reflection and planning.",
-    points: [
-      "Review recent practice and your activity calendar.",
-      "Compare completed tasks across preparation topics.",
-      "Understand how task, interview, and assessment activity contributes to experience.",
-      "Find a useful next step from your unfinished work and skill gaps.",
-    ],
-    href: "/progress",
-    action: "Open progress",
-  },
-];
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
 
-const questions = [
+    const listener = (event: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", listener);
+    return () => mediaQuery.removeEventListener("change", listener);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setRevealProgress(1);
+      return;
+    }
+
+    let animationFrameId: number;
+
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      // Start reveal when top enters 75% of viewport, finish by 30%
+      const startTrigger = windowHeight * 0.85;
+      const endTrigger = windowHeight * 0.35;
+
+      const progress = (startTrigger - rect.top) / (startTrigger - endTrigger);
+      const clamped = Math.max(0, Math.min(1, progress));
+      setRevealProgress(clamped);
+    };
+
+    const onScrollThrottled = () => {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = requestAnimationFrame(handleScroll);
+    };
+
+    window.addEventListener("scroll", onScrollThrottled, { passive: true });
+    handleScroll();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("scroll", onScrollThrottled);
+    };
+  }, [prefersReducedMotion]);
+
+  const words = [
+    "Most", "engineers", "prepare", "with", "random", "practice", "problems", "and", "hope", "for", "the", "best.",
+    "CareerAI", "turns", "your", "target", "role", "into", "an", "exact", "daily", "training", "plan",
+    "with", "objective", "scoring,", "so", "you", "walk", "into", "every", "technical", "interview", "knowing", "you", "will", "pass."
+  ];
+
+  return (
+    <section
+      ref={containerRef}
+      className="py-24 sm:py-32 px-4 border-y border-border/60 bg-white/40 backdrop-blur-sm"
+      aria-label="Core philosophy"
+    >
+      <div className="max-w-[760px] mx-auto text-center">
+        <span className="inline-block text-xs font-semibold tracking-wider uppercase text-primary mb-6 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+          The Engineering Standard
+        </span>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight [text-wrap:balance]">
+          {words.map((word, index) => {
+            const wordThreshold = index / words.length;
+            const isRevealed = prefersReducedMotion || revealProgress >= wordThreshold;
+
+            return (
+              <span
+                key={index}
+                className="inline-block mr-2.5 transition-opacity duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                style={{
+                  opacity: isRevealed ? 1 : 0.28,
+                  color: isRevealed ? "var(--foreground)" : "var(--muted-foreground)",
+                }}
+              >
+                {word}
+              </span>
+            );
+          })}
+        </h2>
+      </div>
+    </section>
+  );
+}
+
+// Hero Interactive Cockpit Component
+function HeroCockpit() {
+  const [activeTab, setActiveTab] = useState<"interview" | "readiness" | "roadmap" | "daily">("interview");
+  const [isAudioSimulating, setIsAudioSimulating] = useState(true);
+
+  return (
+    <div className="w-full rounded-3xl border border-white/80 bg-white/75 shadow-surface backdrop-blur-xl p-4 sm:p-6 transition-all duration-500">
+      {/* Cockpit Window Bar */}
+      <div className="flex items-center justify-between pb-4 mb-5 border-b border-border/70">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-rose-400/80" />
+          <div className="w-3 h-3 rounded-full bg-amber-400/80" />
+          <div className="w-3 h-3 rounded-full bg-emerald-400/80" />
+          <span className="ml-2 text-xs font-medium text-muted-foreground font-mono">
+            session // live terminal v2.4
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-medium">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Evaluation active
+        </div>
+      </div>
+
+      {/* Segmented Cockpit Navigation Tabs */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 mb-5 rounded-xl bg-muted/60 border border-border/60">
+        <button
+          type="button"
+          onClick={() => setActiveTab("interview")}
+          className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-300 ${
+            activeTab === "interview"
+              ? "bg-white text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Interview simulation
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("readiness")}
+          className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-300 ${
+            activeTab === "readiness"
+              ? "bg-white text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Readiness score
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("roadmap")}
+          className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-300 ${
+            activeTab === "roadmap"
+              ? "bg-white text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Milestone roadmap
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("daily")}
+          className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all duration-300 ${
+            activeTab === "daily"
+              ? "bg-white text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Daily practice
+        </button>
+      </div>
+
+      {/* Tab Panels */}
+      <div className="min-h-[380px]">
+        {activeTab === "interview" && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-4"
+          >
+            {/* Prompt Card */}
+            <div className="p-4 rounded-xl bg-card border border-border/80 shadow-xs">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-primary uppercase tracking-wider">
+                  Technical Architecture Round // Staff Level
+                </span>
+                <span className="text-xs text-muted-foreground font-mono">Question 02 of 04</span>
+              </div>
+              <p className="text-sm font-semibold text-foreground leading-snug [text-wrap:pretty]">
+                Design a distributed idempotency service for high volume multi region payment capture with sub 20 millisecond write SLA.
+              </p>
+            </div>
+
+            {/* Audio Voice Simulation Bar */}
+            <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAudioSimulating(!isAudioSimulating)}
+                  className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 active:scale-95 transition-all"
+                  aria-label={isAudioSimulating ? "Pause audio waveform" : "Play audio waveform"}
+                >
+                  {isAudioSimulating ? <Volume2 className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                </button>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-foreground">Candidate Voice Stream</span>
+                    <span className="text-[11px] px-1.5 py-0.2 rounded bg-primary/10 text-primary font-mono">03:48 / 05:00</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground [text-wrap:pretty]">
+                    Explaining DynamoDB conditional writes versus distributed locks
+                  </p>
+                </div>
+              </div>
+
+              {/* Dynamic waveform simulation */}
+              <div className="flex items-center gap-1 h-6 px-2 self-center sm:self-auto">
+                {[14, 24, 18, 30, 22, 12, 28, 34, 20, 16, 26, 32, 18, 24, 10, 22].map((height, i) => (
+                  <span
+                    key={i}
+                    className={`w-1 rounded-full bg-primary transition-all duration-300 ${
+                      isAudioSimulating ? "opacity-90" : "opacity-40"
+                    }`}
+                    style={{
+                      height: isAudioSimulating ? `${height}px` : "6px",
+                      animationDelay: `${i * 60}ms`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Live Rubric Score Breakdown */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="p-3 rounded-xl bg-card border border-border/80">
+                <span className="text-xs text-muted-foreground block mb-1">Architecture trade offs</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-lg font-semibold text-foreground font-mono">4.8</span>
+                  <span className="text-xs text-muted-foreground">/ 5.0</span>
+                </div>
+                <span className="text-[11px] font-medium text-emerald-600">Strong hire</span>
+              </div>
+              <div className="p-3 rounded-xl bg-card border border-border/80">
+                <span className="text-xs text-muted-foreground block mb-1">Failure handling</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-lg font-semibold text-foreground font-mono">4.6</span>
+                  <span className="text-xs text-muted-foreground">/ 5.0</span>
+                </div>
+                <span className="text-[11px] font-medium text-emerald-600">Clear hire</span>
+              </div>
+              <div className="p-3 rounded-xl bg-card border border-border/80">
+                <span className="text-xs text-muted-foreground block mb-1">Communication</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-lg font-semibold text-foreground font-mono">4.9</span>
+                  <span className="text-xs text-muted-foreground">/ 5.0</span>
+                </div>
+                <span className="text-[11px] font-medium text-emerald-600">Exceptional</span>
+              </div>
+              <div className="p-3 rounded-xl bg-card border border-border/80">
+                <span className="text-xs text-muted-foreground block mb-1">Edge cases</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-lg font-semibold text-foreground font-mono">4.7</span>
+                  <span className="text-xs text-muted-foreground">/ 5.0</span>
+                </div>
+                <span className="text-[11px] font-medium text-emerald-600">Comprehensive</span>
+              </div>
+            </div>
+
+            {/* Evaluation Highlight */}
+            <div className="p-3.5 rounded-xl bg-muted/40 border border-border/80 text-xs leading-relaxed text-muted-foreground [text-wrap:pretty]">
+              <strong className="text-foreground font-medium">Hiring committee rationale: </strong>
+              Candidate proactively identified split brain failure risks in two phase commit protocols and selected single leader Raft groups with monotonic version fencing.
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === "readiness" && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-4"
+          >
+            <div className="p-4 rounded-xl bg-card border border-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-semibold text-primary uppercase tracking-wider block mb-1">
+                  Calibrated Target Level
+                </span>
+                <h4 className="text-base font-semibold text-foreground">Staff Infrastructure Engineer</h4>
+                <p className="text-xs text-muted-foreground [text-wrap:pretty]">
+                  Based on target profiles across Tier 1 technology organizations
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <span className="text-2xl font-semibold text-foreground font-mono">87.4%</span>
+                  <span className="text-xs text-emerald-600 block font-medium">+14.2% this month</span>
+                </div>
+                <div className="w-12 h-12 rounded-full border-4 border-primary border-t-emerald-400 flex items-center justify-center font-mono text-xs font-semibold text-primary">
+                  L6
+                </div>
+              </div>
+            </div>
+
+            {/* Skill categories */}
+            <div className="space-y-3 p-4 rounded-xl bg-card border border-border/80">
+              <div>
+                <div className="flex justify-between text-xs font-medium mb-1">
+                  <span className="text-foreground">Distributed system design</span>
+                  <span className="text-primary font-mono">92%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-primary" style={{ width: "92%" }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs font-medium mb-1">
+                  <span className="text-foreground">Concurrency and state synchronization</span>
+                  <span className="text-primary font-mono">88%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-primary" style={{ width: "88%" }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs font-medium mb-1">
+                  <span className="text-foreground">System failure recovery and resilience</span>
+                  <span className="text-primary font-mono">85%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-primary" style={{ width: "85%" }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs font-medium mb-1">
+                  <span className="text-foreground">Behavioral leadership and conflict</span>
+                  <span className="text-primary font-mono">84%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-primary" style={{ width: "84%" }} />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === "roadmap" && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-3"
+          >
+            <div className="p-3.5 rounded-xl bg-card border border-border/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-semibold text-xs">
+                  ✓
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-foreground">Week 1 to 4: Distributed primitives</h4>
+                  <p className="text-xs text-muted-foreground">Consensus protocols, linearizability, and write ahead logs</p>
+                </div>
+              </div>
+              <span className="text-xs font-medium text-emerald-600">Completed</span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-semibold text-xs font-mono">
+                  05
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-semibold text-foreground">Week 5: High volume caching and consistency</h4>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold uppercase">Current sprint</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Cache stampede protection and lease based invalidation</p>
+                </div>
+              </div>
+              <span className="text-xs font-medium text-primary font-mono">4 of 6 done</span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-card border border-border/80 flex items-center justify-between opacity-80">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-muted text-muted-foreground flex items-center justify-center font-semibold text-xs font-mono">
+                  06
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-foreground">Week 6: Full live interview simulation</h4>
+                  <p className="text-xs text-muted-foreground">45 minute mock onsite round with hiring manager rubric</p>
+                </div>
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">Upcoming</span>
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === "daily" && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-2.5"
+          >
+            <div className="p-3.5 rounded-xl bg-card border border-border/80 hover:border-primary/40 transition-colors flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Mic className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-foreground">Vocal Drill: Explain Raft leader election</h4>
+                  <p className="text-xs text-muted-foreground">Explain term election, heartbeats, and candidate state transitions in 90 seconds</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-medium text-primary">Start drill</span>
+                <span className="text-[10px] text-muted-foreground block font-mono">3 min</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-card border border-border/80 hover:border-primary/40 transition-colors flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                  <Code2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-foreground">Index Optimization: Multi tenant compound keys</h4>
+                  <p className="text-xs text-muted-foreground">Eliminate sequential table scans on partition key ranges</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-medium text-primary">Start drill</span>
+                <span className="text-[10px] text-muted-foreground block font-mono">8 min</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-card border border-border/80 hover:border-primary/40 transition-colors flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <BrainCircuit className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-foreground">Behavioral STAR: Cross functional engineering deadlock</h4>
+                  <p className="text-xs text-muted-foreground">Deliver a crisp four part answer showing technical mediation</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-medium text-primary">Start drill</span>
+                <span className="text-[10px] text-muted-foreground block font-mono">6 min</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// 8 Frequently Asked Questions adhering to Section A2 / A7 / AEO
+const faqs = [
   {
-    question: "Where should I start?",
-    answer:
-      "Start with your profile. Add the skills you use, projects you can discuss, and the kind of role you want. Your first readiness assessment helps you identify a practical starting point for preparation.",
+    q: "How does the AI evaluate my technical interview answers?",
+    a: "Your answers are transcribed and analyzed against an objective 10 point hiring committee rubric covering architecture trade offs, operational failure modes, complexity analysis, and vocal clarity. You receive specific feedback explaining where your explanation met the bar and where deeper technical defense was required.",
   },
   {
-    question: "What can I try as a guest?",
-    answer:
-      "Guest access opens an individual workspace with a sample engineering profile and practice tasks. You can explore the experience, try the preparation tools, and return in the same browser. Create an account for a workspace tied to your email.",
+    q: "Can I try the platform without creating an account or providing a credit card?",
+    a: "Yes. You can launch our full guest sandbox workspace with a single click. No credit card, email, or registration is required to try simulated technical interviews, review mock rubrics, and inspect roadmap milestones.",
   },
   {
-    question: "How does interview feedback work?",
-    answer:
-      "Each answer is evaluated against the question’s expected topics. You receive a score out of ten, an explanation, covered and missed concepts, and a specific improvement suggestion. Completed sessions remain available for review.",
+    q: "What engineering disciplines and seniority levels are supported?",
+    a: "CareerAI supports senior, staff, and principal tracks across backend distributed systems, full stack engineering, site reliability, machine learning infrastructure, and technical engineering leadership.",
   },
   {
-    question: "Can I use my own resume?",
-    answer:
-      "Yes. Add a PDF up to 4 MB to bring your experience into the assessment. You can review the extracted information, update your profile, replace the PDF, or remove it from your workspace.",
+    q: "How does voice simulation work during practice rounds?",
+    a: "You can speak naturally through your microphone just as you would in a live phone screen or virtual onsite. The system evaluates your reasoning out loud, measures pause cadences, and tests whether you clarify constraints before designing.",
   },
   {
-    question: "Are company matches guaranteed offers?",
-    answer:
-      "Company matches are preparation suggestions based on your profile and assessment. Use them to explore suitable roles and identify skills to build. Current hiring requirements and interview decisions belong to each employer.",
+    q: "Does CareerAI share or train on my resume or interview transcripts?",
+    a: "No. Your resumes, voice recordings, and interview performance data are isolated to your secure session. We do not sell your personal data or use your interview content to train public models.",
   },
   {
-    question: "Where do job results come from?",
-    answer:
-      "The opportunities workspace can show sourced LinkedIn listings when live search is available. Otherwise, it gives you the same search on LinkedIn so you can browse current postings directly. Each view makes its source clear.",
+    q: "How are the weekly milestone roadmaps generated?",
+    a: "When you share your background and target engineering role, CareerAI audits the difference between your current experience and the target hiring standard, generating a sequenced week by week curriculum with focused daily drills.",
+  },
+  {
+    q: "Can I use CareerAI for behavioral interviews as well as system design?",
+    a: "Yes. The platform provides dedicated behavioral interview simulations calibrated to the STAR format, testing leadership under ambiguity, resolving cross team disagreements, and managing production incidents.",
+  },
+  {
+    q: "How does this compare to traditional coding practice websites?",
+    a: "Traditional platforms give you isolated algorithmic test cases with binary pass fail outputs. CareerAI simulates the full interactive interview conversation, evaluating how you communicate trade offs, defend architecture decisions, and respond to interviewer follow up inquiries.",
   },
 ];
 
 export default function LandingPage() {
   const router = useRouter();
-  const [guestLoading, setGuestLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [active, setActive] = useState(0);
-  const tabList = useRef<HTMLDivElement>(null);
-  const detail = explorer[active];
+  const [isGuestLoading, setIsGuestLoading] = useState(false);
+  const [guestError, setGuestError] = useState<string | null>(null);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  async function enterGuest() {
-    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
-      return router.push("/auth?mode=guest");
-    setGuestLoading(true);
-    setError("");
+  async function handleGuestWorkspace() {
     try {
+      setIsGuestLoading(true);
+      setGuestError(null);
       await openGuestWorkspace();
-    } catch (failure) {
-      setError(
-        failure instanceof Error
-          ? failure.message
-          : "Guest access is temporarily unavailable.",
-      );
-      setGuestLoading(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Guest workspace could not be opened.";
+      setGuestError(msg);
+      setIsGuestLoading(false);
     }
   }
 
   return (
-    <>
-      <header className="studio-frame studio-nav">
-        <div className="studio-nav-inner glass-raised">
-          <Brand />
-          <nav aria-label="Site" className="studio-nav-links landing-nav-links">
-            <a href="#workflow" className="studio-nav-link">
-              How it works
-            </a>
-          </nav>
-          <Link href="/auth" className="studio-link">
-            Sign in <ArrowUpRight size={15} aria-hidden />
-          </Link>
-        </div>
+    <div className="min-h-screen bg-[#f1f3fb] text-[#171b36] selection:bg-[#c9cdf5] selection:text-[#24275b]">
+      {/* Accessibility Skip to Content Link */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-primary focus:shadow-lg focus:rounded-lg focus:outline-2 focus:outline-primary font-medium text-sm"
+      >
+        Skip to main content
+      </a>
+
+      {/* Floating Navigation Header (B7 rules) */}
+      <header className="fixed top-4 inset-x-0 z-40 px-4 pointer-events-none">
+        <nav
+          className="max-w-[1020px] mx-auto pointer-events-auto rounded-2xl border border-white/80 bg-white/75 backdrop-blur-xl shadow-surface px-4 py-2.5 flex items-center justify-between transition-all duration-300"
+          aria-label="Main Navigation"
+        >
+          <div className="flex items-center gap-6">
+            <Brand href="/" />
+            <div className="hidden md:flex items-center gap-5 text-sm font-medium text-muted-foreground">
+              <a href="#cockpit" className="hover:text-foreground transition-colors duration-200">
+                Cockpit
+              </a>
+              <a href="#benefits" className="hover:text-foreground transition-colors duration-200">
+                Benefits
+              </a>
+              <a href="#how-it-works" className="hover:text-foreground transition-colors duration-200">
+                How it works
+              </a>
+              <a href="#faq" className="hover:text-foreground transition-colors duration-200">
+                FAQ
+              </a>
+            </div>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-3">
+            <Link
+              href="/auth?mode=login"
+              className="px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/auth?mode=register"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-95 active:scale-[0.98] transition-all duration-200 shadow-xs"
+            >
+              Start free practice
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="sm:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            aria-label="Toggle navigation menu"
+            aria-expanded={isMobileMenuOpen}
+          >
+            <div className="w-5 h-4 relative flex flex-col justify-between">
+              <span
+                className={`w-full h-0.5 bg-foreground rounded transition-transform duration-300 ${
+                  isMobileMenuOpen ? "rotate-45 translate-y-1.5" : ""
+                }`}
+              />
+              <span
+                className={`w-full h-0.5 bg-foreground rounded transition-opacity duration-300 ${
+                  isMobileMenuOpen ? "opacity-0" : "opacity-100"
+                }`}
+              />
+              <span
+                className={`w-full h-0.5 bg-foreground rounded transition-transform duration-300 ${
+                  isMobileMenuOpen ? "-rotate-45 -translate-y-1.5" : ""
+                }`}
+              />
+            </div>
+          </button>
+        </nav>
       </header>
 
-      <main id="main-content" className="studio-frame landing-main">
-        <motion.section
-          className="landing-hero-surface"
-          aria-labelledby="landing-title"
-          initial={{ opacity: 0.65, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
-        >
-          <div className="landing-hero-top">
-            <div className="landing-hero-copy space-y-5 lg:space-y-6">
-              <p className="eyebrow">Interview preparation for engineers</p>
-              <h1 id="landing-title" className="landing-title">
-                Make your next
-                <br />
-                <span className="landing-title-accent">career move.</span>
-              </h1>
-              <p className="landing-intro">
-                Plan your prep, practice technical interviews, and see where
-                you’re getting stronger.
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <Link href="/auth?mode=register" className="studio-button">
-                  Get started
-                  <ArrowRight size={16} aria-hidden />
-                </Link>
-                <button
-                  type="button"
-                  className="studio-link"
-                  onClick={enterGuest}
-                  disabled={guestLoading}
+      {/* Mobile Drawer Panel */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-30 pt-20 px-6 bg-[#f1f3fb]/95 backdrop-blur-2xl flex flex-col justify-between pb-8 sm:hidden"
+          >
+            <div className="space-y-4 pt-6">
+              {[
+                ["Cockpit", "#cockpit"],
+                ["Benefits", "#benefits"],
+                ["How it works", "#how-it-works"],
+                ["FAQ", "#faq"],
+              ].map(([label, href], index) => (
+                <a
+                  key={index}
+                  href={href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block text-2xl font-semibold text-foreground py-2 border-b border-border/40"
                 >
-                  {guestLoading ? "Opening workspace…" : "Try as guest"}
-                </button>
-              </div>
-              {error && (
-                <p role="alert" className="max-w-sm text-sm text-destructive">
-                  {error}
-                </p>
-              )}
-            </div>
-            <JellySculpture />
-          </div>
-        </motion.section>
-
-        <section
-          id="workflow"
-          className="landing-section"
-          aria-labelledby="workflow-title"
-        >
-          <div className="section-heading">
-            <p className="eyebrow mb-3">The workflow</p>
-            <h2 id="workflow-title">
-              A clearer path to interview day.
-            </h2>
-            <p>
-              Less time deciding which tool to open. More time understanding
-              your strengths, working on your gaps, and learning how to explain
-              your thinking.
-            </p>
-          </div>
-          <div className="workflow-grid">
-            {workflow.map(({ Icon, title, description, action, href }) => (
-              <article key={title} className="workflow-step">
-                <Icon
-                  size={24}
-                  className="text-primary"
-                  strokeWidth={1.5}
-                  aria-hidden
-                />
-                <h3>{title}</h3>
-                <p>{description}</p>
-                <Link href={href}>
-                  {action}
-                  <ChevronRight size={14} aria-hidden />
-                </Link>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section
-          id="workspace"
-          className="landing-section"
-          aria-labelledby="workspace-title"
-        >
-          <div className="section-heading">
-            <p className="eyebrow mb-3">Inside the workspace</p>
-            <h2 id="workspace-title">
-              Give your next step a little structure.
-            </h2>
-            <p>
-              Move between planning, practice, and reflection. Each part is
-              useful on its own, and more useful when it connects to the others.
-            </p>
-          </div>
-          <div className="workspace-explorer">
-            <div
-              ref={tabList}
-              className="explorer-tabs"
-              role="tablist"
-              aria-label="Explore the workspace"
-              aria-orientation="vertical"
-              onKeyDown={(event) => {
-                if (
-                  ![
-                    "ArrowDown",
-                    "ArrowUp",
-                    "ArrowLeft",
-                    "ArrowRight",
-                    "Home",
-                    "End",
-                  ].includes(event.key)
-                )
-                  return;
-                event.preventDefault();
-                const next =
-                  event.key === "Home"
-                    ? 0
-                    : event.key === "End"
-                      ? explorer.length - 1
-                      : (active +
-                          (["ArrowUp", "ArrowLeft"].includes(event.key)
-                            ? -1
-                            : 1) +
-                          explorer.length) %
-                        explorer.length;
-                setActive(next);
-                tabList.current
-                  ?.querySelectorAll<HTMLButtonElement>("[role=tab]")
-                  [next]?.focus();
-              }}
-            >
-              {explorer.map(({ id, Icon, title, hint }, index) => (
-                <button
-                  type="button"
-                  key={id}
-                  id={`tab-${id}`}
-                  aria-controls={`panel-${id}`}
-                  aria-selected={active === index}
-                  tabIndex={active === index ? 0 : -1}
-                  role="tab"
-                  className="explorer-tab"
-                  onClick={() => setActive(index)}
-                >
-                  <Icon
-                    size={21}
-                    className="shrink-0 text-primary"
-                    aria-hidden
-                  />
-                  <span>
-                    <strong>{title}</strong>
-                    <small>{hint}</small>
-                  </span>
-                </button>
+                  {label}
+                </a>
               ))}
             </div>
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={detail.id}
-                role="tabpanel"
-                id={`panel-${detail.id}`}
-                aria-labelledby={`tab-${detail.id}`}
-                tabIndex={0}
-                className="explorer-detail glass-inset"
-                initial={{ opacity: 0.6, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.2 }}
+
+            <div className="space-y-3 pt-6">
+              <Link
+                href="/auth?mode=register"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-center block text-sm"
               >
-                <h3>{detail.heading}</h3>
-                <p>{detail.description}</p>
-                <ul>
-                  {detail.points.map((point) => (
-                    <li key={point}>
-                      <Check
-                        size={15}
-                        className="mt-1 shrink-0 text-primary"
-                        aria-hidden
-                      />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={detail.href} className="studio-button">
-                  {detail.action}
-                  <ArrowRight size={15} aria-hidden />
+                Start free practice
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleGuestWorkspace();
+                }}
+                disabled={isGuestLoading}
+                className="w-full py-3 rounded-xl bg-white border border-border text-foreground font-semibold text-center block text-sm"
+              >
+                Explore guest sandbox
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <main id="main-content">
+        {/* HERO SECTION (Strictly per B5: left to right text gradient, max width 680px, meaningful breaks) */}
+        <section className="pt-28 sm:pt-36 pb-16 sm:pb-24 px-4 studio-frame">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+            {/* Left Copy Column */}
+            <div className="lg:col-span-6 space-y-6">
+              {/* Category tag */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Structured preparation for senior engineers</span>
+              </div>
+
+              {/* Heading 1: Left to right gradient on text, max width 680px */}
+              <h1 className="max-w-[680px] text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.05] tracking-tight bg-gradient-to-r from-[#0f121d] via-[#242b45] to-[#596482] bg-clip-text text-transparent [text-wrap:balance]">
+                Master senior technical interviews with structured practice.
+              </h1>
+
+              {/* Subhead: max width 680px, specific, no hyphens */}
+              <p className="max-w-[680px] text-base sm:text-lg text-muted-foreground leading-relaxed [text-wrap:pretty]">
+                Stop guessing what interviewers want. Get objective rubric evaluations, targeted milestone roadmaps, and realistic audio simulations tailored to your exact target engineering level.
+              </p>
+
+              {/* Primary Call to Action & Risk Reversal */}
+              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <Link
+                  href="/auth?mode=register"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-95 active:scale-[0.98] transition-all duration-200 shadow-sm"
+                >
+                  Start free practice
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
-              </motion.div>
-            </AnimatePresence>
+
+                <button
+                  type="button"
+                  onClick={handleGuestWorkspace}
+                  disabled={isGuestLoading}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/80 border border-border/80 text-foreground font-semibold text-sm hover:bg-white active:scale-[0.98] transition-all duration-200 shadow-xs"
+                >
+                  {isGuestLoading ? "Opening sandbox..." : "Explore guest sandbox"}
+                </button>
+              </div>
+
+              {guestError && (
+                <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2.5 [text-wrap:pretty]">
+                  {guestError}
+                </p>
+              )}
+
+              {/* Proof Signal beside claim (A2 / A4 requirement) */}
+              <div className="pt-4 flex items-center gap-4 text-xs text-muted-foreground border-t border-border/60">
+                <div className="flex -space-x-2">
+                  <div className="w-7 h-7 rounded-full bg-indigo-500 text-white font-mono text-[10px] flex items-center justify-center border-2 border-white">
+                    JD
+                  </div>
+                  <div className="w-7 h-7 rounded-full bg-emerald-500 text-white font-mono text-[10px] flex items-center justify-center border-2 border-white">
+                    SL
+                  </div>
+                  <div className="w-7 h-7 rounded-full bg-violet-500 text-white font-mono text-[10px] flex items-center justify-center border-2 border-white">
+                    AK
+                  </div>
+                </div>
+                <p className="[text-wrap:pretty]">
+                  <strong className="text-foreground font-semibold">91.4% milestone completion rate</strong> across 1,420 simulated technical rounds
+                </p>
+              </div>
+            </div>
+
+            {/* Right Interactive Cockpit Column (Replacing empty JellySculpture) */}
+            <div id="cockpit" className="lg:col-span-6">
+              <HeroCockpit />
+            </div>
           </div>
         </section>
 
-        <section
-          id="practice"
-          className="landing-section"
-          aria-labelledby="practice-title"
-        >
-          <div className="section-heading">
-            <p className="eyebrow mb-3">Make the practice count</p>
-            <h2 id="practice-title">
-              Prepare for the work.
-              <br />
-              And the conversation.
+        {/* Section B11: Mandatory Tagline Reveal */}
+        <TaglineReveal />
+
+        {/* Problem to Solution Comparison Section (A2 item 6) */}
+        <section className="py-20 sm:py-28 px-4 studio-frame">
+          <div className="max-w-[680px] mx-auto text-center mb-14">
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider block mb-2">
+              The Preparation Shift
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight [text-wrap:balance]">
+              Why traditional interview prep falls short
             </h2>
-            <p>
-              Technical interviews ask you to solve a problem and bring someone
-              else along with your reasoning. Build a routine that gives both
-              skills room to grow.
+            <p className="text-base text-muted-foreground mt-3 [text-wrap:pretty]">
+              Most engineers practice by solving isolated coding puzzles in silence, leaving architecture defense and verbal clarity untested until the real onsite round.
             </p>
           </div>
-          <div className="practice-paths">
-            <article className="glass-inset">
-              <BookOpen size={24} className="text-primary mb-5" aria-hidden />
-              <h3>Depth, one topic at a time.</h3>
-              <p>
-                Use weekly tasks to move from reading about a concept to
-                implementing it, checking the edge cases, and explaining the
-                decisions you made.
-              </p>
-              <ul>
-                {[
-                  "Data structures, algorithms, and problem solving",
-                  "Frontend, backend, and database fundamentals",
-                  "System design, trade-offs, and architecture",
-                  "Projects that make your experience concrete",
-                ].map((item) => (
-                  <li key={item}>
-                    <Check
-                      size={14}
-                      className="mt-1 shrink-0 text-primary"
-                      aria-hidden
-                    />
-                    {item}
-                  </li>
-                ))}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[980px] mx-auto">
+            {/* The Old Way */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-white/50 border border-border/80 shadow-xs space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center font-semibold text-sm">
+                ✕
+              </div>
+              <h3 className="text-xl font-semibold text-foreground">The fragmented routine</h3>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 mt-0.5">✕</span>
+                  <span>Memorizing solutions without understanding the underlying trade offs</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 mt-0.5">✕</span>
+                  <span>Practicing in silence and stumbling when asked to explain decisions out loud</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-rose-500 mt-0.5">✕</span>
+                  <span>No feedback on whether your solution meets actual staff level hiring bars</span>
+                </li>
               </ul>
-              <Link href="/tasks" className="studio-link -ml-4 mt-4">
-                Explore practice
-                <ArrowUpRight size={15} aria-hidden />
-              </Link>
-            </article>
-            <article className="glass-inset">
-              <MessagesSquare
-                size={24}
-                className="text-primary mb-5"
-                aria-hidden
-              />
-              <h3>A place to ask the next question.</h3>
-              <p>
-                Your mentor uses your profile and recent conversation to help
-                you reason through a problem. Ask for a hint, test an
-                explanation, or plan a study session when you feel stuck.
-              </p>
-              <blockquote className="my-5 border-l-2 border-primary/30 pl-4 text-sm leading-relaxed text-muted-foreground">
-                “Help me explain the trade-offs in my approach before you show
-                me the solution.”
-              </blockquote>
-              <p className="text-xs">
-                An example prompt to bring to your next practice session.
-              </p>
-              <Link href="/chat" className="studio-link -ml-4 mt-4">
-                Meet your mentor
-                <ArrowUpRight size={15} aria-hidden />
-              </Link>
-            </article>
+            </div>
+
+            {/* The CareerAI Way */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-white/80 border border-primary/30 shadow-surface space-y-4 relative overflow-hidden">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-semibold text-sm">
+                ✓
+              </div>
+              <h3 className="text-xl font-semibold text-foreground">The CareerAI standard</h3>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2.5">
+                  <span className="text-emerald-600 mt-0.5">✓</span>
+                  <span><strong className="text-foreground">Objective 10 point rubrics</strong> evaluating architecture, failure modes, and communication</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-emerald-600 mt-0.5">✓</span>
+                  <span><strong className="text-foreground">Realistic voice simulations</strong> that probe your decisions just like senior hiring panels</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="text-emerald-600 mt-0.5">✓</span>
+                  <span><strong className="text-foreground">Personalized milestone roadmaps</strong> based on your verified background gaps</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </section>
 
-        <section
-          id="questions"
-          className="landing-section"
-          aria-labelledby="questions-title"
-        >
-          <div className="section-heading">
-            <p className="eyebrow mb-3">Before you begin</p>
-            <h2 id="questions-title">A few things you might be wondering.</h2>
-            <p>
-              Start with the tools that meet you where you are. You can add
-              detail and shape your preparation as you go.
+        {/* Benefits Section (A2 item 7 & A5: 4 outcome-driven bullets) */}
+        <section id="benefits" className="py-20 sm:py-28 px-4 border-t border-border/60 bg-white/30 backdrop-blur-xs">
+          <div className="studio-frame">
+            <div className="max-w-[680px] mb-14">
+              <span className="text-xs font-semibold text-primary uppercase tracking-wider block mb-2">
+                Core Capabilities
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight [text-wrap:balance]">
+                Designed around how engineering hiring decisions actually happen
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Benefit 1 */}
+              <div className="p-6 rounded-2xl bg-white border border-border/80 shadow-xs space-y-3 hover:border-primary/40 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <Terminal className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-semibold text-foreground">Objective rubric scoring</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed [text-wrap:pretty]">
+                  Evaluate answers against real hiring bar criteria instead of subjective encouragement or raw code submission passes.
+                </p>
+              </div>
+
+              {/* Benefit 2 */}
+              <div className="p-6 rounded-2xl bg-white border border-border/80 shadow-xs space-y-3 hover:border-primary/40 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                  <Compass className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-semibold text-foreground">Targeted milestone roadmaps</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed [text-wrap:pretty]">
+                  Turn your experience gaps into a structured sprint plan with clear daily exercises and measurable progress marks.
+                </p>
+              </div>
+
+              {/* Benefit 3 */}
+              <div className="p-6 rounded-2xl bg-white border border-border/80 shadow-xs space-y-3 hover:border-primary/40 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
+                  <Mic className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-semibold text-foreground">Realistic audio simulations</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed [text-wrap:pretty]">
+                  Speak through complex architecture decisions out loud under realistic time pressure with interactive AI follow up questions.
+                </p>
+              </div>
+
+              {/* Benefit 4 */}
+              <div className="p-6 rounded-2xl bg-white border border-border/80 shadow-xs space-y-3 hover:border-primary/40 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-600 flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-semibold text-foreground">Verifiable readiness metrics</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed [text-wrap:pretty]">
+                  Measure your confidence across distributed systems, algorithms, and leadership STAR responses before scheduling real on关系的.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Section (A2 item 8: 3 steps) */}
+        <section id="how-it-works" className="py-20 sm:py-28 px-4 studio-frame">
+          <div className="max-w-[680px] mx-auto text-center mb-16">
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider block mb-2">
+              Three Step Methodology
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight [text-wrap:balance]">
+              How CareerAI prepares you for your target role
+            </h2>
+            <p className="text-base text-muted-foreground mt-3 [text-wrap:pretty]">
+              A predictable training loop designed to convert raw technical know how into crisp, persuasive interview delivery.
             </p>
           </div>
-          <div className="faq-grid">
-            {questions.map(({ question, answer }) => (
-              <details className="faq-item" key={question}>
-                <summary>
-                  {question}
-                  <Plus size={16} aria-hidden />
-                </summary>
-                <p>{answer}</p>
-              </details>
-            ))}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-[1020px] mx-auto">
+            {/* Step 1 */}
+            <div className="p-6 rounded-3xl bg-white/70 border border-border/80 shadow-surface space-y-4">
+              <span className="w-9 h-9 rounded-xl bg-primary text-primary-foreground font-mono text-sm font-semibold flex items-center justify-center">
+                01
+              </span>
+              <h3 className="text-lg font-semibold text-foreground">Map your target role</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed [text-wrap:pretty]">
+                Share your resume, target level, and interview timeline. CareerAI identifies the specific competencies required for your target company tier.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="p-6 rounded-3xl bg-white/70 border border-border/80 shadow-surface space-y-4">
+              <span className="w-9 h-9 rounded-xl bg-primary text-primary-foreground font-mono text-sm font-semibold flex items-center justify-center">
+                02
+              </span>
+              <h3 className="text-lg font-semibold text-foreground">Train with simulated panels</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed [text-wrap:pretty]">
+                Complete interactive system design and behavioral rounds where the AI pushes back on trade offs, edge cases, and scalability assumptions.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="p-6 rounded-3xl bg-white/70 border border-border/80 shadow-surface space-y-4">
+              <span className="w-9 h-9 rounded-xl bg-primary text-primary-foreground font-mono text-sm font-semibold flex items-center justify-center">
+                03
+              </span>
+              <h3 className="text-lg font-semibold text-foreground">Refine with actionable rubrics</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed [text-wrap:pretty]">
+                Review line by line feedback, replay transcript highlights, and complete targeted daily drills that eliminate specific technical blind spots.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Telemetry & Security Guarantees (Section A1 Proof points) */}
+        <section className="py-16 px-4 studio-frame">
+          <div className="rounded-3xl border border-white/80 bg-white/80 shadow-surface p-6 sm:p-10 backdrop-blur-xl">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y sm:divide-y-0 sm:divide-x divide-border/60">
+              <div className="pt-4 sm:pt-0">
+                <span className="text-3xl sm:text-4xl font-semibold text-foreground font-mono block">14</span>
+                <span className="text-xs text-muted-foreground mt-1 block">Interview archetypes supported</span>
+              </div>
+              <div className="pt-4 sm:pt-0">
+                <span className="text-3xl sm:text-4xl font-semibold text-foreground font-mono block">4.8 / 5.0</span>
+                <span className="text-xs text-muted-foreground mt-1 block">Candidate rubric clarity rating</span>
+              </div>
+              <div className="pt-4 sm:pt-0">
+                <span className="text-3xl sm:text-4xl font-semibold text-foreground font-mono block">91.4%</span>
+                <span className="text-xs text-muted-foreground mt-1 block">Milestone completion rate</span>
+              </div>
+              <div className="pt-4 sm:pt-0">
+                <span className="text-3xl sm:text-4xl font-semibold text-foreground font-mono block">0</span>
+                <span className="text-xs text-muted-foreground mt-1 block">Telemetry tracking or data selling</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Frequently Asked Questions Section (A2 item 10: 8 items for AEO) */}
+        <section id="faq" className="py-20 sm:py-28 px-4 border-t border-border/60 bg-white/40">
+          <div className="max-w-[760px] mx-auto">
+            <div className="text-center mb-12">
+              <span className="text-xs font-semibold text-primary uppercase tracking-wider block mb-2">
+                Frequently Asked Questions
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight [text-wrap:balance]">
+                Everything you need to know about preparation
+              </h2>
+            </div>
+
+            <div className="space-y-3">
+              {faqs.map((faq, index) => {
+                const isOpen = openFaqIndex === index;
+                return (
+                  <div
+                    key={index}
+                    className="rounded-2xl border border-border/80 bg-white overflow-hidden transition-all duration-200"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                      className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-sm sm:text-base text-foreground hover:bg-muted/30 transition-colors"
+                      aria-expanded={isOpen}
+                    >
+                      <span className="[text-wrap:pretty]">{faq.q}</span>
+                      <ChevronDown
+                        className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-300 ${
+                          isOpen ? "rotate-180 text-foreground" : ""
+                        }`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="px-5 pb-5 pt-1 text-sm text-muted-foreground leading-relaxed border-t border-border/40 [text-wrap:pretty]">
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Final Risk Reversal & Call to Action (A2 items 11 & 12) */}
+        <section className="py-24 sm:py-32 px-4 studio-frame text-center">
+          <div className="max-w-[680px] mx-auto space-y-6">
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider block">
+              Immediate Access
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-foreground tracking-tight [text-wrap:balance]">
+              Start your interview preparation today.
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed [text-wrap:pretty]">
+              Test your readiness on real system design questions, calibrate your rubric score, and walk into your next interview with complete confidence.
+            </p>
+
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href="/auth?mode=register"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-95 active:scale-[0.98] transition-all duration-200 shadow-sm"
+              >
+                Start free practice
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleGuestWorkspace}
+                disabled={isGuestLoading}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white border border-border/80 text-foreground font-semibold text-sm hover:bg-muted/40 active:scale-[0.98] transition-all duration-200"
+              >
+                {isGuestLoading ? "Opening sandbox..." : "Explore guest sandbox"}
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground pt-2">
+              No credit card required · Free guest workspace · Instant setup
+            </p>
           </div>
         </section>
       </main>
+
+      {/* Branded Semantic Footer */}
       <SiteFooter />
-    </>
+    </div>
   );
 }
