@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceAIQuota } from '@/lib/supabase/ai-quota';
 import { generateQuestions } from '@/lib/agents/interview';
 
 export async function POST(request: NextRequest) {
@@ -14,25 +15,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { topic, difficulty, num_questions = 5 } = await request.json();
+    const body = await request.json().catch(() => null);
+    const topic = typeof body?.topic === 'string' ? body.topic.trim() : '';
+    const difficulty = body?.difficulty ?? 'medium';
+    const num_questions = body?.num_questions ?? 5;
 
-    if (!topic) {
+    if (!topic || topic.length > 160 || !['easy', 'medium', 'hard'].includes(difficulty)
+      || !Number.isInteger(num_questions) || num_questions < 1 || num_questions > 10) {
       return NextResponse.json(
-        { success: false, error: { code: 'missing_topic', message: 'Topic is required' } },
+        { success: false, error: { code: 'invalid_interview', message: 'Choose a topic, difficulty, and between 1 and 10 questions.' } },
         { status: 400 }
       );
     }
 
     // Get student level from profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('experience_level')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+    if (profileError) throw profileError;
+
+    const quota = await enforceAIQuota(supabase, 'interview-start');
+    if (quota) return quota;
 
     const questions = await generateQuestions({
       topic,
-      difficulty: difficulty || 'medium',
+      difficulty,
       num_questions,
       student_level: profile?.experience_level || 'fresher',
     });
@@ -43,7 +52,7 @@ export async function POST(request: NextRequest) {
       .insert({
         profile_id: user.id,
         topic,
-        difficulty: difficulty || 'medium',
+        difficulty,
         questions,
         answers: [],
         evaluations: [],
