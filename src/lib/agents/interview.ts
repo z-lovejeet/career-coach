@@ -57,7 +57,14 @@ Return JSON:
     'groq'
   );
 
-  return result.questions;
+  if (!Array.isArray(result?.questions) || result.questions.length !== input.num_questions
+    || result.questions.some(question => !question || typeof question.question !== 'string'
+      || !question.question.trim() || !Array.isArray(question.expected_topics)
+      || question.expected_topics.some(topic => typeof topic !== 'string')
+      || !['conceptual', 'coding', 'behavioral', 'system_design'].includes(question.type))) {
+    throw new Error('Interview model returned invalid questions');
+  }
+  return result.questions.map((question, index) => ({ ...question, id: index + 1 }));
 }
 
 export async function evaluateAnswer(input: InterviewEvaluateInput): Promise<InterviewEvaluation> {
@@ -90,5 +97,11 @@ Return JSON:
     'groq'
   );
 
-  return result;
+  if (!result || !Number.isFinite(result.score) || result.score < 0 || result.score > 10
+    || typeof result.feedback !== 'string' || typeof result.improvement_tip !== 'string'
+    || !Array.isArray(result.topics_covered) || !Array.isArray(result.topics_missed)
+    || [...result.topics_covered, ...result.topics_missed].some(topic => typeof topic !== 'string')) {
+    throw new Error('Interview model returned an invalid evaluation');
+  }
+  return { ...result, max_score: 10 };
 }

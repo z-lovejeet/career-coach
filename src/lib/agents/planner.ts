@@ -44,22 +44,22 @@ const PLANNER_OUTPUT_SCHEMA = `{
 
 export async function generateWeeklyPlan(input: PlannerInput): Promise<PlannerOutput> {
   const skillsSummary = input.analysis.extracted_skills
-    .map(s => `${s.name} (${s.level})`)
-    .join(', ');
+    .map(skill => typeof skill === 'string' ? skill : skill?.name ? `${skill.name} (${skill.level})` : '')
+    .filter(Boolean).join(', ');
 
   const gapsSummary = input.recommendations.skill_gaps
-    .map(g => `${g.skill} (${g.priority})`)
-    .join(', ');
+    .map(gap => typeof gap === 'string' ? gap : gap?.skill ? `${gap.skill} (${gap.priority})` : '')
+    .filter(Boolean).join(', ');
 
   const roadmapFocus = input.recommendations.roadmap_to_target
-    .find(r => r.month === Math.ceil(input.current_week / 4));
+    .find(item => item?.month === Math.ceil(input.current_week / 4) && Array.isArray(item.tasks));
 
   const userPrompt = `Create a weekly task plan for this student:
 
 STUDENT PROFILE:
 - Readiness Score: ${input.analysis.readiness_score}/100
 - Skills: ${skillsSummary}
-- Weaknesses: ${input.analysis.weaknesses.map(w => w.skill).join(', ')}
+- Weaknesses: ${input.analysis.weaknesses.map(item => typeof item === 'string' ? item : item?.skill).filter(Boolean).join(', ')}
 - Skill Gaps: ${gapsSummary}
 - Goals: ${input.goals.join(', ')}
 
@@ -68,7 +68,7 @@ AVAILABLE HOURS/DAY: ${input.available_hours_per_day}
 
 ${roadmapFocus ? `ROADMAP FOCUS FOR THIS MONTH: ${roadmapFocus.focus}\nSuggested tasks: ${roadmapFocus.tasks.join(', ')}` : ''}
 
-TARGET COMPANIES: ${input.recommendations.target_companies.map(c => c.name).join(', ')}
+TARGET COMPANIES: ${input.recommendations.target_companies.map(company => company?.name).filter(Boolean).join(', ')}
 
 Create a balanced week plan with specific, actionable tasks across DSA, web development, system design, and soft skills.
 
@@ -85,5 +85,18 @@ ${PLANNER_OUTPUT_SCHEMA}`;
     'groq'
   );
 
-  return result;
+  const plan = result?.weekly_plan;
+  if (!plan || typeof plan.theme !== 'string' || !Array.isArray(plan.tasks)
+    || plan.tasks.length === 0 || plan.tasks.length > 8
+    || plan.tasks.some(task => !task || typeof task.title !== 'string' || !task.title.trim()
+      || typeof task.description !== 'string'
+      || !['dsa', 'web_dev', 'system_design', 'soft_skills', 'project', 'other'].includes(task.category)
+      || !['easy', 'medium', 'hard'].includes(task.difficulty)
+      || !['daily', 'weekly', 'milestone'].includes(task.type)
+      || !Number.isInteger(task.day_number) || task.day_number < 1 || task.day_number > 7
+      || !Number.isInteger(task.priority) || task.priority < 1 || task.priority > 5)) {
+    throw new Error('Planner model returned an invalid practice week');
+  }
+
+  return { weekly_plan: { ...plan, week_number: input.current_week } };
 }

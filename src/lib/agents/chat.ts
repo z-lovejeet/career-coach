@@ -34,7 +34,7 @@ IMPORTANT: Return valid JSON with this schema:
 
 export async function chat(input: ChatInput): Promise<ChatOutput> {
   const historyStr = input.chat_history
-    .slice(-10) // Last 10 messages for context
+    .slice(-20)
     .map(m => `${m.role === 'user' ? 'Student' : 'Mentor'}: ${m.content}`)
     .join('\n');
 
