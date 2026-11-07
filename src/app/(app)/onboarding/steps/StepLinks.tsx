@@ -1,118 +1,253 @@
 "use client";
 
+import { ArrowLeft, Check, FileText, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Globe, Sparkles } from "lucide-react";
+import { prettyLabel, Tag } from "@/components/workspace/ui";
 import type { OnboardingFormData } from "@/types";
 
-interface Props {
+const linkFields = [
+  {
+    key: "github_url",
+    label: "GitHub",
+    placeholder: "https://github.com/username",
+    description: "Code, contributions, and the work behind your projects.",
+  },
+  {
+    key: "linkedin_url",
+    label: "LinkedIn",
+    placeholder: "https://linkedin.com/in/username",
+    description: "Your professional background and experience.",
+  },
+  {
+    key: "portfolio_url",
+    label: "Portfolio",
+    placeholder: "https://yourportfolio.com",
+    description: "A personal collection of the work you want to share.",
+  },
+] as const;
+
+export default function StepLinks({
+  formData,
+  updateFormData,
+  attached,
+  onEdit,
+}: {
   formData: OnboardingFormData;
   updateFormData: (updates: Partial<OnboardingFormData>) => void;
-}
-
-export default function StepLinks({ formData, updateFormData }: Props) {
+  attached: boolean;
+  onEdit: (step: number) => void;
+}) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h2 className="text-lg font-semibold text-white mb-1">Candidate Handles & Links</h2>
-        <p className="text-xs text-[#8A96AA]">
-          Add your online engineering profiles for multi-modal analysis. All fields are optional.
+        <h2 className="text-2xl font-semibold">Your story, all together.</h2>
+        <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+          Add the places where your work lives, then give your profile a final
+          look.
         </p>
       </div>
-
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="github" className="text-xs font-mono text-[#8A96AA] flex items-center gap-2">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-            GitHub Profile
-          </Label>
-          <Input
-            id="github"
-            placeholder="https://github.com/yourusername"
-            value={formData.github_url}
-            onChange={(e) => updateFormData({ github_url: e.target.value })}
-            className="h-9.5"
-          />
+      <div className="grid gap-5">
+        {linkFields.map(({ key, label, placeholder, description }) => (
+          <label key={key} className="grid gap-2 text-sm font-medium">
+            <span>
+              {label}
+              <span className="ml-2 font-normal text-muted-foreground">
+                Optional
+              </span>
+            </span>
+            <Input
+              inputMode="url"
+              value={formData[key]}
+              placeholder={placeholder}
+              onChange={(event) =>
+                updateFormData({ [key]: event.target.value })
+              }
+            />
+            <span className="text-xs font-normal leading-relaxed text-muted-foreground">
+              {description}
+            </span>
+          </label>
+        ))}
+      </div>
+      <div className="space-y-5 border-t border-border pt-7">
+        <div>
+          <h3 className="text-xl font-semibold">Your profile preview</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            These are the details you’re about to save. Use Edit to revisit a
+            section.
+          </p>
         </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="linkedin" className="text-xs font-mono text-[#8A96AA] flex items-center gap-2">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-            LinkedIn Profile
-          </Label>
-          <Input
-            id="linkedin"
-            placeholder="https://linkedin.com/in/yourusername"
-            value={formData.linkedin_url}
-            onChange={(e) => updateFormData({ linkedin_url: e.target.value })}
-            className="h-9.5"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="portfolio" className="text-xs font-mono text-[#8A96AA] flex items-center gap-2">
-            <Globe className="w-4 h-4" />
-            Portfolio / Engineering Website
-          </Label>
-          <Input
-            id="portfolio"
-            placeholder="https://yourportfolio.com"
-            value={formData.portfolio_url}
-            onChange={(e) => updateFormData({ portfolio_url: e.target.value })}
-            className="h-9.5"
-          />
+        <section className="rounded-2xl border border-border bg-background/20 p-5">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h4 className="text-lg font-semibold">
+                {formData.full_name || "Your name"}
+              </h4>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {formData.preferred_role || "Target role to be added"}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label="Edit your background"
+              onClick={() => onEdit(0)}
+            >
+              <Pencil />
+              Edit
+            </Button>
+          </div>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            {[
+              [
+                "Education",
+                [formData.education_level, formData.field_of_study]
+                  .filter(Boolean)
+                  .join(" · ") || "Not added",
+              ],
+              [
+                "Experience",
+                prettyLabel(formData.experience_level) || "Not added",
+              ],
+              ["Email", formData.email || "Provided by your sign-in method"],
+              [
+                "Preferred locations",
+                formData.preferred_locations.join(", ") || "Open to exploring",
+              ],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs text-muted-foreground">{label}</dt>
+                <dd className="mt-1 break-words text-sm font-medium">
+                  {value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+        <section className="rounded-2xl border border-border bg-background/20 p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h4 className="font-semibold">Skills & confidence</h4>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label="Edit your skills"
+              onClick={() => onEdit(2)}
+            >
+              <Pencil />
+              Edit
+            </Button>
+          </div>
+          {formData.skills.length ? (
+            <div className="flex flex-wrap gap-2">
+              {formData.skills.map((skill) => (
+                <Tag key={skill}>
+                  {skill}
+                  <span className="ml-1.5 tabular-nums text-primary">
+                    {formData.skill_ratings[skill] ?? 5}/10
+                  </span>
+                </Tag>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              You can add your first skills from your profile later.
+            </p>
+          )}
+        </section>
+        <section className="rounded-2xl border border-border bg-background/20 p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h4 className="font-semibold">Projects</h4>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label="Edit your projects"
+              onClick={() => onEdit(3)}
+            >
+              <Pencil />
+              Edit
+            </Button>
+          </div>
+          {formData.projects.length ? (
+            <ul className="space-y-4">
+              {formData.projects.map((project, index) => (
+                <li key={index}>
+                  <p className="break-words text-sm font-semibold">
+                    {project.name}
+                  </p>
+                  {project.description && (
+                    <p className="mt-1 break-words text-sm leading-relaxed text-muted-foreground">
+                      {project.description}
+                    </p>
+                  )}
+                  {project.tech?.length > 0 && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {project.tech.join(" · ")}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Your projects can grow with your practice. Add them whenever
+              you’re ready.
+            </p>
+          )}
+        </section>
+        <section className="rounded-2xl border border-border bg-background/20 p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h4 className="font-semibold">Career direction</h4>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label="Edit your career goals"
+              onClick={() => onEdit(4)}
+            >
+              <Pencil />
+              Edit
+            </Button>
+          </div>
+          {formData.goals.length ? (
+            <div className="flex flex-wrap gap-2">
+              {formData.goals.map((goal) => (
+                <Tag key={goal} tone="accent">
+                  {prettyLabel(goal)}
+                </Tag>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Add a goal later as you explore the workspace.
+            </p>
+          )}
+        </section>
+        <div className="flex items-center gap-3 rounded-2xl border border-border p-4">
+          <FileText className="size-5 shrink-0 text-primary" />
+          <p className="flex-1 text-sm">
+            {attached
+              ? "Your resume PDF is attached to your account."
+              : "You’re starting with the details entered here."}
+          </p>
+          {attached ? (
+            <Check className="size-4 shrink-0 text-primary" />
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => onEdit(1)}
+            >
+              <ArrowLeft />
+              Add resume
+            </Button>
+          )}
         </div>
       </div>
-
-      {/* Summary */}
-      <div className="p-4 rounded-xl bg-[#0A0C13] border border-white/[0.08]">
-        <h3 className="font-semibold text-xs font-mono uppercase tracking-wider text-blue-400 mb-3 flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5" /> Dossier Summary Preview
-        </h3>
-        <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-          <SummaryItem label="Name" value={formData.full_name || "—"} />
-          <SummaryItem label="Education" value={formData.education_level || "—"} />
-          <SummaryItem label="Field" value={formData.field_of_study || "—"} />
-          <SummaryItem label="Experience" value={formData.experience_level} />
-          <SummaryItem
-            label="Skills"
-            value={
-              formData.skills.length > 0
-                ? `${formData.skills.length} skills`
-                : "—"
-            }
-          />
-          <SummaryItem
-            label="Projects"
-            value={
-              formData.projects.length > 0
-                ? `${formData.projects.length} project${formData.projects.length > 1 ? 's' : ''}`
-                : "—"
-            }
-          />
-          <SummaryItem
-            label="Goals"
-            value={
-              formData.goals.length > 0
-                ? `${formData.goals.length} selected`
-                : "—"
-            }
-          />
-          <SummaryItem
-            label="Resume"
-            value={formData.resume_file ? "Attached PDF" : "Manual entry"}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SummaryItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col">
-      <span className="text-[10px] uppercase text-[#64748B]">{label}</span>
-      <span className="font-medium text-slate-200 truncate">{value}</span>
     </div>
   );
 }
