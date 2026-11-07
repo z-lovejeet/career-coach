@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { isLegacyGuestEmail } from '@/lib/supabase/legacy-guest';
+import { isLegacyGuestEmail, isGuestEmail } from '@/lib/supabase/legacy-guest';
 import type { AnalyzerOutput, RecommendationOutput } from '@/types';
 
 const demoName = 'Guest Engineer';
@@ -42,16 +42,50 @@ export async function POST(request: Request) {
     if (guest && isLegacyGuestEmail(guest.email)) {
       await supabase.auth.signOut({ scope: 'local' });
       guest = null;
-    } else if (guest && !guest.is_anonymous) {
+    } else if (guest && !guest.is_anonymous && !guest.user_metadata?.is_guest && !isGuestEmail(guest.email)) {
       return NextResponse.json({ success: false, error: 'Sign out of your account before starting a guest session.' }, { status: 409 });
     }
 
     if (!guest) {
       const { captchaToken } = await request.json().catch(() => null) ?? {};
-      const { data, error } = await supabase.auth.signInAnonymously({
+      let { data, error } = await supabase.auth.signInAnonymously({
         options: { data: { full_name: demoName }, captchaToken: typeof captchaToken === 'string' ? captchaToken : undefined },
       });
-      if (error || !data.user || !data.session) {
+
+      // If anonymous auth provider is disabled in Supabase, fall back seamlessly to an isolated guest session
+      if (error && error.code === 'anonymous_provider_disabled') {
+        const { createClient: createServiceClient } = await import('@supabase/supabase-js');
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (url && key) {
+          const admin = createServiceClient(url, key, {
+            auth: { autoRefreshToken: false, persistSession: false },
+          });
+          const guestId = randomUUID();
+          const guestEmail = `guest.${guestId}@careerai.local`;
+          const guestPassword = randomBytes(24).toString('hex');
+
+          const { data: created, error: createError } = await admin.auth.admin.createUser({
+            email: guestEmail,
+            password: guestPassword,
+            email_confirm: true,
+            user_metadata: { full_name: demoName, is_guest: true },
+          });
+
+          if (!createError && created?.user) {
+            const signInRes = await supabase.auth.signInWithPassword({
+              email: guestEmail,
+              password: guestPassword,
+            });
+            if (signInRes.data?.user && signInRes.data?.session) {
+              data = signInRes.data;
+              error = null;
+            }
+          }
+        }
+      }
+
+      if (error || !data?.user || !data?.session) {
         const message = error?.code === 'captcha_failed'
           ? 'Please complete the verification and try again.'
           : error?.status === 429 ? 'Too many attempts. Please try again later.' : 'Guest access is temporarily unavailable.';
