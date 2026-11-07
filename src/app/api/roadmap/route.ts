@@ -1,23 +1,107 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceAIQuota } from '@/lib/supabase/ai-quota';
 import { callAI } from '@/lib/agents/ai';
 
-interface RoadmapInput {
+const FOCUS = {
+  dsa: { label: 'Data structures and algorithms', type: 'dsa', title: 'LeetCode problem set', url: 'https://leetcode.com/problemset/' },
+  web_dev: { label: 'Web development', type: 'web_dev', title: 'MDN learning path', url: 'https://developer.mozilla.org/en-US/docs/Learn_web_development' },
+  system_design: { label: 'System design', type: 'system_design', title: 'System Design Primer', url: 'https://github.com/donnemartin/system-design-primer' },
+  projects: { label: 'Projects and portfolio', type: 'project', title: 'GitHub Skills', url: 'https://skills.github.com/' },
+  soft_skills: { label: 'Communication and behavioral skills', type: 'soft_skills', title: 'Behavioral interview practice', url: '/interview' },
+  mock_interviews: { label: 'Mock interviews', type: 'mock_interview', title: 'Mock interview practice', url: '/interview' },
+};
+
+type FocusArea = keyof typeof FOCUS;
+type RoadmapSettings = {
   dreamCompany: string;
   targetRole: string;
-  timelineMonths?: number;
-  timelinMonths?: number;
+  timelineMonths: number;
   hoursPerDay: number;
-  focusAreas: string[];
+  focusAreas: FocusArea[];
+};
+
+type Outline = {
+  overview: {
+    feasibility: 'realistic' | 'ambitious' | 'unrealistic';
+    feasibilityNote: string;
+    targetReadiness: number;
+    estimatedFinalReadiness: number;
+  };
+  phases: Array<{
+    title: string;
+    focusArea: FocusArea;
+    objective: string;
+    milestone: string;
+    weeks: Array<{ focus: string; exercise: string; deliverable: string }>;
+  }>;
+  keySkillsToAcquire: Array<{
+    skill: string;
+    currentLevel: string;
+    targetLevel: string;
+    estimatedWeeks: number;
+    priority: string;
+  }>;
+  interviewPrep: {
+    dsaProblemsTarget: number;
+    systemDesignTopics: string[];
+    mockInterviewsTarget: number;
+    companySpecificTips: string[];
+  };
+  warnings: string[];
+};
+
+const DEFAULT_FOCUS: FocusArea[] = ['dsa', 'web_dev'];
+const hasText = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+const hasNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
+const hasStrings = (value: unknown): value is string[] => Array.isArray(value) && value.every(hasText);
+const isFocusArea = (value: unknown): value is FocusArea => typeof value === 'string' && Object.hasOwn(FOCUS, value);
+
+function readSettings(body: Record<string, unknown> | null): RoadmapSettings | null {
+  const dreamCompany = hasText(body?.dreamCompany) ? body.dreamCompany.trim() : '';
+  const targetRole = hasText(body?.targetRole) ? body.targetRole.trim() : 'Software Engineer';
+  const timelineMonths = body?.timelineMonths ?? body?.timelinMonths ?? 6;
+  const hoursPerDay = body?.hoursPerDay ?? 4;
+  const focusAreas = body?.focusAreas ?? DEFAULT_FOCUS;
+  if (!dreamCompany || dreamCompany.length > 120 || targetRole.length > 120
+    || typeof timelineMonths !== 'number' || !Number.isInteger(timelineMonths) || timelineMonths < 1 || timelineMonths > 12
+    || typeof hoursPerDay !== 'number' || !Number.isFinite(hoursPerDay) || hoursPerDay < 1 || hoursPerDay > 12
+    || !Array.isArray(focusAreas) || focusAreas.length < 1 || focusAreas.length > 6 || !focusAreas.every(isFocusArea)) {
+    return null;
+  }
+  return { dreamCompany, targetRole, timelineMonths, hoursPerDay, focusAreas: [...new Set(focusAreas)] };
 }
 
-const SYSTEM = `You are a career roadmap generator. Return ONLY valid JSON. No markdown.`;
+function validateOutline(outline: Outline, weeksPerPhase: number[], focusAreas: FocusArea[]): boolean {
+  const overview = outline?.overview;
+  const interview = outline?.interviewPrep;
+  return !!overview && ['realistic', 'ambitious', 'unrealistic'].includes(overview.feasibility)
+    && hasText(overview.feasibilityNote) && hasNumber(overview.targetReadiness) && hasNumber(overview.estimatedFinalReadiness)
+    && Array.isArray(outline.phases) && outline.phases.length === weeksPerPhase.length
+    && outline.phases.every((phase, index) => phase && focusAreas.includes(phase.focusArea)
+      && hasText(phase.title) && hasText(phase.objective) && hasText(phase.milestone)
+      && Array.isArray(phase.weeks) && phase.weeks.length === weeksPerPhase[index]
+      && phase.weeks.every(week => week && hasText(week.focus) && hasText(week.exercise) && hasText(week.deliverable)))
+    && Array.isArray(outline.keySkillsToAcquire) && outline.keySkillsToAcquire.every(item => item
+      && hasText(item.skill) && hasText(item.currentLevel) && hasText(item.targetLevel)
+      && hasNumber(item.estimatedWeeks) && ['critical', 'high', 'medium', 'low'].includes(item.priority))
+    && !!interview && hasNumber(interview.dsaProblemsTarget) && hasNumber(interview.mockInterviewsTarget)
+    && hasStrings(interview.systemDesignTopics) && hasStrings(interview.companySpecificTips)
+    && hasStrings(outline.warnings);
+}
+
+function listSkills(value: unknown): string {
+  if (!Array.isArray(value)) return 'None';
+  return value.slice(0, 6).map(entry => {
+    if (hasText(entry)) return entry.slice(0, 100);
+    return hasText(entry?.skill) ? entry.skill.slice(0, 100) : '';
+  }).filter(Boolean).join(', ') || 'None';
+}
 
 export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
     if (authError || !user) {
       return NextResponse.json(
         { success: false, error: { code: 'unauthorized', message: 'Not authenticated' } },
@@ -27,23 +111,23 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('roadmaps')
-      .select('*')
+      .select('content')
       .eq('profile_id', user.id)
       .order('created_at', { ascending: false })
+      .order('id')
       .limit(1)
       .maybeSingle();
-
-    if (error || !data) {
+    if (error) throw error;
+    if (!data) {
       return NextResponse.json(
         { success: false, error: { code: 'not_found', message: 'No saved roadmap found' } },
         { status: 404 }
       );
     }
-
     return NextResponse.json({ success: true, data: data.content });
   } catch {
     return NextResponse.json(
-      { success: false, error: { code: 'server_error', message: 'Internal server error' } },
+      { success: false, error: { code: 'server_error', message: 'Could not load your roadmap.' } },
       { status: 500 }
     );
   }
@@ -53,7 +137,6 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
     if (authError || !user) {
       return NextResponse.json(
         { success: false, error: { code: 'unauthorized', message: 'Not authenticated' } },
@@ -61,86 +144,121 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body: RoadmapInput = await request.json();
-    const timelineMonths = body.timelineMonths || body.timelinMonths || 6;
-    const hoursPerDay = body.hoursPerDay || 4;
-    const focusAreas = Array.isArray(body.focusAreas) && body.focusAreas.length > 0 ? body.focusAreas : ['dsa', 'web_dev'];
-
-    const [profileRes, analysisRes] = await Promise.all([
-      supabase.from('profiles').select('skills, skill_ratings, education_level, experience_level').eq('id', user.id).maybeSingle(),
-      supabase.from('analyses').select('readiness_score, strengths, weaknesses, missing_skills').eq('profile_id', user.id)
-        .order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    ]);
-
-    const profile = profileRes.data;
-    const analysis = analysisRes.data;
-
-    const skills = profile?.skills?.slice(0, 6)?.join(', ') || 'None';
-    const weak = (analysis?.weaknesses || []).slice(0, 2).map((w: {skill: string}) => w.skill).join(', ') || 'N/A';
-    const missing = (analysis?.missing_skills || []).slice(0, 3).map((m: {skill: string}) => m.skill).join(', ') || 'N/A';
-
-    const phases = Math.min(Math.ceil(timelineMonths / 2), 3);
-
-    const focusStr = focusAreas.join(', ');
-
-    const userPrompt = `Build a personalized ${timelineMonths}-month placement prep roadmap.
-
-TARGET: ${body.dreamCompany} — ${body.targetRole}
-TIMELINE: ${timelineMonths} months, ${hoursPerDay} hours per day available
-FOCUS AREAS: ${focusStr}
-STUDENT PROFILE: ${profile?.experience_level || 'fresher'}, knows ${skills}, readiness ${analysis?.readiness_score || '?'}/100
-GAPS: weak in ${weak}, missing ${missing}
-
-RULES:
-- Generate exactly ${phases} phases, 2 weeks each
-- Daily hour splits must total ${hoursPerDay}h (theory+practice+projects)
-- Tasks must match the focus areas: ${focusStr}
-- Each phase needs 2 resources (1 must be a real youtube playlist URL)
-- Company-specific tips must be about ${body.dreamCompany} interview process
-- Warnings should be honest about ${timelineMonths}-month timeline feasibility
-
-JSON: {"overview":{"feasibility":"realistic|ambitious|unrealistic","feasibilityNote":"str","alternativeCompanies":[],"currentReadiness":0,"targetReadiness":0,"estimatedFinalReadiness":0},"phases":[{"phaseNumber":1,"title":"str","startWeek":1,"endWeek":2,"objective":"str","milestone":"str","resources":[{"title":"str","url":"real url","type":"youtube_playlist|documentation|practice","description":"str"}],"weeks":[{"weekNumber":1,"focus":"str","dailyHoursBreakdown":{"theory":1,"practice":2,"projects":1},"tasks":[{"title":"str","type":"dsa|web_dev|system_design|project|soft_skills","description":"str","resources":["str"],"deliverable":"str"}],"weeklyGoal":"str"}]}],"keySkillsToAcquire":[{"skill":"str","currentLevel":"none|beginner","targetLevel":"intermediate|advanced","estimatedWeeks":4,"priority":"critical|high|medium"}],"interviewPrep":{"dsaProblemsTarget":100,"systemDesignTopics":["str"],"mockInterviewsTarget":5,"companySpecificTips":["str"]},"warnings":["str"]}`;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const roadmap: any = await callAI(
-      {
-        systemPrompt: SYSTEM,
-        userPrompt,
-        jsonMode: true,
-        temperature: 0.5,
-        maxTokens: 8192,
-      },
-      'gemini'
-    );
-
-    // Validate phases exist
-    if (!roadmap.phases || !Array.isArray(roadmap.phases) || roadmap.phases.length === 0) {
-      console.error('Roadmap generated with empty phases:', JSON.stringify(roadmap).substring(0, 500));
+    const settings = readSettings(await request.json().catch(() => null));
+    if (!settings) {
       return NextResponse.json(
-        { success: false, error: { code: 'generation_error', message: 'AI generated an incomplete roadmap. Please try again.' } },
-        { status: 500 }
+        { success: false, error: { code: 'invalid_settings', message: 'Choose a company, focus areas, and a timeline of 1–12 months.' } },
+        { status: 400 }
       );
     }
 
-    // Persist to database if roadmaps table exists
-    try {
-      await supabase.from('roadmaps').insert({
-        profile_id: user.id,
-        dream_company: body.dreamCompany,
-        target_role: body.targetRole,
-        timeline_months: timelineMonths,
-        content: roadmap,
-      });
-    } catch (saveErr) {
-      console.warn('Roadmap database persistence skipped:', saveErr);
+    const [profile, analysis] = await Promise.all([
+      supabase.from('profiles').select('skills, experience_level').eq('id', user.id).maybeSingle(),
+      supabase.from('analyses').select('readiness_score, weaknesses, missing_skills').eq('profile_id', user.id)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    if (profile.error || analysis.error) throw profile.error || analysis.error;
+    const quota = await enforceAIQuota(supabase, 'roadmap');
+    if (quota) return quota;
+
+    const { dreamCompany, targetRole, timelineMonths, hoursPerDay, focusAreas } = settings;
+    // Allocate the weeks in the selected horizon to contiguous monthly phases.
+    const weeksPerPhase = Array.from({ length: timelineMonths }, (_, month) =>
+      Math.round((month + 1) * 52 / 12) - Math.round(month * 52 / 12)
+    );
+    const currentReadiness = analysis.data?.readiness_score ?? 0;
+    const outline = await callAI<Outline>({
+      systemPrompt: 'You are a placement coach creating a practical study curriculum. Return only valid JSON matching the requested structure.',
+      userPrompt: `Target: ${targetRole} at ${dreamCompany}. Time available: ${hoursPerDay} hours per day.
+Candidate level: ${profile.data?.experience_level || 'fresher'}. Current readiness: ${currentReadiness}/100.
+Skills: ${listSkills(profile.data?.skills)}. Weaknesses: ${listSkills(analysis.data?.weaknesses)}. Gaps: ${listSkills(analysis.data?.missing_skills)}.
+Selected focus areas: ${focusAreas.map(area => `${area} (${FOCUS[area].label})`).join(', ')}.
+
+Build exactly ${timelineMonths} phases, each covering a month. In order, the phases must have exactly these counts of week entries: [${weeksPerPhase.join(', ')}].
+Choose one of the selected focus IDs as each phase's focusArea. Cover the selected domains over time. Give every week a distinct focus, exercise and verifiable deliverable. Keep each exercise and deliverable under 16 words. Use honest projections and company tips. Do not generate links.
+Return this shape:
+{"overview":{"feasibility":"realistic|ambitious|unrealistic","feasibilityNote":"text","targetReadiness":80,"estimatedFinalReadiness":70},"phases":[{"title":"text","focusArea":"selected focus ID","objective":"text","milestone":"text","weeks":[{"focus":"text","exercise":"text","deliverable":"text"}]}],"keySkillsToAcquire":[{"skill":"text","currentLevel":"text","targetLevel":"text","estimatedWeeks":4,"priority":"critical|high|medium|low"}],"interviewPrep":{"dsaProblemsTarget":30,"systemDesignTopics":["text"],"mockInterviewsTarget":4,"companySpecificTips":["text"]},"warnings":["text"]}`,
+      jsonMode: true,
+      temperature: 0.4,
+      maxTokens: 12000,
+    }, 'gemini');
+
+    if (!validateOutline(outline, weeksPerPhase, focusAreas)) {
+      return NextResponse.json(
+        { success: false, error: { code: 'generation_error', message: 'The plan was incomplete. Please generate it again.' } },
+        { status: 502 }
+      );
     }
 
+    const theory = Math.round(hoursPerDay * 25) / 100;
+    const practice = Math.round(hoursPerDay * 50) / 100;
+    const projects = Math.round((hoursPerDay - theory - practice) * 100) / 100;
+    let weekNumber = 0;
+    const roadmap = {
+      settings,
+      overview: {
+        ...outline.overview,
+        currentReadiness,
+        targetReadiness: Math.min(100, outline.overview.targetReadiness),
+        estimatedFinalReadiness: Math.min(100, outline.overview.estimatedFinalReadiness),
+        alternativeCompanies: [],
+      },
+      phases: outline.phases.map((phase, index) => {
+        const resource = FOCUS[phase.focusArea];
+        const startWeek = weekNumber + 1;
+        const weeks = phase.weeks.map(week => ({
+          weekNumber: ++weekNumber,
+          focus: week.focus,
+          dailyHoursBreakdown: { theory, practice, projects },
+          weeklyGoal: week.deliverable,
+          tasks: [{
+            title: week.focus,
+            type: resource.type,
+            description: week.exercise,
+            deliverable: week.deliverable,
+            resources: [],
+          }],
+        }));
+        return {
+          phaseNumber: index + 1,
+          title: phase.title,
+          startWeek,
+          endWeek: weekNumber,
+          objective: phase.objective,
+          milestone: phase.milestone,
+          resources: [{
+            title: resource.title,
+            url: resource.url,
+            type: 'practice',
+            description: `Practice ${resource.label.toLowerCase()}.`,
+          }],
+          weeks,
+        };
+      }),
+      keySkillsToAcquire: outline.keySkillsToAcquire,
+      interviewPrep: outline.interviewPrep,
+      warnings: outline.warnings,
+    };
+
+    const { error: saveError } = await supabase.from('roadmaps').insert({
+      profile_id: user.id,
+      dream_company: dreamCompany,
+      target_role: targetRole,
+      timeline_months: timelineMonths,
+      content: roadmap,
+    });
+    if (saveError) {
+      console.error('Roadmap save failed:', saveError.code);
+      return NextResponse.json(
+        { success: false, error: { code: 'save_failed', message: 'Could not save your roadmap. Please try again.' } },
+        { status: 500 }
+      );
+    }
     return NextResponse.json({ success: true, data: roadmap });
   } catch (err) {
-    console.error('Roadmap generation error:', err);
-    const message = err instanceof Error ? err.message : 'Failed to generate roadmap';
+    console.error('Roadmap generation error:', err instanceof Error ? err.name : 'database_error');
     return NextResponse.json(
-      { success: false, error: { code: 'generation_error', message } },
+      { success: false, error: { code: 'generation_error', message: 'Could not generate your roadmap. Please try again.' } },
       { status: 500 }
     );
   }

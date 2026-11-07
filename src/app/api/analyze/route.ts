@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceAIQuota } from '@/lib/supabase/ai-quota';
+import { downloadResume } from '@/lib/supabase/resume';
+import { readResumeWithGemini } from '@/lib/agents/resume';
 import { analyzeProfile } from '@/lib/agents/analyzer';
 import { generateWeeklyPlan } from '@/lib/agents/planner';
 import type { AnalyzerInput, PlannerInput } from '@/types';
@@ -37,69 +40,18 @@ export async function POST() {
       );
     }
 
-    // === RESUME ANALYSIS ===
-    // If the user uploaded a resume, use Gemini to extract key info from it
+    const quota = await enforceAIQuota(supabase, 'analysis');
+    if (quota) return quota;
+
     let resumeAnalysis = '';
     if (profile.resume_url) {
       try {
-        console.log('Fetching resume for AI analysis:', profile.resume_url);
-        const pdfRes = await fetch(profile.resume_url);
-        if (pdfRes.ok) {
-          const pdfBuffer = await pdfRes.arrayBuffer();
-          const base64Pdf = Buffer.from(pdfBuffer).toString('base64');
-          
-          // Use Gemini to read the PDF directly
-          const { GoogleGenAI } = await import('@google/genai');
-          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-          const { getGemini38Usage, recordGemini38Request } = await import('@/lib/agents/ai');
-
-          const usage = getGemini38Usage();
-          const modelsToTry = usage.allowed ? ['gemini-3.8-flash', 'gemini-3.5-flash-lite'] : ['gemini-3.5-flash-lite'];
-
-          for (const model of modelsToTry) {
-            try {
-              const result = await ai.models.generateContent({
-                model,
-                contents: [
-                  {
-                    role: 'user',
-                    parts: [
-                      {
-                        inlineData: {
-                          mimeType: 'application/pdf',
-                          data: base64Pdf,
-                        },
-                      },
-                      {
-                        text: `Extract the following from this resume in a structured text format:
-1. Name and contact info
-2. Education details
-3. All technical skills mentioned
-4. Work experience / internships
-5. Projects with tech stacks used
-6. Certifications
-7. Key achievements
-
-Return a clean, structured text summary. No JSON needed.`,
-                      },
-                    ],
-                  },
-                ],
-              });
-
-              resumeAnalysis = result.text || '';
-              if (model === 'gemini-3.8-flash') {
-                recordGemini38Request();
-              }
-              if (resumeAnalysis) break;
-            } catch (mErr) {
-              console.warn(`[Resume Analysis] Model ${model} failed, trying fallback:`, (mErr as Error).message || mErr);
-            }
-          }
-          console.log('Resume analyzed successfully, extracted', resumeAnalysis.length, 'chars');
+        const pdf = await downloadResume(supabase, profile.resume_url, user.id);
+        if (pdf) {
+          resumeAnalysis = await readResumeWithGemini(pdf, 'Summarize the technical skills, education, work experience, projects, and relevant certifications supported by the attached resume. Omit contact information.');
         }
-      } catch (resumeErr) {
-        console.warn('Resume analysis skipped:', resumeErr);
+      } catch {
+        console.warn('[Resume] Could not read the attached PDF for profile analysis.');
       }
     }
 
@@ -111,7 +63,7 @@ Return a clean, structured text summary. No JSON needed.`,
       education: `${profile.education_level || ''} ${profile.field_of_study || ''}`.trim(),
       experience: profile.experience_level || 'fresher',
       goals: profile.goals || [],
-      resume_text: resumeAnalysis || profile.resume_text || undefined,
+      resume_text: resumeAnalysis || undefined,
     };
 
     // Run analyzer agent
@@ -140,58 +92,40 @@ Return a clean, structured text summary. No JSON needed.`,
       );
     }
 
-    // === AGENTIC: AUTO-GENERATE TASKS ===
-    // The AI proactively creates a study plan based on detected weaknesses
+    // Seed the first practice week once. Later analyses preserve existing practice.
     try {
-      console.log('🤖 Agentic: Auto-generating tasks based on weakness detection...');
-      
-      const plannerInput: PlannerInput = {
-        analysis: {
-          extracted_skills: analysis.extracted_skills,
-          strengths: analysis.strengths,
-          weaknesses: analysis.weaknesses,
-          missing_skills: analysis.missing_skills,
-          readiness_score: analysis.readiness_score,
-          summary: analysis.summary,
-        },
-        recommendations: {
-          current_fit_companies: [],
-          target_companies: [],
-          skill_gaps: analysis.missing_skills.map((s: { skill: string; importance: string }) => ({
-            skill: s.skill,
-            current_level: 'none',
-            required_level: 'intermediate',
-            priority: s.importance as 'low' | 'medium' | 'high' | 'critical',
-          })),
-          roadmap_to_target: [],
-        },
-        goals: profile.goals || [],
-        available_hours_per_day: 3,
-        current_week: 1,
-      };
+      const { data: firstWeek, error: tasksError } = await supabase.from('tasks')
+        .select('id').eq('profile_id', user.id).eq('week_number', 1).limit(1);
+      if (tasksError) throw tasksError;
 
-      const plan = await generateWeeklyPlan(plannerInput);
-
-      // Save auto-generated tasks
-      const tasksToInsert = plan.weekly_plan.tasks.map(task => ({
-        profile_id: user.id,
-        analysis_id: savedAnalysis.id,
-        title: task.title,
-        description: task.description,
-        category: task.category,
-        difficulty: task.difficulty,
-        type: task.type,
-        day_number: task.day_number,
-        week_number: 1,
-        priority: task.priority,
-        completed: false,
-      }));
-
-      await supabase.from('tasks').insert(tasksToInsert);
-      console.log(`🤖 Agentic: Auto-assigned ${tasksToInsert.length} tasks based on weakness detection`);
-    } catch (planErr) {
-      // Task generation is best-effort — don't fail the whole analysis if it errors
-      console.warn('Auto-task generation skipped:', planErr);
+      if (!firstWeek?.length) {
+        const plannerInput: PlannerInput = {
+          analysis,
+          recommendations: {
+            current_fit_companies: [],
+            target_companies: [],
+            skill_gaps: analysis.missing_skills.map(skill => ({
+              skill: skill.skill,
+              current_level: 'none',
+              required_level: 'intermediate',
+              priority: skill.importance,
+            })),
+            roadmap_to_target: [],
+          },
+          goals: profile.goals || [],
+          available_hours_per_day: 3,
+          current_week: 1,
+        };
+        const plan = await generateWeeklyPlan(plannerInput);
+        const { error: saveTasksError } = await supabase.rpc('save_weekly_tasks', {
+          p_analysis_id: savedAnalysis.id,
+          p_week_number: 1,
+          p_tasks: plan.weekly_plan.tasks,
+        });
+        if (saveTasksError) throw saveTasksError;
+      }
+    } catch (err) {
+      console.warn('Initial practice plan was skipped:', err instanceof Error ? err.name : 'database_error');
     }
 
     return NextResponse.json({ success: true, data: savedAnalysis });
