@@ -1,0 +1,14 @@
+import Link from "next/link";
+
+export function Brand({ href = "/" }: { href?: string }) {
+  return (
+    <Link href={href} className="brand" aria-label="CareerAI home">
+      <svg aria-hidden="true" viewBox="0 0 40 40" className="brand-mark" fill="none">
+        <rect x="1" y="1" width="38" height="38" rx="19" fill="currentColor" />
+        <path d="M24.8 10.5c-3.6 1.5-6.4 3.6-8.7 6.6-2.1 2.9-3.4 6-4.2 10.2 3.3-2.6 6-3.6 9-3.6 2.5 0 4.5.7 6.4 2.3-.1-3.6-1.6-6.1-4.5-7.7l2-7.8Z" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="m16 27.7 3.1-3.6M28.2 13.4l1.7 1.7m-1.7 0 1.7-1.7" stroke="#e0e4ff" strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+      <span>Career<span className="brand-ai">AI</span></span>
+    </Link>
+  );
+}
