@@ -1,597 +1,485 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Brain,
-  Building2,
   ArrowRight,
-  Mic,
-  LayoutDashboard,
-  Cpu,
-  Check,
-  Sparkles,
-  Terminal,
-  ShieldCheck,
-  Zap,
-  Flame,
-  Activity,
-  Code2,
-  Layers,
-  ChevronRight,
   ArrowUpRight,
+  BookOpen,
+  Check,
+  ChevronRight,
+  FileText,
+  MessagesSquare,
+  Mic,
+  Plus,
+  Route,
+  TrendingUp,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Brand } from "@/components/studio/brand";
+import { JellySculpture } from "@/components/studio/jelly-sculpture";
+import { SiteFooter } from "@/components/studio/site-footer";
+import { openGuestWorkspace } from "@/components/studio/guest-action";
 
-const autonomousAgents = [
-  { name: "Profile Intelligence", engine: "Gemini 3.8 Flash", role: "Multi-modal resume parsing & granular skill matrix taxonomy extraction" },
-  { name: "Mentor Reasoning", engine: "Groq • GPT-OSS 120B", role: "Real-time Socratic architectural debate & algorithmic coaching" },
-  { name: "Adaptive Planner", engine: "Groq • GPT-OSS 120B", role: "Dynamic weekly sprint curriculum calibrated to identified candidate gaps" },
-  { name: "Technical Interviewer", engine: "Groq • GPT-OSS 120B", role: "Multi-round simulated engineering rounds with nuanced rubric scoring" },
-  { name: "Company Matchmaker", engine: "Gemini 3.8 Flash", role: "Deterministic fit index calculation against real Tier-1 hiring bars" },
-  { name: "Live Market Radar", engine: "Apify / LinkedIn", role: "Real-time scrapers mapping verified hiring openings to candidate skillsets" },
+const workflow = [
+  {
+    Icon: FileText,
+    title: "Start with your story",
+    description:
+      "Bring your skills, experience, projects, and goals together. Add a resume when you want your assessment to reflect the work behind the bullet points.",
+    action: "Build your profile",
+    href: "/profile",
+  },
+  {
+    Icon: Route,
+    title: "Give your time a purpose",
+    description:
+      "Choose a role, company, and preparation horizon. Turn the gaps in your profile into a clear sequence of weekly milestones and practical exercises.",
+    action: "Explore roadmaps",
+    href: "/roadmap",
+  },
+  {
+    Icon: Mic,
+    title: "Practice thinking out loud",
+    description:
+      "Work through a technical interview round. Explain your choices, receive feedback on each answer, and return to the parts that need more attention.",
+    action: "See interview practice",
+    href: "/interview",
+  },
+  {
+    Icon: TrendingUp,
+    title: "Notice your progress",
+    description:
+      "Review completed practice, consistency, and the topics you spend time on. Use that evidence to decide what deserves your attention next.",
+    action: "Understand progress",
+    href: "/progress",
+  },
+];
+
+const explorer = [
+  {
+    id: "plan",
+    Icon: Route,
+    title: "A plan you can follow",
+    hint: "Profile, goals, and a realistic schedule",
+    heading: "Know what to work on next.",
+    description:
+      "A useful study plan starts with the time you actually have. CareerAI connects your starting skills and target role with a week-by-week preparation path.",
+    points: [
+      "Choose a preparation horizon from one to twelve months.",
+      "Balance concepts, hands-on practice, and project work.",
+      "See each week’s exercise and the result you should be able to demonstrate.",
+      "Return to your saved plan and adjust your direction as your goals evolve.",
+    ],
+    href: "/roadmap",
+    action: "Open the roadmap",
+  },
+  {
+    id: "practice",
+    Icon: Mic,
+    title: "Practice with feedback",
+    hint: "Technical rounds and a patient mentor",
+    heading: "Make your reasoning visible.",
+    description:
+      "Knowing an answer and communicating it are different skills. Use a focused mock interview or an open conversation with your mentor to practice both.",
+    points: [
+      "Choose a topic and difficulty for a five-question technical round.",
+      "Explain your approach, complexity, edge cases, and trade-offs.",
+      "Review the concepts you covered and the details you missed.",
+      "Save a session, come back later, and revisit the complete answer notebook.",
+    ],
+    href: "/interview",
+    action: "Open interview practice",
+  },
+  {
+    id: "reflect",
+    Icon: TrendingUp,
+    title: "Progress with perspective",
+    hint: "Your activity and the skills behind it",
+    heading: "See the work behind the score.",
+    description:
+      "Use your activity history and completed work to understand how your preparation is developing. Scores are a starting point for reflection and planning.",
+    points: [
+      "Review recent practice and your activity calendar.",
+      "Compare completed tasks across preparation topics.",
+      "Understand how task, interview, and assessment activity contributes to experience.",
+      "Find a useful next step from your unfinished work and skill gaps.",
+    ],
+    href: "/progress",
+    action: "Open progress",
+  },
+];
+
+const questions = [
+  {
+    question: "Where should I start?",
+    answer:
+      "Start with your profile. Add the skills you use, projects you can discuss, and the kind of role you want. Your first readiness assessment helps you identify a practical starting point for preparation.",
+  },
+  {
+    question: "What can I try as a guest?",
+    answer:
+      "Guest access opens an individual workspace with a sample engineering profile and practice tasks. You can explore the experience, try the preparation tools, and return in the same browser. Create an account for a workspace tied to your email.",
+  },
+  {
+    question: "How does interview feedback work?",
+    answer:
+      "Each answer is evaluated against the question’s expected topics. You receive a score out of ten, an explanation, covered and missed concepts, and a specific improvement suggestion. Completed sessions remain available for review.",
+  },
+  {
+    question: "Can I use my own resume?",
+    answer:
+      "Yes. Add a PDF up to 4 MB to bring your experience into the assessment. You can review the extracted information, update your profile, replace the PDF, or remove it from your workspace.",
+  },
+  {
+    question: "Are company matches guaranteed offers?",
+    answer:
+      "Company matches are preparation suggestions based on your profile and assessment. Use them to explore suitable roles and identify skills to build. Current hiring requirements and interview decisions belong to each employer.",
+  },
+  {
+    question: "Where do job results come from?",
+    answer:
+      "The opportunities workspace can show sourced LinkedIn listings when live search is available. Otherwise, it gives you the same search on LinkedIn so you can browse current postings directly. Each view makes its source clear.",
+  },
 ];
 
 export default function LandingPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-  const [activeCockpitTab, setActiveCockpitTab] = useState<"mentor" | "interview" | "radar">("mentor");
+  const router = useRouter();
   const [guestLoading, setGuestLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [active, setActive] = useState(0);
+  const tabList = useRef<HTMLDivElement>(null);
+  const detail = explorer[active];
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsLoggedIn(!!user);
-    };
-    checkAuth();
-  }, []);
-
-  const handleGuestLogin = async () => {
+  async function enterGuest() {
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY)
+      return router.push("/auth?mode=guest");
     setGuestLoading(true);
+    setError("");
     try {
-      const res = await fetch("/api/auth/guest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to initialize guest session");
-      }
-      window.location.href = data.redirect || "/dashboard";
-    } catch (err: unknown) {
-      console.error("Guest login error:", err);
+      await openGuestWorkspace();
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Guest access is temporarily unavailable.",
+      );
       setGuestLoading(false);
-      window.location.href = "/auth";
     }
-  };
-
-  const cta = isLoggedIn ? "/dashboard" : "/auth";
-  const ctaText = isLoggedIn ? "Open Command Center" : "Calibrate Candidate Dossier";
+  }
 
   return (
-    <div className="min-h-screen bg-[#08090C] text-[#F4F6FB] selection:bg-blue-500/20 selection:text-blue-300">
-      {/* ─── Architectural Grid & Subtle Radial Atmosphere ─── */}
-      <div className="fixed inset-0 subtle-grid pointer-events-none opacity-25 z-0" />
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[450px] bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(59,130,246,0.12),transparent)] pointer-events-none z-0" />
-
-      {/* ─── Fixed Header ─── */}
-      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#08090C]/85 border-b border-white/[0.07]">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/[0.12] p-0.5 bg-[#0D0F17] shadow-sm flex items-center justify-center">
-              <Image src="/logo.png" alt="CareerAI Logo" fill className="object-cover rounded-md" priority />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold tracking-tight text-white group-hover:text-blue-400 transition-colors">
-                CareerAI
-              </span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase bg-white/[0.06] text-[#8A96AA] border border-white/[0.06]">
-                v2.4
-              </span>
-            </div>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-7 text-xs font-mono tracking-wider uppercase text-[#8A96AA]">
-            <a href="#cockpit" className="hover:text-white transition-colors">Live Cockpit</a>
-            <a href="#architecture" className="hover:text-white transition-colors">Architecture</a>
-            <a href="#pipeline" className="hover:text-white transition-colors">Agent Syndicate</a>
-            <a href="#protocol" className="hover:text-white transition-colors">Protocol</a>
+    <>
+      <header className="studio-frame studio-nav">
+        <div className="studio-nav-inner glass-raised">
+          <Brand />
+          <nav aria-label="Site" className="studio-nav-links landing-nav-links">
+            <a href="#workflow" className="studio-nav-link">
+              How it works
+            </a>
           </nav>
-
-          <div className="flex items-center gap-3">
-            {isLoggedIn ? (
-              <Link href="/dashboard">
-                <Button className="h-8.5 px-4 rounded-lg bg-primary hover:bg-blue-500 text-white font-medium text-xs tracking-wide transition-all shadow-[0_2px_10px_rgba(59,130,246,0.3)]">
-                  <LayoutDashboard className="w-3.5 h-3.5 mr-1.5" /> Dashboard
-                </Button>
-              </Link>
-            ) : (
-              <>
-                <button
-                  onClick={handleGuestLogin}
-                  disabled={guestLoading}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 font-mono text-xs transition-colors cursor-pointer"
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>{guestLoading ? "Connecting..." : "Guest Access (1-Click)"}</span>
-                </button>
-                <Link href="/auth">
-                  <Button variant="ghost" className="h-8.5 px-3 text-xs font-mono text-[#8A96AA] hover:text-white">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/auth">
-                  <Button className="h-8.5 px-3.5 rounded-lg bg-white hover:bg-slate-200 text-black font-semibold text-xs tracking-wide transition-all shadow-sm">
-                    Get Started <ArrowRight className="w-3 h-3 ml-1" />
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
+          <Link href="/auth" className="studio-link">
+            Sign in <ArrowUpRight size={15} aria-hidden />
+          </Link>
         </div>
       </header>
 
-      {/* ─── Hero Section ─── */}
-      <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 px-6 z-10 overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-12 gap-10 lg:gap-8 items-center">
-            
-            {/* Left Narrative */}
-            <div className="lg:col-span-7 flex flex-col items-start text-left">
-              
-              {/* Telemetry Badge */}
-              <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[#0E111A] border border-white/[0.08] mb-6 shadow-sm">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                </span>
-                <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300">
-                  DUAL AI RUNTIME: GROQ 120B • GEMINI 3.8 FLASH
-                </span>
-                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  LATENCY &lt;380MS
-                </span>
-              </div>
-
-              {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.035em] leading-[1.08] text-white">
-                Autonomous placement intelligence for{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-sky-300">
-                  elite software engineers.
-                </span>
+      <main id="main-content" className="studio-frame landing-main">
+        <motion.section
+          className="landing-hero-surface"
+          aria-labelledby="landing-title"
+          initial={{ opacity: 0.65, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
+        >
+          <div className="landing-hero-top">
+            <div className="landing-hero-copy space-y-5 lg:space-y-6">
+              <p className="eyebrow">Interview preparation for engineers</p>
+              <h1 id="landing-title" className="landing-title">
+                Make your next
+                <br />
+                <span className="landing-title-accent">career move.</span>
               </h1>
-
-              {/* Subtitle */}
-              <p className="mt-6 text-sm sm:text-base md:text-lg text-[#8A96AA] max-w-2xl leading-relaxed font-normal">
-                Continuous multi-agent reasoning that decodes your code and resume, conducts rigorous Socratic mock rounds, isolates algorithmic blindspots, and calibrates your preparation until offer day.
+              <p className="landing-intro">
+                Plan your prep, practice technical interviews, and see where
+                you’re getting stronger.
               </p>
-
-              {/* Action Buttons */}
-              <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full sm:w-auto">
-                <Link href={cta}>
-                  <Button className="h-11 px-6 rounded-lg bg-primary hover:bg-blue-500 text-white font-medium text-sm flex items-center justify-center gap-2.5 shadow-[0_4px_16px_rgba(59,130,246,0.3)] transition-all">
-                    <span>{ctaText}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link href="/auth?mode=register" className="studio-button">
+                  Get started
+                  <ArrowRight size={16} aria-hidden />
                 </Link>
-
-                {!isLoggedIn && (
-                  <button
-                    onClick={handleGuestLogin}
-                    disabled={guestLoading}
-                    className="h-11 px-5 rounded-lg border border-emerald-500/30 hover:border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-300 font-mono text-xs tracking-wide uppercase transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    {guestLoading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-3.5 h-3.5 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
-                        <span>Calibrating...</span>
-                      </span>
-                    ) : (
-                      <>
-                        <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Instant Guest Mode</span>
-                      </>
-                    )}
-                  </button>
-                )}
-
-                <a href="#cockpit">
-                  <Button
-                    variant="outline"
-                    className="h-11 px-4.5 rounded-lg border-white/[0.1] hover:border-white/[0.2] bg-[#0E111A] text-xs font-mono tracking-wider uppercase text-[#8A96AA] hover:text-white transition-all flex items-center justify-center gap-2"
-                  >
-                    <Terminal className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Live Cockpit</span>
-                  </Button>
-                </a>
+                <button
+                  type="button"
+                  className="studio-link"
+                  onClick={enterGuest}
+                  disabled={guestLoading}
+                >
+                  {guestLoading ? "Opening workspace…" : "Try as guest"}
+                </button>
               </div>
-
-              {/* Hiring Standards Verification */}
-              <div className="mt-10 pt-6 border-t border-white/[0.07] w-full">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-[#64748B] mb-3">
-                  Calibrated to rubrics from Tier-1 product engineering teams
+              {error && (
+                <p role="alert" className="max-w-sm text-sm text-destructive">
+                  {error}
                 </p>
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-mono text-[#8A96AA]">
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <Check className="w-3.5 h-3.5 text-blue-400" /> Google L3/L4
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <Check className="w-3.5 h-3.5 text-blue-400" /> Stripe Core
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <Check className="w-3.5 h-3.5 text-blue-400" /> Uber Infra
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <Check className="w-3.5 h-3.5 text-blue-400" /> Atlassian P3
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-300">
-                    <Check className="w-3.5 h-3.5 text-blue-400" /> Razorpay
-                  </span>
-                </div>
-              </div>
-
+              )}
             </div>
-
-            {/* Right Interactive Cockpit */}
-            <div id="cockpit" className="lg:col-span-5 w-full">
-              <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col">
-                
-                {/* Terminal Header Bar */}
-                <div className="px-4 py-3 bg-[#0A0C13] border-b border-white/[0.07] flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                    <span className="ml-2 font-mono text-[11px] text-[#8A96AA] truncate">
-                      career-agent.daemon • pid 94102
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="font-mono text-[10px] text-emerald-400 font-semibold">STREAMING</span>
-                  </div>
-                </div>
-
-                {/* Cockpit Segment Tabs */}
-                <div className="p-1.5 bg-[#090B12] border-b border-white/[0.06] flex items-center gap-1">
-                  <button
-                    onClick={() => setActiveCockpitTab("mentor")}
-                    className={`flex-1 py-1.5 px-2 rounded-md font-mono text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      activeCockpitTab === "mentor"
-                        ? "bg-blue-600/15 text-blue-300 border border-blue-500/25 font-medium"
-                        : "text-[#8A96AA] hover:text-white hover:bg-white/[0.03]"
-                    }`}
-                  >
-                    <Sparkles className="w-3 h-3 text-blue-400" />
-                    <span>01 Socratic</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveCockpitTab("interview")}
-                    className={`flex-1 py-1.5 px-2 rounded-md font-mono text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      activeCockpitTab === "interview"
-                        ? "bg-emerald-600/15 text-emerald-300 border border-emerald-500/25 font-medium"
-                        : "text-[#8A96AA] hover:text-white hover:bg-white/[0.03]"
-                    }`}
-                  >
-                    <Mic className="w-3 h-3 text-emerald-400" />
-                    <span>02 Mock Rubric</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveCockpitTab("radar")}
-                    className={`flex-1 py-1.5 px-2 rounded-md font-mono text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      activeCockpitTab === "radar"
-                        ? "bg-purple-600/15 text-purple-300 border border-purple-500/25 font-medium"
-                        : "text-[#8A96AA] hover:text-white hover:bg-white/[0.03]"
-                    }`}
-                  >
-                    <Building2 className="w-3 h-3 text-purple-400" />
-                    <span>03 Match Radar</span>
-                  </button>
-                </div>
-
-                {/* Cockpit Content */}
-                <div className="p-5 min-h-[310px] flex flex-col justify-between bg-[#0B0D16]">
-                  
-                  {activeCockpitTab === "mentor" && (
-                    <div className="space-y-3.5">
-                      <div className="flex items-center justify-between text-[11px] font-mono text-[#8A96AA] pb-2 border-b border-white/[0.05]">
-                        <span className="text-blue-400 flex items-center gap-1.5">
-                          <Cpu className="w-3.5 h-3.5" /> GROQ • OPENAI/GPT-OSS-120B
-                        </span>
-                        <span className="text-emerald-400 font-bold tabular-nums">280 tok/sec</span>
-                      </div>
-
-                      <div className="p-2.5 rounded-lg bg-[#0E111C] border border-white/[0.06] text-xs text-slate-200 font-mono">
-                        <span className="text-blue-400 mr-2">candidate&gt;</span>
-                        &quot;Should I use Dijkstra or 0-1 BFS for a grid with weighted edge costs 0 and 1?&quot;
-                      </div>
-
-                      <div className="p-3 rounded-lg bg-[#0F1322] border border-blue-500/20 text-xs font-mono text-slate-200 space-y-2">
-                        <div className="flex items-center gap-1.5 text-blue-400 text-[10px] font-bold uppercase tracking-wider">
-                          <Sparkles className="w-3 h-3" /> Mentor Evaluation
-                        </div>
-                        <p className="leading-relaxed text-[#D0D6E2]">
-                          Use <strong className="text-white">0-1 BFS via a Deque</strong>. Time complexity drops from <code className="text-amber-300 bg-black/40 px-1 py-0.5 rounded">O(E log V)</code> to pure <code className="text-emerald-300 bg-black/40 px-1 py-0.5 rounded">O(V + E)</code> because edges are processed in strictly non-decreasing distance order without min-heap overhead.
-                        </p>
-                        <div className="p-2 rounded bg-black/50 text-[11px] text-slate-300 border border-white/[0.04]">
-                          <code>q.push_front(v) if w == 0 else q.push_back(v)</code>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeCockpitTab === "interview" && (
-                    <div className="space-y-3.5">
-                      <div className="flex items-center justify-between text-[11px] font-mono text-[#8A96AA] pb-2 border-b border-white/[0.05]">
-                        <span className="text-emerald-400 flex items-center gap-1.5">
-                          <Mic className="w-3.5 h-3.5" /> TECHNICAL ROUND SIMULATION
-                        </span>
-                        <span className="text-white font-bold">L4 Distributed Systems</span>
-                      </div>
-
-                      <div className="p-3 rounded-lg bg-[#0E1320] border border-emerald-500/20 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-mono text-xs font-bold text-white tabular-nums">Score: 92 / 100</span>
-                          <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            STRONG HIRE
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-300 font-mono">
-                          Question: <em>&quot;Design idempotent transaction handling under network retries.&quot;</em>
-                        </p>
-                        <div className="space-y-1.5 pt-1 text-[11px] font-mono">
-                          <div className="flex items-center gap-1.5 text-emerald-400">
-                            <Check className="w-3 h-3" /> Covered: Unique Idempotency Keys + Redis Leases
-                          </div>
-                          <div className="flex items-center gap-1.5 text-amber-300">
-                            <span>⚠</span> Tip: Explicitly handle duplicate in-flight requests with 409 Conflict
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 rounded-lg bg-[#0E111C] border border-white/[0.04] text-[11px] font-mono flex items-center justify-between text-[#8A96AA]">
-                        <span>Confidence Metric</span>
-                        <span className="text-emerald-400 font-semibold tabular-nums">96.4% Nuance Recognition</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeCockpitTab === "radar" && (
-                    <div className="space-y-3.5">
-                      <div className="flex items-center justify-between text-[11px] font-mono text-[#8A96AA] pb-2 border-b border-white/[0.05]">
-                        <span className="text-purple-400 flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5" /> PLACEMENT MATCH MATRIX
-                        </span>
-                        <span className="text-blue-400 font-mono">TARGET RADAR</span>
-                      </div>
-
-                      <div className="space-y-2 font-mono">
-                        <div className="p-2.5 rounded-lg bg-[#0E111C] border border-white/[0.06] flex items-center justify-between">
-                          <div>
-                            <p className="text-xs font-semibold text-white">Stripe • Core Infrastructure</p>
-                            <p className="text-[10px] text-[#8A96AA]">Match: Distributed Systems, Kafka, Go</p>
-                          </div>
-                          <span className="text-sm font-bold text-emerald-400 tabular-nums">94%</span>
-                        </div>
-
-                        <div className="p-2.5 rounded-lg bg-[#0E111C] border border-white/[0.06] flex items-center justify-between">
-                          <div>
-                            <p className="text-xs font-semibold text-white">Google • L3/L4 Software Engineer</p>
-                            <p className="text-[10px] text-[#8A96AA]">Match: Advanced Graph DSA, C++</p>
-                          </div>
-                          <span className="text-sm font-bold text-emerald-400 tabular-nums">88%</span>
-                        </div>
-
-                        <div className="p-2.5 rounded-lg bg-[#0E111C] border border-white/[0.06] flex items-center justify-between">
-                          <div>
-                            <p className="text-xs font-semibold text-white">Uber • Platform Engineering</p>
-                            <p className="text-[10px] text-amber-300">Missing: Microservices Resiliency (Sprint Active)</p>
-                          </div>
-                          <span className="text-sm font-bold text-amber-400 tabular-nums">76%</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Cockpit Footer */}
-                  <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[10px] font-mono text-[#64748B]">
-                    <span>Engine: Gemini 3.8 + Groq 120B</span>
-                    <span className="text-slate-400 flex items-center gap-1">
-                      <Activity className="w-3 h-3 text-emerald-400" /> Continuous Telemetry
-                    </span>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
+            <JellySculpture />
           </div>
-        </div>
-      </section>
+        </motion.section>
 
-      {/* ─── Bento Grid: Multi-Agent Architecture ─── */}
-      <section id="architecture" className="py-20 px-6 border-t border-white/[0.07] relative">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="font-mono text-[11px] uppercase tracking-wider text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
-              Autonomous Ecosystem
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mt-4 mb-3">
-              Not a chatbot. A full-scale placement syndicate.
+        <section
+          id="workflow"
+          className="landing-section"
+          aria-labelledby="workflow-title"
+        >
+          <div className="section-heading">
+            <p className="eyebrow mb-3">The workflow</p>
+            <h2 id="workflow-title">
+              A clearer path to interview day.
             </h2>
-            <p className="text-[#8A96AA] text-sm leading-relaxed">
-              Every workflow is decoupled into specialized agent runtimes that evaluate, adjust, and prepare you like a team of dedicated FAANG mentors.
+            <p>
+              Less time deciding which tool to open. More time understanding
+              your strengths, working on your gaps, and learning how to explain
+              your thinking.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-6 flex flex-col justify-between hover:border-blue-500/30 transition-all">
-              <div>
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-5">
-                  <Brain className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-semibold text-white mb-2">Deep Multi-modal Parsing</h3>
-                <p className="text-xs text-[#8A96AA] leading-relaxed">
-                  Upload any PDF resume. Gemini 3.8 Flash extracts concrete technical proficiencies, parses project complexity, and assigns confidence ratings across 100+ taxonomy categories.
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-[#8A96AA]">
-                <span>Gemini 3.8 Flash</span>
-                <span className="text-blue-400 font-semibold">Zero Slop</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-6 flex flex-col justify-between hover:border-emerald-500/30 transition-all">
-              <div>
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-5">
-                  <Mic className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-semibold text-white mb-2">Technical Interview Simulation</h3>
-                <p className="text-xs text-[#8A96AA] leading-relaxed">
-                  Powered by Groq 120B. Simulates algorithmic coding, system design, and behavioral pressure tests with sub-second feedback, grading syntax, time complexity, and edge cases.
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-[#8A96AA]">
-                <span>Groq • GPT-OSS 120B</span>
-                <span className="text-emerald-400 font-semibold tabular-nums">Sub-second</span>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-6 flex flex-col justify-between hover:border-indigo-500/30 transition-all">
-              <div>
-                <div className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-5">
-                  <Building2 className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-semibold text-white mb-2">Company Fit & Live Jobs</h3>
-                <p className="text-xs text-[#8A96AA] leading-relaxed">
-                  Computes compatibility scores for top tech tiers (Google, Uber, Razorpay, Swiggy) and cross-references live LinkedIn postings to show you verified jobs matching your exact qualifications.
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-[#8A96AA]">
-                <span>Apify LinkedIn API</span>
-                <span className="text-indigo-400 font-semibold">Live Scraped</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Agent Pipeline Protocol Table ─── */}
-      <section id="pipeline" className="py-20 px-6 bg-[#07080D] border-t border-white/[0.07]">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
-            <div>
-              <span className="font-mono text-[11px] uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                Agent Specification
-              </span>
-              <h2 className="text-3xl font-bold tracking-tight text-white mt-3">
-                Decoupled AI Pipeline Matrix
-              </h2>
-            </div>
-            <p className="text-xs text-[#8A96AA] max-w-sm mt-3 md:mt-0 font-mono">
-              Engineered with resilience: Gemini 3.8 Flash automatically routes to Gemini 3.5 Flash Lite upon reaching 17 RPD or demand spikes.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] overflow-hidden divide-y divide-white/[0.06]">
-            {autonomousAgents.map((agent, i) => (
-              <div key={i} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors">
-                <div className="flex items-center gap-3.5">
-                  <span className="font-mono text-xs text-[#64748B] w-6 tabular-nums">0{i + 1}</span>
-                  <div>
-                    <h4 className="text-sm font-semibold text-white">{agent.name}</h4>
-                    <p className="text-xs text-[#8A96AA] mt-0.5">{agent.role}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-[#131624] border border-white/[0.08] text-slate-300">
-                    {agent.engine}
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                </div>
-              </div>
+          <div className="workflow-grid">
+            {workflow.map(({ Icon, title, description, action, href }) => (
+              <article key={title} className="workflow-step">
+                <Icon
+                  size={24}
+                  className="text-primary"
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
+                <h3>{title}</h3>
+                <p>{description}</p>
+                <Link href={href}>
+                  {action}
+                  <ChevronRight size={14} aria-hidden />
+                </Link>
+              </article>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ─── Protocol Steps ─── */}
-      <section id="protocol" className="py-20 px-6 border-t border-white/[0.07]">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center max-w-xl mx-auto mb-16">
-            <h2 className="text-3xl font-bold tracking-tight text-white mb-3">
-              The 4-Stage Candidate Protocol
+        <section
+          id="workspace"
+          className="landing-section"
+          aria-labelledby="workspace-title"
+        >
+          <div className="section-heading">
+            <p className="eyebrow mb-3">Inside the workspace</p>
+            <h2 id="workspace-title">
+              Give your next step a little structure.
             </h2>
-            <p className="text-[#8A96AA] text-sm">
-              From cold resume to signed offer letter in a structured loop.
+            <p>
+              Move between planning, practice, and reflection. Each part is
+              useful on its own, and more useful when it connects to the others.
             </p>
           </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { step: "01", title: "Dossier Ingestion", desc: "Upload resume and calibrate skill proficiencies from 1-10." },
-              { step: "02", title: "Gap Diagnostics", desc: "AI identifies missing algorithms, architectural concepts, and tooling." },
-              { step: "03", title: "Targeted Sprints", desc: "Weekly roadmap with daily DSA, theory, and implementation drills." },
-              { step: "04", title: "Pressure Testing", desc: "Live mock interviews with scoring rubrics and company match apply links." },
-            ].map((st, i) => (
-              <div key={i} className="p-5 rounded-xl bg-[#0E111A] border border-white/[0.08] relative">
-                <span className="font-mono text-3xl font-bold text-white/20 mb-3 block tabular-nums">{st.step}</span>
-                <h3 className="text-sm font-semibold text-white mb-1.5">{st.title}</h3>
-                <p className="text-xs text-[#8A96AA] leading-relaxed">{st.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Final CTA ─── */}
-      <section className="py-20 px-6 border-t border-white/[0.07]">
-        <div className="max-w-4xl mx-auto text-center p-10 sm:p-14 rounded-2xl bg-[#0E111A] border border-white/[0.08] shadow-[0_16px_48px_rgba(0,0,0,0.5)]">
-          <span className="font-mono text-xs uppercase tracking-wider text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
-            Immediate Access
-          </span>
-          <h2 className="text-3xl sm:text-5xl font-bold text-white tracking-tight mt-5 mb-4">
-            Begin your calibration cycle now.
-          </h2>
-          <p className="text-[#8A96AA] text-sm sm:text-base max-w-lg mx-auto mb-8 leading-relaxed">
-            No credit card. Powered by high-speed Groq 120B reasoning and Gemini multi-modal intelligence.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href={cta}>
-              <Button className="h-11 px-7 rounded-lg bg-white hover:bg-slate-200 text-black font-semibold text-sm shadow-sm transition-all">
-                {ctaText} <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-            {!isLoggedIn && (
-              <button
-                onClick={handleGuestLogin}
-                disabled={guestLoading}
-                className="h-11 px-6 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 font-mono text-xs transition-colors cursor-pointer"
+          <div className="workspace-explorer">
+            <div
+              ref={tabList}
+              className="explorer-tabs"
+              role="tablist"
+              aria-label="Explore the workspace"
+              aria-orientation="vertical"
+              onKeyDown={(event) => {
+                if (
+                  ![
+                    "ArrowDown",
+                    "ArrowUp",
+                    "ArrowLeft",
+                    "ArrowRight",
+                    "Home",
+                    "End",
+                  ].includes(event.key)
+                )
+                  return;
+                event.preventDefault();
+                const next =
+                  event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? explorer.length - 1
+                      : (active +
+                          (["ArrowUp", "ArrowLeft"].includes(event.key)
+                            ? -1
+                            : 1) +
+                          explorer.length) %
+                        explorer.length;
+                setActive(next);
+                tabList.current
+                  ?.querySelectorAll<HTMLButtonElement>("[role=tab]")
+                  [next]?.focus();
+              }}
+            >
+              {explorer.map(({ id, Icon, title, hint }, index) => (
+                <button
+                  type="button"
+                  key={id}
+                  id={`tab-${id}`}
+                  aria-controls={`panel-${id}`}
+                  aria-selected={active === index}
+                  tabIndex={active === index ? 0 : -1}
+                  role="tab"
+                  className="explorer-tab"
+                  onClick={() => setActive(index)}
+                >
+                  <Icon
+                    size={21}
+                    className="shrink-0 text-primary"
+                    aria-hidden
+                  />
+                  <span>
+                    <strong>{title}</strong>
+                    <small>{hint}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={detail.id}
+                role="tabpanel"
+                id={`panel-${detail.id}`}
+                aria-labelledby={`tab-${detail.id}`}
+                tabIndex={0}
+                className="explorer-detail glass-inset"
+                initial={{ opacity: 0.6, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
               >
-                {guestLoading ? "Connecting..." : "Explore as Guest Candidate"}
-              </button>
-            )}
+                <h3>{detail.heading}</h3>
+                <p>{detail.description}</p>
+                <ul>
+                  {detail.points.map((point) => (
+                    <li key={point}>
+                      <Check
+                        size={15}
+                        className="mt-1 shrink-0 text-primary"
+                        aria-hidden
+                      />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+                <Link href={detail.href} className="studio-button">
+                  {detail.action}
+                  <ArrowRight size={15} aria-hidden />
+                </Link>
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ─── Footer ─── */}
-      <footer className="py-8 px-6 border-t border-white/[0.06] bg-[#07080C] text-xs font-mono text-[#8A96AA]">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-slate-300">
-            <div className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>CareerAI Placement Platform • Built with High-Craft Telemetry</span>
+        <section
+          id="practice"
+          className="landing-section"
+          aria-labelledby="practice-title"
+        >
+          <div className="section-heading">
+            <p className="eyebrow mb-3">Make the practice count</p>
+            <h2 id="practice-title">
+              Prepare for the work.
+              <br />
+              And the conversation.
+            </h2>
+            <p>
+              Technical interviews ask you to solve a problem and bring someone
+              else along with your reasoning. Build a routine that gives both
+              skills room to grow.
+            </p>
           </div>
-          <div>
-            <span>Groq 120B + Gemini 3.8 Flash • © {new Date().getFullYear()}</span>
+          <div className="practice-paths">
+            <article className="glass-inset">
+              <BookOpen size={24} className="text-primary mb-5" aria-hidden />
+              <h3>Depth, one topic at a time.</h3>
+              <p>
+                Use weekly tasks to move from reading about a concept to
+                implementing it, checking the edge cases, and explaining the
+                decisions you made.
+              </p>
+              <ul>
+                {[
+                  "Data structures, algorithms, and problem solving",
+                  "Frontend, backend, and database fundamentals",
+                  "System design, trade-offs, and architecture",
+                  "Projects that make your experience concrete",
+                ].map((item) => (
+                  <li key={item}>
+                    <Check
+                      size={14}
+                      className="mt-1 shrink-0 text-primary"
+                      aria-hidden
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/tasks" className="studio-link -ml-4 mt-4">
+                Explore practice
+                <ArrowUpRight size={15} aria-hidden />
+              </Link>
+            </article>
+            <article className="glass-inset">
+              <MessagesSquare
+                size={24}
+                className="text-primary mb-5"
+                aria-hidden
+              />
+              <h3>A place to ask the next question.</h3>
+              <p>
+                Your mentor uses your profile and recent conversation to help
+                you reason through a problem. Ask for a hint, test an
+                explanation, or plan a study session when you feel stuck.
+              </p>
+              <blockquote className="my-5 border-l-2 border-primary/30 pl-4 text-sm leading-relaxed text-muted-foreground">
+                “Help me explain the trade-offs in my approach before you show
+                me the solution.”
+              </blockquote>
+              <p className="text-xs">
+                An example prompt to bring to your next practice session.
+              </p>
+              <Link href="/chat" className="studio-link -ml-4 mt-4">
+                Meet your mentor
+                <ArrowUpRight size={15} aria-hidden />
+              </Link>
+            </article>
           </div>
-        </div>
-      </footer>
-    </div>
+        </section>
+
+        <section
+          id="questions"
+          className="landing-section"
+          aria-labelledby="questions-title"
+        >
+          <div className="section-heading">
+            <p className="eyebrow mb-3">Before you begin</p>
+            <h2 id="questions-title">A few things you might be wondering.</h2>
+            <p>
+              Start with the tools that meet you where you are. You can add
+              detail and shape your preparation as you go.
+            </p>
+          </div>
+          <div className="faq-grid">
+            {questions.map(({ question, answer }) => (
+              <details className="faq-item" key={question}>
+                <summary>
+                  {question}
+                  <Plus size={16} aria-hidden />
+                </summary>
+                <p>{answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+      </main>
+      <SiteFooter />
+    </>
   );
 }
