@@ -1,218 +1,223 @@
 "use client";
 
 import { useState } from "react";
+import { FolderOpen, Pencil, Plus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Plus, X, FolderKanban, Trash2 } from "lucide-react";
+import { Notice, safeHttpUrl, Tag } from "@/components/workspace/ui";
 import type { OnboardingFormData, Project } from "@/types";
 
-interface Props {
+const empty = { name: "", tech: "", description: "", url: "" };
+
+export default function StepProjects({
+  formData,
+  updateFormData,
+}: {
   formData: OnboardingFormData;
   updateFormData: (updates: Partial<OnboardingFormData>) => void;
-}
+}) {
+  const [index, setIndex] = useState<number | null>(null);
+  const [draft, setDraft] = useState(empty);
+  const [urlError, setUrlError] = useState(false);
 
-const emptyProject: Project = {
-  name: "",
-  tech: [],
-  description: "",
-  url: "",
-};
+  function open(project?: Project, currentIndex = -1) {
+    setDraft(
+      project
+        ? {
+            name: project.name,
+            tech: project.tech?.join(", ") || "",
+            description: project.description,
+            url: project.url ?? "",
+          }
+        : empty,
+    );
+    setIndex(currentIndex);
+    setUrlError(false);
+  }
 
-export default function StepProjects({ formData, updateFormData }: Props) {
-  const [editingProject, setEditingProject] = useState<Project>({ ...emptyProject });
-  const [techInput, setTechInput] = useState("");
-  const [showForm, setShowForm] = useState(formData.projects.length === 0);
-
-  const addTech = (tech: string) => {
-    const trimmed = tech.trim();
-    if (!trimmed || editingProject.tech.includes(trimmed)) return;
-    setEditingProject((prev) => ({ ...prev, tech: [...prev.tech, trimmed] }));
-    setTechInput("");
-  };
-
-  const removeTech = (tech: string) => {
-    setEditingProject((prev) => ({
-      ...prev,
-      tech: prev.tech.filter((t) => t !== tech),
-    }));
-  };
-
-  const saveProject = () => {
-    if (!editingProject.name.trim()) return;
-    const newProjects = [...formData.projects, editingProject];
-    updateFormData({ projects: newProjects });
-    setEditingProject({ ...emptyProject });
-    setTechInput("");
-    setShowForm(false);
-  };
-
-  const removeProject = (index: number) => {
-    const newProjects = formData.projects.filter((_, i) => i !== index);
-    updateFormData({ projects: newProjects });
-    if (newProjects.length === 0) setShowForm(true);
-  };
+  function save() {
+    const url = draft.url.trim();
+    if (url && !safeHttpUrl(url)) {
+      setUrlError(true);
+      return;
+    }
+    const project: Project = {
+      name: draft.name.trim(),
+      description: draft.description.trim(),
+      tech: [
+        ...new Set(
+          draft.tech
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
+        ),
+      ],
+      url: url || undefined,
+    };
+    updateFormData({
+      projects:
+        index === -1
+          ? [...formData.projects, project]
+          : formData.projects.map((item, itemIndex) =>
+              itemIndex === index ? project : item,
+            ),
+    });
+    setIndex(null);
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-1">Projects</h2>
-        <p className="text-sm text-muted-foreground">
-          Add projects you&apos;ve built. These help the AI understand your practical experience.
-        </p>
-      </div>
-
-      {/* Existing projects */}
-      {formData.projects.length > 0 && (
-        <div className="space-y-3">
-          {formData.projects.map((project, i) => (
-            <div key={i} className="p-4 rounded-xl bg-accent/50 border border-border">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm">{project.name}</h3>
-                  {project.description && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {project.description}
-                    </p>
-                  )}
-                  {project.tech.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {project.tech.map((t) => (
-                        <Badge key={t} variant="secondary" className="text-[10px]">
-                          {t}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-7 h-7 text-muted-foreground hover:text-destructive flex-shrink-0"
-                  onClick={() => removeProject(i)}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Add project form */}
-      {showForm ? (
-        <div className="p-4 rounded-xl border border-border space-y-4">
-          <div className="space-y-2">
-            <Label>Project Name *</Label>
-            <Input
-              placeholder="e.g., E-commerce Platform"
-              value={editingProject.name}
-              onChange={(e) =>
-                setEditingProject((prev) => ({ ...prev, name: e.target.value }))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea
-              placeholder="Brief description of what you built..."
-              value={editingProject.description}
-              onChange={(e) =>
-                setEditingProject((prev) => ({ ...prev, description: e.target.value }))
-              }
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Technologies Used</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="e.g., React (press Enter)"
-                value={techInput}
-                onChange={(e) => setTechInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTech(techInput);
-                  }
-                }}
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => addTech(techInput)}
-                disabled={!techInput.trim()}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            {editingProject.tech.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {editingProject.tech.map((t) => (
-                  <Badge
-                    key={t}
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-destructive/20 text-xs"
-                    onClick={() => removeTech(t)}
-                  >
-                    {t}
-                    <X className="w-3 h-3 ml-1" />
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Project URL (optional)</Label>
-            <Input
-              placeholder="https://github.com/..."
-              value={editingProject.url}
-              onChange={(e) =>
-                setEditingProject((prev) => ({ ...prev, url: e.target.value }))
-              }
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              onClick={saveProject}
-              disabled={!editingProject.name.trim()}
-              className="gradient-primary text-white border-0 hover:opacity-90"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add Project
-            </Button>
-            {formData.projects.length > 0 && (
-              <Button variant="ghost" onClick={() => setShowForm(false)}>
-                Cancel
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : (
-        <Button
-          variant="outline"
-          className="w-full py-6 border-dashed"
-          onClick={() => setShowForm(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Another Project
-        </Button>
-      )}
-
-      {formData.projects.length === 0 && !showForm && (
-        <div className="p-8 rounded-xl border border-dashed border-border text-center">
-          <FolderKanban className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">
-            No projects added yet. Click above to add one.
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-semibold">Show what you’ve built.</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Add coursework, side projects, or work you’re proud to share.
           </p>
         </div>
+        {index === null && (
+          <Button type="button" variant="outline" onClick={() => open()}>
+            <Plus />
+            Add project
+          </Button>
+        )}
+      </div>
+      <div className="rounded-2xl border border-primary/12 bg-primary/5 p-4">
+        <h3 className="text-sm font-semibold">
+          Make each project tell a story
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Describe who it helped, what you built, and the result or lesson.
+          Mention one technical decision you could explain in an interview.
+        </p>
+      </div>
+      {index === null && !formData.projects.length && (
+        <Notice
+          icon={FolderOpen}
+          title="Your projects will appear here"
+          description="A project is optional. You can add one later from your profile."
+        />
       )}
+      {index !== null && (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            save();
+          }}
+          className="grid gap-4 rounded-2xl border border-border bg-background/45 p-4 sm:grid-cols-2"
+        >
+          <label className="grid gap-2 text-sm font-medium">
+            Project name
+            <Input
+              required
+              value={draft.name}
+              onChange={(event) =>
+                setDraft({ ...draft, name: event.target.value })
+              }
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-medium">
+            Project link (optional)
+            <Input
+              inputMode="url"
+              value={draft.url}
+              aria-invalid={urlError}
+              onChange={(event) => {
+                setDraft({ ...draft, url: event.target.value });
+                setUrlError(false);
+              }}
+            />
+          </label>
+          {urlError && (
+            <p role="alert" className="text-sm text-destructive sm:col-span-2">
+              Enter a link starting with https:// or http://.
+            </p>
+          )}
+          <label className="grid gap-2 text-sm font-medium sm:col-span-2">
+            Technologies
+            <Input
+              value={draft.tech}
+              onChange={(event) =>
+                setDraft({ ...draft, tech: event.target.value })
+              }
+              placeholder="React, TypeScript, PostgreSQL"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-medium sm:col-span-2">
+            What did you make?
+            <Textarea
+              rows={4}
+              placeholder="I built… to help… My contribution was…"
+              value={draft.description}
+              onChange={(event) =>
+                setDraft({ ...draft, description: event.target.value })
+              }
+            />
+          </label>
+          <div className="flex flex-wrap gap-2 sm:col-span-2">
+            <Button type="submit" disabled={!draft.name.trim()}>
+              Save project
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIndex(null)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      )}
+      <ul className="space-y-2">
+        {formData.projects.map((project, projectIndex) => (
+          <li
+            key={projectIndex}
+            className="flex items-start gap-3 rounded-2xl border border-border p-4"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="break-words font-medium">{project.name}</p>
+              {project.description && (
+                <p className="mt-1 break-words text-sm text-muted-foreground">
+                  {project.description}
+                </p>
+              )}
+              {!!project.tech?.length && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {project.tech.map((tech, techIndex) => (
+                    <Tag key={techIndex}>{tech}</Tag>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`Edit ${project.name}`}
+              disabled={index !== null}
+              onClick={() => open(project, projectIndex)}
+            >
+              <Pencil />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`Remove ${project.name}`}
+              disabled={index !== null}
+              onClick={() =>
+                updateFormData({
+                  projects: formData.projects.filter(
+                    (_, currentIndex) => currentIndex !== projectIndex,
+                  ),
+                })
+              }
+            >
+              <X />
+            </Button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
