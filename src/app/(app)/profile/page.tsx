@@ -1,397 +1,188 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import useSWR from "swr";
-import {
-  User,
-  Mail,
-  GraduationCap,
-  Briefcase,
-  Globe,
-  Code2,
-  FileText,
-  Edit3,
-  Flame,
-  Upload,
-  Loader2,
-  Sparkles,
-  Check,
-  AlertTriangle,
-  ExternalLink,
-  ShieldCheck,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
-
-interface ProfileData {
-  full_name: string;
-  email: string;
-  phone: string;
-  education_level: string;
-  field_of_study: string;
-  experience_level: string;
-  skills: string[];
-  skill_ratings: Record<string, number>;
-  goals: string[];
-  projects: Array<{ name: string; description: string; tech_stack: string[] }>;
-  preferred_role: string;
-  preferred_locations: string[];
-  github_url: string;
-  portfolio_url: string;
-  linkedin_url: string;
-  resume_url: string;
-  onboarding_complete: boolean;
-  created_at: string;
-}
-
-interface FullAnalysis {
-  readiness_score: number;
-  extracted_skills: Array<{ name: string; level: string; confidence: number }>;
-  strengths: Array<{ skill: string; reason: string }>;
-  weaknesses: Array<{ skill: string; reason: string }>;
-  missing_skills: Array<{ skill: string; importance: string; reason: string }>;
-  summary: string;
-}
-
-const fetcher = (url: string) => fetch(url).then(r => r.json());
+import { ArrowUpRight, CheckCircle2, Circle, FileText, FolderOpen, Globe, Loader2, ShieldCheck, Sparkles, Target, User } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { optionalRequest, request } from "@/components/workspace/api";
+import { ResumeControl } from "@/components/workspace/resume-control";
+import { ActionLink, clampPercent, dateFormat, ErrorNotice, IconTile, Notice, Panel, PanelHeading, PercentBar, prettyLabel, safeHttpUrl, Tag, WorkspaceHeading, WorkspaceSkeleton } from "@/components/workspace/ui";
+import type { Analysis, Profile } from "@/types";
 
 export default function ProfilePage() {
-  const { data: profileRes, isLoading: loadingProfile, mutate: revalidateProfile } = useSWR('/api/profile', fetcher);
-  const { data: streakRes, isLoading: loadingStreak } = useSWR('/api/streak', fetcher);
-  const { data: analysisRes, isLoading: loadingAnalysis, mutate: revalidateAnalysis } = useSWR('/api/analyze/latest', fetcher);
-
-  const profile: ProfileData | null = profileRes?.success ? profileRes.data : null;
-  const streak = streakRes?.success ? streakRes.data : null;
-  const analysis: FullAnalysis | null = analysisRes?.success ? analysisRes.data : null;
-
+  const { data: profile, error, isLoading, mutate } = useSWR("/api/profile", optionalRequest<Profile>);
+  const { data: analysis, error: analysisError, isLoading: loadingAnalysis, mutate: refreshAnalysis } = useSWR("/api/analyze/latest", optionalRequest<Analysis>);
   const [analyzing, setAnalyzing] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const router = useRouter();
+  const [resumeBusy, setResumeBusy] = useState(false);
+  const [assessmentError, setAssessmentError] = useState<string | null>(null);
 
-  const loading = loadingProfile || loadingStreak || loadingAnalysis;
-
-  const handleResumeUpload = async (file: File) => {
-    if (file.type !== 'application/pdf') {
-      toast.error('Only PDF documents are supported for dossier ingestion');
-      return;
-    }
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('resume', file);
-      const res = await fetch('/api/onboarding/resume', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.success) {
-        toast.success('Resume ingested & parsed via Gemini 3.8 Flash!');
-        revalidateProfile();
-        revalidateAnalysis();
-      } else {
-        toast.error(data.error?.message || 'Upload failed');
-      }
-    } catch {
-      toast.error('Failed to upload resume');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const runAnalysis = async () => {
+  async function assess() {
+    setAssessmentError(null);
     setAnalyzing(true);
     try {
-      toast.info('Running deep multi-modal analysis via Gemini 3.8...');
-      const res = await fetch('/api/analyze', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        revalidateAnalysis();
-        toast.success('Candidate dossier analysis calibrated!');
-      } else {
-        toast.error(data.error?.message || 'Analysis failed');
-      }
-    } catch {
-      toast.error('Analysis failed. Please try again.');
+      const result = await request<Analysis>("/api/analyze", { method: "POST" });
+      await refreshAnalysis(result, { revalidate: false });
+    } catch (failure) {
+      setAssessmentError(failure instanceof Error ? failure.message : "Your assessment could not be completed.");
     } finally {
       setAnalyzing(false);
     }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-6 max-w-5xl mx-auto">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-48 rounded-xl" />
-        <Skeleton className="h-32 rounded-xl" />
-      </div>
-    );
   }
 
-  if (!profile) {
-    return (
-      <div className="text-center py-20 text-[#8A96AA] font-mono">
-        <User className="w-12 h-12 mx-auto mb-4 opacity-40 text-blue-400" />
-        <p className="text-white text-base font-semibold">Candidate Dossier Not Found</p>
-        <p className="text-xs text-[#8A96AA] mt-1">Please complete onboarding to initialize your profile.</p>
-        <Button
-          className="mt-5 h-9 px-5 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs uppercase cursor-pointer"
-          onClick={() => router.push("/onboarding")}
-        >
-          Begin Onboarding
-        </Button>
-      </div>
-    );
-  }
+  if (isLoading) return <WorkspaceSkeleton />;
+  if (error && profile === undefined) return <div className="workspace-page"><ErrorNotice error={error} retry={() => void mutate()} /></div>;
+  if (!profile) return <div className="workspace-page"><Notice icon={User} title="Set up your profile" description="Add your skills, experience, and career goals to personalize your workspace." action={<ActionLink href="/onboarding">Start setup</ActionLink>} /></div>;
+
+  const links = [
+    { label: "GitHub", url: safeHttpUrl(profile.github_url) },
+    { label: "LinkedIn", url: safeHttpUrl(profile.linkedin_url) },
+    { label: "Portfolio", url: safeHttpUrl(profile.portfolio_url) },
+  ].filter((link): link is { label: string; url: string } => !!link.url);
+  const fullName = profile.full_name?.trim();
+  const skills = profile.skills ?? [];
+  const goals = profile.goals ?? [];
+  const projects = profile.projects ?? [];
+  const coverage = [
+    { label: "Personal details", detail: fullName ? "Name and account information added" : "Add your name so your workspace feels like yours", ready: !!fullName },
+    { label: "Skill profile", detail: skills.length ? `${skills.length} skills listed` : "Add skills you use or are learning", ready: skills.length > 0 },
+    { label: "Work you can discuss", detail: projects.length ? `${projects.length} projects added` : "Add a project with context and technologies", ready: projects.length > 0 },
+    { label: "Career direction", detail: profile.preferred_role || (goals.length ? `${goals.length} interests selected` : "Choose a role or career interest"), ready: !!profile.preferred_role || goals.length > 0 },
+    { label: "Resume", detail: profile.resume_url ? "An account-protected PDF is attached" : "Attach a resume for additional experience context", ready: !!profile.resume_url },
+    { label: "Professional links", detail: links.length ? links.map((link) => link.label).join(" · ") : "Add a portfolio, GitHub, or LinkedIn link", ready: links.length > 0 },
+  ];
+  const completeSections = coverage.filter((section) => section.ready).length;
+  const selfRatings = skills.flatMap((skill) => typeof profile.skill_ratings?.[skill] === "number" ? [profile.skill_ratings[skill]] : []);
+  const demonstrated = projects.filter((project) => project.description?.trim() && project.tech?.length).length;
+  const assessmentDate = analysis?.created_at ? new Date(analysis.created_at) : null;
+  const assessment = analysis ? [
+    { title: "Strengths", items: analysis.strengths ?? [] },
+    { title: "Areas to improve", items: analysis.weaknesses ?? [] },
+    { title: "Skills to develop", items: analysis.missing_skills ?? [] },
+  ] : [];
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* ─── Header ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.07]">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20">
-              Candidate Dossier
-            </span>
-            <span className="text-[#64748B] text-xs">•</span>
-            <span className="font-mono text-[11px] text-[#8A96AA]">ID: verified</span>
+    <div className="workspace-page space-y-6">
+      <WorkspaceHeading label="Profile" title="Your professional profile." description="Keep your experience and goals current so your guidance stays relevant." actions={<ActionLink href="/onboarding">Edit profile</ActionLink>} />
+      <div className="grid gap-5 lg:grid-cols-[1.05fr_1fr]">
+        <Panel>
+          <div className="flex items-start gap-4">
+            <div className="grid size-16 shrink-0 place-items-center rounded-[22px] border border-border bg-primary/10 text-xl font-semibold text-primary shadow-sm">
+              {fullName?.split(/\s+/).slice(0, 2).map((part) => part[0].toUpperCase()).join("") || <User className="size-6" />}
+            </div>
+            <div className="min-w-0">
+              <h2 className="break-words text-2xl font-semibold">{fullName || "Your profile"}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{profile.preferred_role || "Add your target role"}</p>
+              <p className="mt-1 break-all text-sm text-muted-foreground">{profile.email}</p>
+              {profile.phone && <p className="mt-1 text-sm text-muted-foreground">{profile.phone}</p>}
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            Engineering Profile & Skills
-          </h1>
-        </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push("/onboarding")}
-          className="h-8.5 px-3.5 rounded-lg border-white/[0.1] hover:border-white/[0.2] text-xs font-mono uppercase tracking-wider text-slate-300 cursor-pointer"
-        >
-          <Edit3 className="w-3.5 h-3.5 mr-1.5" /> Edit Profile Specs
-        </Button>
+          <dl className="mt-6 grid gap-4 border-t border-border pt-5 text-sm sm:grid-cols-2">
+            <div><dt className="text-muted-foreground">Education</dt><dd className="mt-1 font-medium">{[prettyLabel(profile.education_level), profile.field_of_study].filter(Boolean).join(" · ") || "Unspecified"}</dd></div>
+            <div><dt className="text-muted-foreground">Experience</dt><dd className="mt-1 font-medium">{prettyLabel(profile.experience_level) || "Unspecified"}</dd></div>
+            {!!profile.preferred_locations?.length && <div className="sm:col-span-2"><dt className="text-muted-foreground">Preferred locations</dt><dd className="mt-1 font-medium">{profile.preferred_locations.join(", ")}</dd></div>}
+          </dl>
+          {links.length > 0 && <div className="mt-5 flex flex-wrap gap-2">
+            {links.map(({ label, url }) => <a key={label} href={url} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "sm" })}><Globe />{label}<ArrowUpRight /></a>)}
+          </div>}
+        </Panel>
+        <Panel>
+          <PanelHeading title="Resume" description="Attach a PDF to bring your work and education into your assessment." action={<IconTile icon={FileText} />} />
+          <ResumeControl
+            attached={!!profile.resume_url}
+            onBusyChange={setResumeBusy}
+            onChange={(attached) => void mutate((current) => current ? { ...current, resume_url: attached ? "/api/onboarding/resume" : null } : current, { revalidate: false })}
+          />
+          <div className="mt-5 flex items-start gap-3 border-t border-border pt-4">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+            <p className="text-xs leading-relaxed text-muted-foreground">Your PDF opens through your signed-in account. Replacing or removing it updates the stored attachment. Refresh your assessment after making changes to your experience.</p>
+          </div>
+        </Panel>
       </div>
 
-      {/* ─── Hero Dossier Card ─── */}
-      <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
-          <div className="flex items-start gap-5">
-            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-sky-500 flex items-center justify-center text-white text-2xl font-bold font-mono flex-shrink-0 shadow-sm">
-              {profile.full_name?.charAt(0)?.toUpperCase() || "C"}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">{profile.full_name}</h2>
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              </div>
-              <p className="text-xs sm:text-sm font-mono text-blue-400 mt-0.5">
-                {profile.preferred_role || "Full-Stack Software Engineer"}
-              </p>
+      <Panel>
+        <PanelHeading title="Give your profile more context" description="See which parts of your profile are populated and what you can add next." action={<Tag tone="accent">{completeSections} of {coverage.length} areas populated</Tag>} />
+        <ul className="grid gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
+          {coverage.map(({ label, detail, ready }) => <li key={label} className="flex items-start gap-2.5">
+            {ready ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />}
+            <div><p className="text-sm font-semibold">{label}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{detail}</p></div>
+          </li>)}
+        </ul>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4"><p className="text-xs leading-relaxed text-muted-foreground">More specific examples help your mentor connect advice to your actual experience.</p><ActionLink href="/onboarding" variant="ghost">Review details</ActionLink></div>
+      </Panel>
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3 text-xs font-mono text-[#8A96AA]">
-                {profile.email && (
-                  <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-[#64748B]" />{profile.email}</span>
-                )}
-                {profile.education_level && (
-                  <span className="flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5 text-[#64748B]" />{profile.education_level} • {profile.field_of_study}</span>
-                )}
-                {profile.experience_level && (
-                  <span className="flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5 text-[#64748B]" />{profile.experience_level}</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Metrics */}
-          <div className="flex items-center gap-2.5 font-mono self-stretch sm:self-auto justify-end">
-            {analysis && (
-              <div className="px-3.5 py-2 rounded-lg bg-[#0A0C13] border border-white/[0.08] text-center min-w-[75px]">
-                <p className="text-lg font-bold text-blue-400 tabular-nums">{analysis.readiness_score}</p>
-                <p className="text-[10px] text-[#8A96AA] uppercase">Readiness</p>
-              </div>
-            )}
-            {streak && (
-              <div className="px-3.5 py-2 rounded-lg bg-[#0A0C13] border border-white/[0.08] text-center min-w-[75px]">
-                <p className="text-lg font-bold text-orange-400 flex items-center justify-center gap-1 tabular-nums">
-                  <Flame className="w-3.5 h-3.5 fill-orange-500/30" />{streak.streak.current}
-                </p>
-                <p className="text-[10px] text-[#8A96AA] uppercase">Streak</p>
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="grid gap-5 lg:grid-cols-[1.05fr_1fr]">
+        <Panel>
+          <PanelHeading title="Your skill profile" description="Your own confidence ratings, from 1 to 10." action={<Tag>{skills.length} added</Tag>} />
+          {skills.length ? (
+            <ul className="grid gap-4 sm:grid-cols-2">
+              {skills.map((skill, index) => {
+                const rating = profile.skill_ratings?.[skill];
+                return <li key={`${skill}-${index}`}><div className="mb-2 flex justify-between gap-2 text-sm"><span className="break-words font-medium">{skill}</span><span className="shrink-0 text-muted-foreground">{typeof rating === "number" ? `${rating}/10` : "Unrated"}</span></div><PercentBar label={`${skill} rating`} value={(rating ?? 0) * 10} /></li>;
+              })}
+            </ul>
+          ) : <p className="text-sm text-muted-foreground">Add skills in your profile to get more relevant practice tasks.</p>}
+          {selfRatings.length > 0 && <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4 text-sm"><div><p className="text-muted-foreground">Skills rated</p><p className="mt-1 font-semibold tabular-nums">{selfRatings.length} of {skills.length}</p></div><div><p className="text-muted-foreground">Confident areas</p><p className="mt-1 font-semibold tabular-nums">{selfRatings.filter((rating) => rating >= 7).length} rated 7 or above</p></div></div>}
+        </Panel>
+        <Panel>
+          <PanelHeading title="Your career direction" description="The preferences that shape your company suggestions and preparation plans." action={<IconTile icon={Target} />} />
+          <dl className="space-y-4 text-sm">
+            <div><dt className="text-muted-foreground">Role you’re working toward</dt><dd className="mt-1 text-lg font-semibold">{profile.preferred_role || "Choose your target role"}</dd></div>
+            <div><dt className="text-muted-foreground">Location preferences</dt><dd className="mt-1 font-medium">{profile.preferred_locations?.length ? profile.preferred_locations.join(" · ") : "Add cities or remote preferences"}</dd></div>
+            <div><dt className="mb-2 text-muted-foreground">Areas of interest</dt><dd className="flex flex-wrap gap-2">{goals.length ? goals.map((goal, index) => <Tag key={index}>{prettyLabel(goal)}</Tag>) : "Choose a few areas you want to explore"}</dd></div>
+          </dl>
+          <div className="mt-5 border-t border-border pt-4"><ActionLink href="/companies" variant="outline">Explore opportunities</ActionLink></div>
+        </Panel>
       </div>
+      <Panel>
+        <PanelHeading title="Projects you can speak about" description="Build a clear account of what you made, how it works, and the decisions you owned." action={<Tag>{demonstrated} with context and technology</Tag>} />
+        {projects.length ? <div className="grid gap-4 md:grid-cols-2">{projects.map((project, index) => {
+          const url = safeHttpUrl(project.url);
+          return <article key={index} className="min-w-0 rounded-2xl border border-border bg-background/20 p-4 sm:p-5">
+            <div className="flex items-start gap-3"><IconTile icon={FolderOpen} /><div className="min-w-0 flex-1"><h3 className="break-words font-semibold">{project.name}</h3><p className="mt-1 text-xs text-muted-foreground">{project.tech?.length ? project.tech.join(" · ") : "Add the technologies you used"}</p></div></div>
+            <p className="mt-4 break-words text-sm leading-relaxed text-muted-foreground">{project.description || "Add a short explanation of the problem, your contribution, and what you built."}</p>
+            <details className="mt-4 border-t border-border pt-3"><summary className="cursor-pointer text-sm font-medium text-primary">Prepare your project story</summary><ol className="mt-3 list-decimal space-y-2 pl-4 text-sm leading-relaxed text-muted-foreground"><li>What problem did this solve, and for whom?</li><li>Which technical decision did you own? Explain the trade-off.</li><li>How did you test the result, and what would you improve next?</li></ol></details>
+            {url && <a href={url} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "ghost", size: "sm", className: "mt-3" })}>View project<ArrowUpRight /></a>}
+          </article>;
+        })}</div> : <Notice icon={FolderOpen} title="Add a project with a story" description="A course assignment, side project, internship contribution, or open-source change can show how you approach real work." action={<ActionLink href="/onboarding">Add experience</ActionLink>} />}
+      </Panel>
 
-      {/* ─── Links & Resume Row ─── */}
-      <div className="grid sm:grid-cols-2 gap-5">
-        {/* Verified Links */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 flex flex-col justify-between shadow-sm">
-          <div>
-            <h3 className="font-semibold text-xs font-mono uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
-              <Globe className="w-4 h-4 text-blue-400" /> Verified Candidate Handles
-            </h3>
-            <div className="space-y-2 font-mono text-xs">
-              {profile.github_url ? (
-                <a href={profile.github_url} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-lg bg-[#0A0C13] border border-white/[0.06] hover:border-blue-500/30 flex items-center justify-between text-slate-300 hover:text-white transition-all">
-                  <span>GitHub Profile</span>
-                  <span className="text-blue-400 text-[10px] flex items-center gap-1">CONNECTED <ExternalLink className="w-3 h-3" /></span>
-                </a>
-              ) : (
-                <div className="p-2.5 rounded-lg bg-[#0A0C13] border border-white/[0.04] text-[#64748B] text-[11px]">
-                  No GitHub URL linked
+      <Panel>
+        <PanelHeading title="Readiness assessment" description="Review the strengths and gaps identified from your profile." action={
+          <Button disabled={analyzing || resumeBusy} onClick={() => void assess()}>{analyzing ? <Loader2 className="motion-safe:animate-spin" /> : <Sparkles />}{analyzing ? "Assessing…" : analysis ? "Refresh assessment" : "Run assessment"}</Button>
+        } />
+        {assessmentError && <p role="alert" className="mb-4 text-sm text-destructive">{assessmentError}</p>}
+        {analysisError && !analysis && <ErrorNotice error={analysisError} retry={() => void refreshAnalysis()} />}
+        {analysis && (
+          <>
+            <div className="mb-6 grid gap-5 rounded-2xl border border-primary/12 bg-primary/6 p-5 sm:grid-cols-[auto_1fr] sm:items-center">
+              <div className="text-4xl font-semibold tabular-nums text-primary">{clampPercent(analysis.readiness_score)}<span className="text-lg">/100</span></div>
+              <p className="text-sm leading-relaxed text-muted-foreground">{analysis.summary}</p>
+            </div>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground"><p>Use the assessment to choose what to practice and which experience to explain more clearly.</p>{assessmentDate && Number.isFinite(assessmentDate.getTime()) && <p>Updated {dateFormat.format(assessmentDate)}</p>}</div>
+            <div className="grid gap-5 md:grid-cols-3">
+              {assessment.map(({ title, items }) => (
+                <div key={title} className="border-t border-border pt-4">
+                  <h3 className="text-sm font-semibold">{title}</h3>
+                  <ul className="mt-2 space-y-2 text-sm">
+                    {items.map((item, index) => typeof item === "string" ? <li key={index}>{item}</li> : item && <li key={index}><p className="font-medium">{item.skill}</p>{item.reason && <p className="mt-0.5 text-muted-foreground">{item.reason}</p>}</li>)}
+                  </ul>
+                  {!items.length && <p className="mt-2 text-xs text-muted-foreground">No items were highlighted in this assessment.</p>}
                 </div>
-              )}
-
-              {profile.linkedin_url ? (
-                <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-lg bg-[#0A0C13] border border-white/[0.06] hover:border-blue-500/30 flex items-center justify-between text-slate-300 hover:text-white transition-all">
-                  <span>LinkedIn Profile</span>
-                  <span className="text-blue-400 text-[10px] flex items-center gap-1">CONNECTED <ExternalLink className="w-3 h-3" /></span>
-                </a>
-              ) : (
-                <div className="p-2.5 rounded-lg bg-[#0A0C13] border border-white/[0.04] text-[#64748B] text-[11px]">
-                  No LinkedIn URL linked
-                </div>
-              )}
+              ))}
             </div>
-          </div>
-        </div>
-
-        {/* Resume Management */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 flex flex-col justify-between shadow-sm">
-          <div>
-            <h3 className="font-semibold text-xs font-mono uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-emerald-400" /> Resume Multi-Modal Ingestion
-            </h3>
-            <div className="p-3 rounded-lg bg-[#0A0C13] border border-white/[0.06] flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-white truncate">
-                  {profile.resume_url ? "Candidate Resume PDF Attached" : "No Resume Uploaded"}
-                </p>
-                <p className="text-[10px] font-mono text-[#8A96AA]">
-                  Parsed via Gemini 3.8 Flash multi-modal parser
-                </p>
-              </div>
-
-              <label className="cursor-pointer flex-shrink-0">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && handleResumeUpload(e.target.files[0])}
-                  disabled={uploading}
-                />
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 border border-blue-500/25 text-xs font-mono transition-all">
-                  {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                  {uploading ? "Ingesting..." : "Upload PDF"}
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <Button
-            onClick={runAnalysis}
-            disabled={analyzing}
-            className="w-full mt-3 h-9 rounded-lg bg-primary hover:bg-blue-500 text-white font-mono text-xs uppercase tracking-wider shadow-sm cursor-pointer"
-          >
-            {analyzing ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                Calibrating Dossier...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                Trigger Full AI Analysis
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {/* ─── Skills Inventory ─── */}
-      {profile.skills?.length > 0 && (
-        <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-5 shadow-sm">
-          <h3 className="font-semibold text-xs font-mono uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
-            <Code2 className="w-4 h-4 text-sky-400" />
-            Self-Rated Proficiencies ({profile.skills.length})
-          </h3>
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-            {profile.skills.map((skill) => {
-              const rating = profile.skill_ratings?.[skill] || 5;
-              return (
-                <div key={skill} className="p-3 rounded-lg bg-[#0A0C13] border border-white/[0.06] flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-200">{skill}</span>
-                  <span className={`font-mono text-xs font-semibold px-2 py-0.5 rounded tabular-nums ${
-                    rating >= 7 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                  }`}>
-                    {rating} / 10
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ─── CV Analysis Report (Full Breakdown) ─── */}
-      {analysis && (
-        <div className="rounded-xl border border-white/[0.08] bg-[#0E111A] p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-            <div>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">
-                AI SYNTHESIZED REPORT
-              </span>
-              <h3 className="text-base font-bold text-white mt-1">Candidate Placement Readiness</h3>
-            </div>
-            <span className="font-mono text-2xl font-bold text-blue-400 tabular-nums">
-              {analysis.readiness_score} <span className="text-xs text-[#8A96AA] font-normal">/ 100</span>
-            </span>
-          </div>
-
-          {/* Assessment Narrative */}
-          <div className="p-4 rounded-lg bg-[#0A0C13] border border-white/[0.06] text-xs sm:text-sm text-[#D0D6E2] leading-relaxed font-sans">
-            <span className="font-mono text-[10px] text-blue-400 uppercase tracking-wider block mb-1.5 font-semibold">
-              Executive Synthesis
-            </span>
-            {analysis.summary}
-          </div>
-
-          {/* Strengths & Missing Skills Grid */}
-          <div className="grid sm:grid-cols-2 gap-4">
-            {/* Strengths */}
-            <div className="p-4 rounded-lg bg-[#0A0C13] border border-emerald-500/20">
-              <span className="font-mono text-xs font-semibold text-emerald-400 flex items-center gap-1.5 mb-3">
-                <Check className="w-3.5 h-3.5" /> Verified Candidate Strengths
-              </span>
-              <div className="space-y-2">
-                {analysis.strengths?.map((s, i) => (
-                  <div key={i} className="text-xs">
-                    <p className="font-semibold text-slate-200">{s.skill}</p>
-                    {s.reason && <p className="text-[11px] text-[#8A96AA] mt-0.5">{s.reason}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Missing Skills */}
-            <div className="p-4 rounded-lg bg-[#0A0C13] border border-rose-500/20">
-              <span className="font-mono text-xs font-semibold text-rose-400 flex items-center gap-1.5 mb-3">
-                <AlertTriangle className="w-3.5 h-3.5" /> High-Priority Missing Skills
-              </span>
-              <div className="space-y-2">
-                {analysis.missing_skills?.map((m, i) => (
-                  <div key={i} className="text-xs">
-                    <div className="flex items-center justify-between">
-                      <p className="font-semibold text-slate-200">{m.skill}</p>
-                      <span className="font-mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                        {m.importance}
-                      </span>
-                    </div>
-                    {m.reason && <p className="text-[11px] text-[#8A96AA] mt-0.5">{m.reason}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            {!!analysis.extracted_skills?.length && <div className="mt-6 border-t border-border pt-4">
+              <div className="mb-4 flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-sm font-semibold">Skills identified in your assessment</h3><p className="mt-1 max-w-2xl text-xs leading-relaxed text-muted-foreground">Levels are inferred from your profile and resume. Confidence describes how strongly the assessment identified that skill.</p></div><Tag>{analysis.extracted_skills.length} identified</Tag></div>
+              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{analysis.extracted_skills.map((skill, index) => {
+                if (typeof skill === "string") return <li key={index} className="rounded-xl border border-border p-3 text-sm font-medium">{skill}</li>;
+                const confidence = typeof skill?.confidence === "number" ? clampPercent(skill.confidence * 100) : null;
+                return <li key={index} className="rounded-xl border border-border p-3"><div className="flex flex-wrap items-start justify-between gap-2"><p className="text-sm font-semibold">{skill?.name}</p><Tag>{prettyLabel(skill?.level)}</Tag></div>{confidence !== null && <p className="mt-2 text-xs text-muted-foreground">{confidence}% identification confidence</p>}</li>;
+              })}</ul>
+            </div>}
+          </>
+        )}
+        {loadingAnalysis && <p className="text-sm text-muted-foreground" role="status">Loading assessment…</p>}
+        {!analysis && !analysisError && !loadingAnalysis && <Notice icon={Sparkles} title="Get your baseline" description="Run an assessment to see how your current skills line up with your career goals." />}
+      </Panel>
     </div>
   );
 }
