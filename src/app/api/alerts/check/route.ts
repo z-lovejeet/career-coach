@@ -29,8 +29,8 @@ export async function GET() {
     const [profileRes, analysisRes, tasksRes, interviewsRes, completedRes] = await Promise.all([
       supabase.from('profiles').select('onboarding_complete, skills, goals, created_at').eq('id', user.id).maybeSingle(),
       supabase.from('analyses').select('readiness_score, weaknesses, missing_skills, created_at').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-      supabase.from('tasks').select('id, title, category, completed, due_date, created_at').eq('profile_id', user.id),
-      supabase.from('interviews').select('id, status, created_at').eq('profile_id', user.id),
+      supabase.from('tasks').select('id, title, category, completed, due_date, created_at').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(250),
+      supabase.from('interviews').select('id, status, created_at').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('tasks').select('completed_at').eq('profile_id', user.id).eq('completed', true).order('completed_at', { ascending: false }).limit(1),
     ]);
 

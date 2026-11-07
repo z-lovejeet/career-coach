@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { enforceAIQuota } from '@/lib/supabase/ai-quota';
 import { recommendCompanies } from '@/lib/agents/recommendation';
 import type { RecommendationInput } from '@/types';
 
@@ -54,6 +55,8 @@ export async function POST() {
     };
 
     // Run recommendation agent
+    const quota = await enforceAIQuota(supabase, 'companies');
+    if (quota) return quota;
     const recommendations = await recommendCompanies(input);
 
     // Store recommendations
