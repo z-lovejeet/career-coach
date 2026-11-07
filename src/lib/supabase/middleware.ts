@@ -1,55 +1,43 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from "@supabase/ssr";
+import { isLegacyGuestEmail } from "@/lib/supabase/legacy-guest";
+import { NextResponse, type NextRequest } from "next/server";
+
+const workspaceRoutes = new Set([
+  "dashboard", "onboarding", "tasks", "companies", "interview", "chat", "progress", "profile", "roadmap",
+]);
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  let response = NextResponse.next({ request });
+  const path = request.nextUrl.pathname;
+  if (path !== "/auth" && !workspaceRoutes.has(path.split("/")[1])) return response;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+        getAll: () => request.cookies.getAll(),
+        setAll(cookiesToSet, headers) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request, headers });
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },
-    }
+    },
   );
 
-  // Validate user auth token securely with Supabase Auth
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Protected routes: redirect to /auth if not logged in
-  const protectedPaths = ['/dashboard', '/onboarding', '/tasks', '/companies', '/interview', '/chat', '/progress', '/profile', '/roadmap'];
-  const isProtected = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
-
-  if (isProtected && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/auth';
-    return NextResponse.redirect(url);
+  let destination: string | null = null;
+  if (path === "/auth") {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user && !isLegacyGuestEmail(user.email)) destination = "/dashboard";
+  } else {
+    const { data } = await supabase.auth.getClaims();
+    if (!data?.claims?.sub || isLegacyGuestEmail(data.claims.email)) destination = "/auth";
   }
+  if (!destination) return response;
 
-  // If logged in and going to /auth, redirect to dashboard
-  if (user && request.nextUrl.pathname === '/auth') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
-  }
-
-  return supabaseResponse;
+  const redirect = NextResponse.redirect(new URL(destination, request.url));
+  for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+  redirect.headers.set("Cache-Control", "private, no-store");
+  return redirect;
 }
