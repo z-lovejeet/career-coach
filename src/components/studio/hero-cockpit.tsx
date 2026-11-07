@@ -86,7 +86,7 @@ export function HeroCockpit() {
 
       {/* Cockpit Content Panel with smooth decelerating transitions */}
       <div className="relative min-h-[300px]">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           {activeTab === "interview" && (
             <motion.div
               key="interview"

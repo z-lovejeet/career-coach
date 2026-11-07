@@ -187,12 +187,9 @@ export default function LandingPage() {
       </header>
 
       <main id="main-content" className="studio-frame landing-main">
-        <motion.section
+        <section
           className="landing-hero-surface"
           aria-labelledby="landing-title"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="landing-hero-top">
             <div className="landing-hero-copy space-y-6">
@@ -263,7 +260,7 @@ export default function LandingPage() {
               <HeroCockpit />
             </div>
           </div>
-        </motion.section>
+        </section>
 
         <section
           id="workflow"
