@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 370" width="100%" height="100%">
+  <defs>
+    <linearGradient id="stackBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0c16" />
+      <stop offset="50%" stop-color="#101326" />
+      <stop offset="100%" stop-color="#07080f" />
+    </linearGradient>
+
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#181c34" />
+      <stop offset="100%" stop-color="#111425" />
+    </linearGradient>
+
+    <linearGradient id="cardHoverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#202446" />
+      <stop offset="100%" stop-color="#13172e" />
+    </linearGradient>
+
+    <pattern id="stackGrid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#252b48" stroke-width="0.5" stroke-opacity="0.25" />
+    </pattern>
+  </defs>
+
+  <!-- Container -->
+  <rect width="1200" height="370" rx="16" fill="url(#stackBg)" />
+  <rect width="1200" height="370" rx="16" fill="url(#stackGrid)" />
+  <rect width="1200" height="370" rx="16" fill="none" stroke="#2a3052" stroke-width="1.2" />
+
+  <!-- Header -->
+  <g transform="translate(60, 32)">
+    <text x="0" y="0" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="0.8">CORE TECHNOLOGY PILLARS</text>
+    <text x="0" y="24" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700">Engineered for Latency, Type Safety, and Isolated Multi-Tenancy</text>
+  </g>
+
+  <!-- Row 1: 4 Cards -->
+  <!-- Card 1: Next.js 16 -->
+  <g transform="translate(60, 80)">
+    <rect width="252" height="120" rx="12" fill="url(#cardGrad)" stroke="#2b3254" stroke-width="1" />
+    <circle cx="28" cy="28" r="14" fill="#1e2444" stroke="#6366f1" stroke-width="1.2" />
+    <text x="28" y="32" fill="#a5b4fc" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" text-anchor="middle">N</text>
+    <text x="52" y="25" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700">Next.js 16 (App Router)</text>
+    <text x="52" y="38" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500">React Server Components</text>
+    <text x="16" y="70" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11" line-height="1.4">Streaming architecture, nested route layouts, server actions, and edge runtime routing.</text>
+  </g>
+
+  <!-- Card 2: React 19 & Motion -->
+  <g transform="translate(336, 80)">
+    <rect width="252" height="120" rx="12" fill="url(#cardGrad)" stroke="#2b3254" stroke-width="1" />
+    <circle cx="28" cy="28" r="14" fill="#1e2444" stroke="#38bdf8" stroke-width="1.2" />
+    <text x="28" y="32" fill="#38bdf8" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" text-anchor="middle">⚛</text>
+    <text x="52" y="25" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700">React 19 &amp; Framer Motion</text>
+    <text x="52" y="38" fill="#38bdf8" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500">Fluid Transitions</text>
+    <text x="16" y="70" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11">Concurrent rendering, optimistic state transitions, spring physics, and accessible fallbacks.</text>
+  </g>
+
+  <!-- Card 3: TypeScript 5 -->
+  <g transform="translate(612, 80)">
+    <rect width="252" height="120" rx="12" fill="url(#cardGrad)" stroke="#2b3254" stroke-width="1" />
+    <circle cx="28" cy="28" r="14" fill="#1e2444" stroke="#60a5fa" stroke-width="1.2" />
+    <text x="28" y="32" fill="#60a5fa" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" text-anchor="middle">TS</text>
+    <text x="52" y="25" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700">TypeScript 5 (Strict)</text>
+    <text x="52" y="38" fill="#60a5fa" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500">End-to-End Type Safety</text>
+    <text x="16" y="70" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11">Compile time contracts, Zod runtime schemas, synchronized database row interfaces.</text>
+  </g>
+
+  <!-- Card 4: Tailwind CSS 4 -->
+  <g transform="translate(888, 80)">
+    <rect width="252" height="120" rx="12" fill="url(#cardGrad)" stroke="#2b3254" stroke-width="1" />
+    <circle cx="28" cy="28" r="14" fill="#1e2444" stroke="#2dd4bf" stroke-width="1.2" />
+    <text x="28" y="32" fill="#2dd4bf" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" text-anchor="middle">≈</text>
+    <text x="52" y="25" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700">Tailwind CSS 4</text>
+    <text x="52" y="38" fill="#2dd4bf" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500">Design System Tokens</text>
+    <text x="16" y="70" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11">Modern CSS layer variables, glassmorphic obsidian palettes, high contrast typography.</text>
+  </g>
+
+  <!-- Row 2: 4 Cards -->
+  <!-- Card 5: Supabase RLS -->
+  <g transform="translate(60, 220)">
+    <rect width="252" height="120" rx="12" fill="url(#cardGrad)" stroke="#2b3254" stroke-width="1" />
+    <circle cx="28" cy="28" r="14" fill="#1e2444" stroke="#34d399" stroke-width="1.2" />
+    <text x="28" y="32" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" text-anchor="middle">⚡</text>
+    <text x="52" y="25" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700">Supabase &amp; PostgreSQL</text>
+    <text x="52" y="38" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500">Row Level Security</text>
+    <text x="16" y="70" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11">Multi-tenant isolation, atomic RPC functions for quotas, private storage buckets for resumes.</text>
+  </g>
+
+  <!-- Card 6: Gemini 2.5 Flash -->
+  <g transform="translate(336, 220)">
+    <rect width="252" height="120" rx="12" fill="url(#cardGrad)" stroke="#2b3254" stroke-width="1" />
+    <circle cx="28" cy="28" r="14" fill="#1e2444" stroke="#a78bfa" stroke-width="1.2" />
+    <text x="28" y="32" fill="#a78bfa" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" text-anchor="middle">✦</text>
+    <text x="52" y="25" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700">Gemini 2.5 Flash</text>
+    <text x="52" y="38" fill="#a78bfa" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500">Multimodal &amp; Evaluation</text>
+    <text x="16" y="70" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11">Structured rubric synthesis, deep resume parsing, curriculum graph planning, and scoring.</text>
+  </g>
+
+  <!-- Card 7: Groq LPU -->
+  <g transform="translate(612, 220)">
+    <rect width="252" height="120" rx="12" fill="url(#cardGrad)" stroke="#2b3254" stroke-width="1" />
+    <circle cx="28" cy="28" r="14" fill="#1e2444" stroke="#f472b6" stroke-width="1.2" />
+    <text x="28" y="32" fill="#f472b6" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" text-anchor="middle">⚡</text>
+    <text x="52" y="25" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700">Groq LPU (Llama 3.3)</text>
+    <text x="52" y="38" fill="#f472b6" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500">Low Latency Mentor Engine</text>
+    <text x="16" y="70" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11">Sub-100ms time-to-first-token, conversational technical mentor with full context retention.</text>
+  </g>
+
+  <!-- Card 8: Vitest & Playwright -->
+  <g transform="translate(888, 220)">
+    <rect width="252" height="120" rx="12" fill="url(#cardGrad)" stroke="#2b3254" stroke-width="1" />
+    <circle cx="28" cy="28" r="14" fill="#1e2444" stroke="#fbbf24" stroke-width="1.2" />
+    <text x="28" y="32" fill="#fbbf24" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" text-anchor="middle">✓</text>
+    <text x="52" y="25" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700">Vitest &amp; Verification</text>
+    <text x="52" y="38" fill="#fbbf24" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="500">Automated Quality Suite</text>
+    <text x="16" y="70" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11">Hermetic unit tests, route regression harnesses, TypeScript static analysis, accessibility checks.</text>
+  </g>
+</svg>

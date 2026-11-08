@@ -1,0 +1,224 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 580" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="archBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0c16" />
+      <stop offset="50%" stop-color="#0e1122" />
+      <stop offset="100%" stop-color="#07080e" />
+    </linearGradient>
+
+    <!-- Layer Card Gradients -->
+    <linearGradient id="layerGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#191d35" />
+      <stop offset="100%" stop-color="#14182b" />
+    </linearGradient>
+
+    <linearGradient id="layerGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1b1e38" />
+      <stop offset="100%" stop-color="#131627" />
+    </linearGradient>
+
+    <linearGradient id="nodeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e2444" />
+      <stop offset="100%" stop-color="#12162a" />
+    </linearGradient>
+
+    <linearGradient id="neonIndigo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+
+    <linearGradient id="neonEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <linearGradient id="neonAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <linearGradient id="neonPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#7e22ce" />
+    </linearGradient>
+
+    <!-- Shadows -->
+    <filter id="glowSubtle" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#4f46e5" flood-opacity="0.25" />
+    </filter>
+
+    <!-- Grid Pattern -->
+    <pattern id="archGrid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#252b48" stroke-width="0.6" stroke-opacity="0.3" />
+    </pattern>
+  </defs>
+
+  <!-- Canvas Base -->
+  <rect width="1200" height="580" rx="16" fill="url(#archBg)" />
+  <rect width="1200" height="580" rx="16" fill="url(#archGrid)" />
+  <rect width="1200" height="580" rx="16" fill="none" stroke="#2d3356" stroke-width="1.2" />
+
+  <!-- Architecture Header -->
+  <g transform="translate(60, 36)">
+    <rect width="140" height="24" rx="12" fill="#1e1b4b" stroke="#4f46e5" stroke-width="0.8" />
+    <text x="16" y="16" fill="#a5b4fc" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" font-weight="700" letter-spacing="0.5">SYSTEM TOPOLOGY</text>
+
+    <text x="0" y="54" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="-0.6">CareerAI Platform Architecture</text>
+    <text x="430" y="52" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="13.5">
+      End-to-end data pipeline: from client presentation to edge authentication, inference engines, and RLS storage.
+    </text>
+  </g>
+
+  <!-- LAYER 1: Presentation & Client Runtime (y: 110) -->
+  <g transform="translate(60, 110)">
+    <rect width="1080" height="88" rx="12" fill="url(#layerGrad1)" stroke="#2b3254" stroke-width="1" />
+    <text x="24" y="24" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="0.5">LAYER 1 · PRESENTATION &amp; EDGE RUNTIME</text>
+
+    <!-- Node 1: Next.js 16 App Router -->
+    <g transform="translate(24, 34)">
+      <rect width="245" height="42" rx="8" fill="url(#nodeGrad)" stroke="#3730a3" stroke-width="1" />
+      <rect x="12" y="14" width="14" height="14" rx="3" fill="#6366f1" />
+      <text x="34" y="24" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">Next.js 16 (Turbopack)</text>
+      <text x="34" y="36" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="9.5">Server Components &amp; App Router</text>
+    </g>
+
+    <!-- Node 2: React 19 & Framer Motion -->
+    <g transform="translate(285, 34)">
+      <rect width="245" height="42" rx="8" fill="url(#nodeGrad)" stroke="#3730a3" stroke-width="1" />
+      <rect x="12" y="14" width="14" height="14" rx="3" fill="#8b5cf6" />
+      <text x="34" y="24" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">React 19 &amp; Framer Motion</text>
+      <text x="34" y="36" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="9.5">Spring Motion &amp; Reduced-Motion</text>
+    </g>
+
+    <!-- Node 3: Tailwind & Glass System -->
+    <g transform="translate(546, 34)">
+      <rect width="245" height="42" rx="8" fill="url(#nodeGrad)" stroke="#3730a3" stroke-width="1" />
+      <rect x="12" y="14" width="14" height="14" rx="3" fill="#06b6d4" />
+      <text x="34" y="24" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">Tailwind CSS 4 &amp; Glass Engine</text>
+      <text x="34" y="36" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="9.5">Tactile Depth &amp; Nested Radii</text>
+    </g>
+
+    <!-- Node 4: Base UI & Lucide -->
+    <g transform="translate(807, 34)">
+      <rect width="245" height="42" rx="8" fill="url(#nodeGrad)" stroke="#3730a3" stroke-width="1" />
+      <rect x="12" y="14" width="14" height="14" rx="3" fill="#10b981" />
+      <text x="34" y="24" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">Accessible Design Primitives</text>
+      <text x="34" y="36" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="9.5">Base UI Dialogs, Tooltips &amp; Sonner</text>
+    </g>
+  </g>
+
+  <!-- CONNECTOR 1 -->
+  <g transform="translate(600, 202)">
+    <line x1="0" y1="0" x2="0" y2="18" stroke="#4f46e5" stroke-width="1.5" stroke-dasharray="3,3" />
+    <circle cx="0" cy="18" r="3" fill="#818cf8" />
+  </g>
+
+  <!-- LAYER 2: Security & Session Boundary (y: 224) -->
+  <g transform="translate(60, 224)">
+    <rect width="1080" height="74" rx="12" fill="url(#layerGrad2)" stroke="#2b3254" stroke-width="1" />
+    <text x="24" y="22" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="0.5">LAYER 2 · AUTHENTICATION, RLS &amp; SESSION PROVISIONING</text>
+
+    <!-- Item 1: PKCE OAuth -->
+    <g transform="translate(24, 30)">
+      <rect width="328" height="34" rx="6" fill="#14182e" stroke="#252d4e" stroke-width="0.8" />
+      <text x="14" y="21" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="600">PKCE OAuth &amp; Email Confirmation</text>
+    </g>
+
+    <!-- Item 2: Isolated Guest Provisioner -->
+    <g transform="translate(372, 30)">
+      <rect width="336" height="34" rx="6" fill="#14182e" stroke="#059669" stroke-width="0.8" />
+      <text x="14" y="21" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="600">Isolated Guest Session Engine (Auto-Fallback)</text>
+    </g>
+
+    <!-- Item 3: Cloudflare Turnstile & Quotas -->
+    <g transform="translate(728, 30)">
+      <rect width="324" height="34" rx="6" fill="#14182e" stroke="#252d4e" stroke-width="0.8" />
+      <text x="14" y="21" fill="#cbd5e1" font-family="system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="600">Cloudflare Turnstile CAPTCHA &amp; AI Quotas</text>
+    </g>
+  </g>
+
+  <!-- CONNECTOR 2 -->
+  <g transform="translate(600, 302)">
+    <line x1="0" y1="0" x2="0" y2="18" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3,3" />
+    <circle cx="0" cy="18" r="3" fill="#34d399" />
+  </g>
+
+  <!-- LAYER 3: Application Engines & Intelligence Services (y: 324) -->
+  <g transform="translate(60, 324)">
+    <rect width="1080" height="114" rx="12" fill="url(#layerGrad1)" stroke="#2b3254" stroke-width="1" />
+    <text x="24" y="24" fill="#fbbf24" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="0.5">LAYER 3 · INTELLIGENCE ENGINES &amp; BUSINESS LOGIC</text>
+
+    <!-- Engine 1: Mock Interview Engine -->
+    <g transform="translate(24, 36)">
+      <rect width="245" height="64" rx="8" fill="url(#nodeGrad)" stroke="#4338ca" stroke-width="1" />
+      <text x="14" y="22" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">Interview Simulation Engine</text>
+      <text x="14" y="38" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="10">5-Round Technical Sessions</text>
+      <text x="14" y="52" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600">Rubric Scorer (O(1), Concurrency)</text>
+    </g>
+
+    <!-- Engine 2: 52-Week Curriculum Engine -->
+    <g transform="translate(285, 36)">
+      <rect width="245" height="64" rx="8" fill="url(#nodeGrad)" stroke="#4338ca" stroke-width="1" />
+      <text x="14" y="22" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">Adaptive Curriculum Engine</text>
+      <text x="14" y="38" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="10">1 to 12 Month Flexible Horizons</text>
+      <text x="14" y="52" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600">Contiguous Weekly Milestones</text>
+    </g>
+
+    <!-- Engine 3: Mentorship AI -->
+    <g transform="translate(546, 36)">
+      <rect width="245" height="64" rx="8" fill="url(#nodeGrad)" stroke="#4338ca" stroke-width="1" />
+      <text x="14" y="22" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">Conversational AI Mentor</text>
+      <text x="14" y="38" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="10">Streaming Technical Discussions</text>
+      <text x="14" y="52" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600">Context-Aware Guidance</text>
+    </g>
+
+    <!-- Engine 4: Profile & Opportunity Matcher -->
+    <g transform="translate(807, 36)">
+      <rect width="245" height="64" rx="8" fill="url(#nodeGrad)" stroke="#4338ca" stroke-width="1" />
+      <text x="14" y="22" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">Opportunity &amp; Fit Matcher</text>
+      <text x="14" y="38" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="10">PDF Resume Skills Ingestion</text>
+      <text x="14" y="52" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="10" font-weight="600">Target Benchmark Scoring</text>
+    </g>
+  </g>
+
+  <!-- CONNECTOR 3 -->
+  <g transform="translate(600, 442)">
+    <line x1="0" y1="0" x2="0" y2="18" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,3" />
+    <circle cx="0" cy="18" r="3" fill="#fde047" />
+  </g>
+
+  <!-- LAYER 4: Persistence, Infrastructure & External APIs (y: 464) -->
+  <g transform="translate(60, 464)">
+    <rect width="1080" height="88" rx="12" fill="url(#layerGrad2)" stroke="#2b3254" stroke-width="1" />
+    <text x="24" y="22" fill="#c084fc" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="0.5">LAYER 4 · PERSISTENCE &amp; EXTERNAL INFRASTRUCTURE</text>
+
+    <!-- DB 1: Supabase PostgreSQL -->
+    <g transform="translate(24, 32)">
+      <rect width="245" height="42" rx="8" fill="#13162b" stroke="#7e22ce" stroke-width="0.9" />
+      <text x="14" y="20" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700">Supabase PostgreSQL</text>
+      <text x="14" y="33" fill="#a855f7" font-family="system-ui, -apple-system, sans-serif" font-size="9.5">Row-Level Security (RLS) &amp; Migrations</text>
+    </g>
+
+    <!-- DB 2: Google Gemini AI -->
+    <g transform="translate(285, 32)">
+      <rect width="245" height="42" rx="8" fill="#13162b" stroke="#3b82f6" stroke-width="0.9" />
+      <text x="14" y="20" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700">Google Gemini 2.5 Flash</text>
+      <text x="14" y="33" fill="#60a5fa" font-family="system-ui, -apple-system, sans-serif" font-size="9.5">Structured Rubrics &amp; Curriculum AI</text>
+    </g>
+
+    <!-- DB 3: Groq LLM Inference -->
+    <g transform="translate(546, 32)">
+      <rect width="245" height="42" rx="8" fill="#13162b" stroke="#f97316" stroke-width="0.9" />
+      <text x="14" y="20" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700">Groq High-Speed LLM</text>
+      <text x="14" y="33" fill="#fb923c" font-family="system-ui, -apple-system, sans-serif" font-size="9.5">Ultra-Low Latency Conversational Inference</text>
+    </g>
+
+    <!-- DB 4: Apify & Storage -->
+    <g transform="translate(807, 32)">
+      <rect width="245" height="42" rx="8" fill="#13162b" stroke="#10b981" stroke-width="0.9" />
+      <text x="14" y="20" fill="#f8fafc" font-family="system-ui, -apple-system, sans-serif" font-size="11.5" font-weight="700">Storage &amp; Live Search</text>
+      <text x="14" y="33" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="9.5">Private Resumes &amp; LinkedIn Search</text>
+    </g>
+  </g>
+</svg>

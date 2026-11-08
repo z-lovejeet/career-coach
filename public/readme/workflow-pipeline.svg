@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="pipeBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0c16" />
+      <stop offset="50%" stop-color="#101426" />
+      <stop offset="100%" stop-color="#07080f" />
+    </linearGradient>
+
+    <!-- Step Gradients -->
+    <linearGradient id="stepGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#191e36" />
+      <stop offset="100%" stop-color="#111526" />
+    </linearGradient>
+
+    <linearGradient id="stepActiveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#242852" />
+      <stop offset="100%" stop-color="#151833" />
+    </linearGradient>
+
+    <linearGradient id="arrowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+
+    <!-- Grid Pattern -->
+    <pattern id="pipeGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#252b48" stroke-width="0.5" stroke-opacity="0.25" />
+    </pattern>
+  </defs>
+
+  <!-- Canvas Base -->
+  <rect width="1200" height="320" rx="16" fill="url(#pipeBg)" />
+  <rect width="1200" height="320" rx="16" fill="url(#pipeGrid)" />
+  <rect width="1200" height="320" rx="16" fill="none" stroke="#2b3152" stroke-width="1.2" />
+
+  <!-- Section Title -->
+  <g transform="translate(60, 32)">
+    <text x="0" y="0" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="0.5">LEARNING &amp; PREPARATION PIPELINE</text>
+    <text x="0" y="26" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" letter-spacing="-0.5">5-Stage Adaptive Candidate Progression</text>
+  </g>
+
+  <!-- 5 Horizontal Steps -->
+  <!-- STEP 1 -->
+  <g transform="translate(60, 94)">
+    <rect width="200" height="180" rx="12" fill="url(#stepGrad)" stroke="#2f365c" stroke-width="1" />
+    <circle cx="32" cy="34" r="16" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1" />
+    <text x="32" y="39" fill="#a5b4fc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" text-anchor="middle">01</text>
+
+    <text x="20" y="80" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700">Profile &amp; Resume</text>
+    <text x="20" y="100" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11" line-height="16">
+      <tspan x="20" dy="0">Ingest experience,</tspan>
+      <tspan x="20" dy="16">skills &amp; parse PDF</tspan>
+      <tspan x="20" dy="16">resume via AI parser.</tspan>
+    </text>
+
+    <rect x="20" y="142" width="94" height="20" rx="10" fill="#1e2444" />
+    <text x="28" y="156" fill="#c7d2fe" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" font-weight="600">Skills Ingested</text>
+  </g>
+
+  <!-- ARROW 1 -->
+  <g transform="translate(268, 174)">
+    <path d="M 0 0 L 12 0 M 8 -4 L 12 0 L 8 4" fill="none" stroke="url(#arrowGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- STEP 2 -->
+  <g transform="translate(288, 94)">
+    <rect width="200" height="180" rx="12" fill="url(#stepGrad)" stroke="#2f365c" stroke-width="1" />
+    <circle cx="32" cy="34" r="16" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1" />
+    <text x="32" y="39" fill="#a5b4fc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" text-anchor="middle">02</text>
+
+    <text x="20" y="80" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700">Gap Analysis</text>
+    <text x="20" y="100" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11" line-height="16">
+      <tspan x="20" dy="0">Compare current</tspan>
+      <tspan x="20" dy="16">capabilities against</tspan>
+      <tspan x="20" dy="16">Tier-1 company rubrics.</tspan>
+    </text>
+
+    <rect x="20" y="142" width="102" height="20" rx="10" fill="#1e2444" />
+    <text x="28" y="156" fill="#fbbf24" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" font-weight="600">Gaps Identified</text>
+  </g>
+
+  <!-- ARROW 2 -->
+  <g transform="translate(496, 174)">
+    <path d="M 0 0 L 12 0 M 8 -4 L 12 0 L 8 4" fill="none" stroke="url(#arrowGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- STEP 3 -->
+  <g transform="translate(516, 94)">
+    <rect width="200" height="180" rx="12" fill="url(#stepActiveGrad)" stroke="#4338ca" stroke-width="1.5" />
+    <circle cx="32" cy="34" r="16" fill="#312e81" stroke="#6366f1" stroke-width="1" />
+    <text x="32" y="39" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" text-anchor="middle">03</text>
+
+    <text x="20" y="80" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700">52-Week Roadmap</text>
+    <text x="20" y="100" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11" line-height="16">
+      <tspan x="20" dy="0">Synthesize weekly</tspan>
+      <tspan x="20" dy="16">contiguous targets &amp;</tspan>
+      <tspan x="20" dy="16">practical exercises.</tspan>
+    </text>
+
+    <rect x="20" y="142" width="112" height="20" rx="10" fill="#3730a3" />
+    <text x="28" y="156" fill="#818cf8" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" font-weight="600">Curriculum Built</text>
+  </g>
+
+  <!-- ARROW 3 -->
+  <g transform="translate(724, 174)">
+    <path d="M 0 0 L 12 0 M 8 -4 L 12 0 L 8 4" fill="none" stroke="url(#arrowGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- STEP 4 -->
+  <g transform="translate(744, 94)">
+    <rect width="200" height="180" rx="12" fill="url(#stepGrad)" stroke="#2f365c" stroke-width="1" />
+    <circle cx="32" cy="34" r="16" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1" />
+    <text x="32" y="39" fill="#a5b4fc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" text-anchor="middle">04</text>
+
+    <text x="20" y="80" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700">Mock Interview</text>
+    <text x="20" y="100" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11" line-height="16">
+      <tspan x="20" dy="0">5-question technical</tspan>
+      <tspan x="20" dy="16">rounds scored against</tspan>
+      <tspan x="20" dy="16">architectural rubrics.</tspan>
+    </text>
+
+    <rect x="20" y="142" width="102" height="20" rx="10" fill="#064e3b" />
+    <text x="28" y="156" fill="#34d399" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" font-weight="600">Rubric Scored</text>
+  </g>
+
+  <!-- ARROW 4 -->
+  <g transform="translate(952, 174)">
+    <path d="M 0 0 L 12 0 M 8 -4 L 12 0 L 8 4" fill="none" stroke="url(#arrowGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- STEP 5 -->
+  <g transform="translate(972, 94)">
+    <rect width="168" height="180" rx="12" fill="url(#stepGrad)" stroke="#2f365c" stroke-width="1" />
+    <circle cx="32" cy="34" r="16" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1" />
+    <text x="32" y="39" fill="#a5b4fc" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="800" text-anchor="middle">05</text>
+
+    <text x="20" y="80" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700">Readiness Radar</text>
+    <text x="20" y="100" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="11" line-height="16">
+      <tspan x="20" dy="0">Track streak XP,</tspan>
+      <tspan x="20" dy="16">company fit metrics &amp;</tspan>
+      <tspan x="20" dy="16">on-site readiness.</tspan>
+    </text>
+
+    <rect x="20" y="142" width="94" height="20" rx="10" fill="#1e2444" />
+    <text x="28" y="156" fill="#c084fc" font-family="system-ui, -apple-system, sans-serif" font-size="9.5" font-weight="600">On-Site Ready</text>
+  </g>
+</svg>
