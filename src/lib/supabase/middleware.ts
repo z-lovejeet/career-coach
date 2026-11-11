@@ -9,6 +9,17 @@ const workspaceRoutes = new Set([
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const path = request.nextUrl.pathname;
+  const code = request.nextUrl.searchParams.get("code");
+
+  // If OAuth provider redirected to root with a code, forward directly to the callback handler
+  if (code && path === "/") {
+    const callbackUrl = new URL("/auth/callback", request.url);
+    request.nextUrl.searchParams.forEach((value, key) => {
+      callbackUrl.searchParams.set(key, value);
+    });
+    return NextResponse.redirect(callbackUrl);
+  }
+
   if (path !== "/auth" && !workspaceRoutes.has(path.split("/")[1])) return response;
 
   const supabase = createServerClient(
