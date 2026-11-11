@@ -9,5 +9,5 @@ export async function openGuestWorkspace(captchaToken?: string) {
     throw new Error(result.error || "Guest access is temporarily unavailable.");
   }
   // Reload after the route handler sets the new session cookie.
-  window.location.assign(new URL("/dashboard", window.location.origin));
+  window.location.assign(new URL(result.redirect || "/dashboard", window.location.origin));
 }

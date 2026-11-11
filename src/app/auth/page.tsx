@@ -136,12 +136,13 @@ function AuthForm({
           skipBrowserRedirect: true,
         },
       });
-      if (error || !data.url)
+      if (error || !data?.url)
         throw new Error(
-          "Google sign-in is unavailable right now. You can continue with email.",
+          error?.message || "Google sign-in is unavailable right now. You can continue with guest mode.",
         );
       window.location.assign(data.url);
     } catch (err) {
+      console.error("[Google OAuth Error]", err);
       setError(
         err instanceof Error
           ? err.message
@@ -307,17 +308,21 @@ function AuthForm({
         </button>
       </form>
 
-      {mode !== "guest" && (
-        <button
-          type="button"
-          className="studio-link w-full border border-border bg-card/45"
-          onClick={googleSignIn}
-          disabled={pending !== null}
-        >
-          <GoogleMark />
-          {pending === "google" ? "Connecting…" : "Continue with Google"}
-        </button>
-      )}
+      <div className="relative my-2 flex items-center justify-center text-xs text-muted-foreground">
+        <span className="w-full border-t border-border" />
+        <span className="bg-card px-2 shrink-0">or</span>
+        <span className="w-full border-t border-border" />
+      </div>
+
+      <button
+        type="button"
+        className="studio-link w-full border border-border bg-card/45 hover:bg-card/75 transition-colors"
+        onClick={googleSignIn}
+        disabled={pending !== null}
+      >
+        <GoogleMark />
+        {pending === "google" ? "Connecting to Google…" : "Continue with Google"}
+      </button>
     </section>
   );
 }

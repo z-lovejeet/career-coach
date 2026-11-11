@@ -1,11 +1,15 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { isLegacyGuestEmail, isGuestEmail } from '@/lib/supabase/legacy-guest';
 import type { AnalyzerOutput, RecommendationOutput } from '@/types';
 
 const demoName = 'Guest Engineer';
 const demoSkills = ['TypeScript', 'React', 'Node.js', 'PostgreSQL', 'System Design'];
+
+const SHARED_GUEST_EMAIL = 'guest.demo@careerai.local';
+const SHARED_GUEST_PASSWORD = 'GuestDemo12345!Secure';
 
 function sampleTaskId(profileId: string, day: number) {
   const digest = createHash('sha256').update(`${profileId}:guest-task:${day}`).digest('hex');
@@ -37,30 +41,35 @@ const demoMatches: RecommendationOutput = {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const admin = url && serviceKey
+      ? createServiceClient(url, serviceKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        })
+      : null;
+
+    // 1. Check current session
     const { data: current } = await supabase.auth.getUser();
-    let guest = current.user;
+    let guest = current?.user ?? null;
+
     if (guest && isLegacyGuestEmail(guest.email)) {
       await supabase.auth.signOut({ scope: 'local' });
       guest = null;
     } else if (guest && !guest.is_anonymous && !guest.user_metadata?.is_guest && !isGuestEmail(guest.email)) {
-      return NextResponse.json({ success: false, error: 'Sign out of your account before starting a guest session.' }, { status: 409 });
+      // User is logged into a real account, sign out locally to allow guest access
+      await supabase.auth.signOut({ scope: 'local' });
+      guest = null;
     }
 
+    // 2. If not already an active guest, authenticate
     if (!guest) {
-      const { captchaToken } = await request.json().catch(() => null) ?? {};
-      let { data, error } = await supabase.auth.signInAnonymously({
-        options: { data: { full_name: demoName }, captchaToken: typeof captchaToken === 'string' ? captchaToken : undefined },
-      });
+      let authenticated = false;
 
-      // If anonymous auth provider is disabled in Supabase, fall back seamlessly to an isolated guest session
-      if (error && error.code === 'anonymous_provider_disabled') {
-        const { createClient: createServiceClient } = await import('@supabase/supabase-js');
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        if (url && key) {
-          const admin = createServiceClient(url, key, {
-            auth: { autoRefreshToken: false, persistSession: false },
-          });
+      // Strategy A: Try creating an isolated guest session
+      if (admin) {
+        try {
           const guestId = randomUUID();
           const guestEmail = `guest.${guestId}@careerai.local`;
           const guestPassword = randomBytes(24).toString('hex');
@@ -77,71 +86,87 @@ export async function POST(request: Request) {
               email: guestEmail,
               password: guestPassword,
             });
+
             if (signInRes.data?.user && signInRes.data?.session) {
-              data = signInRes.data;
-              error = null;
+              guest = signInRes.data.user;
+              authenticated = true;
             }
           }
+        } catch (err) {
+          console.warn('[guest-auth] Isolated guest user creation failed, will try fallback:', err);
         }
       }
 
-      if (error || !data?.user || !data?.session) {
-        const message = error?.code === 'captcha_failed'
-          ? 'Please complete the verification and try again.'
-          : error?.status === 429 ? 'Too many attempts. Please try again later.' : 'Guest access is temporarily unavailable.';
-        return NextResponse.json({ success: false, error: message }, { status: error?.status === 429 ? 429 : 503 });
+      // Strategy B: Fallback to the dedicated shared demo guest account
+      if (!authenticated) {
+        try {
+          let signInRes = await supabase.auth.signInWithPassword({
+            email: SHARED_GUEST_EMAIL,
+            password: SHARED_GUEST_PASSWORD,
+          });
+
+          if (signInRes.error && admin) {
+            // User doesn't exist yet, create it with admin
+            await admin.auth.admin.createUser({
+              email: SHARED_GUEST_EMAIL,
+              password: SHARED_GUEST_PASSWORD,
+              email_confirm: true,
+              user_metadata: { full_name: demoName, is_guest: true },
+            });
+
+            signInRes = await supabase.auth.signInWithPassword({
+              email: SHARED_GUEST_EMAIL,
+              password: SHARED_GUEST_PASSWORD,
+            });
+          }
+
+          if (signInRes.data?.user && signInRes.data?.session) {
+            guest = signInRes.data.user;
+            authenticated = true;
+          }
+        } catch (err) {
+          console.error('[guest-auth] Shared guest sign-in error:', err);
+        }
       }
-      guest = data.user;
+
+      // Strategy C: Last resort anonymous sign-in (if enabled in project)
+      if (!authenticated) {
+        const { captchaToken } = await request.json().catch(() => null) ?? {};
+        const anonRes = await supabase.auth.signInAnonymously({
+          options: {
+            data: { full_name: demoName },
+            captchaToken: typeof captchaToken === 'string' ? captchaToken : undefined,
+          },
+        });
+
+        if (anonRes.data?.user && anonRes.data?.session) {
+          guest = anonRes.data.user;
+          authenticated = true;
+        }
+      }
+
+      if (!guest) {
+        return NextResponse.json(
+          { success: false, error: 'Guest access is temporarily unavailable. Please try again or sign in with Google.' },
+          { status: 503 }
+        );
+      }
     }
 
+    // 3. Ensure demo data exists for this guest
     const profileId = guest.id;
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles').select('onboarding_complete').eq('id', profileId).maybeSingle();
-    if (profileError) throw profileError;
+    const dbClient = admin ?? supabase;
+
+    const { data: profile } = await dbClient
+      .from('profiles')
+      .select('onboarding_complete')
+      .eq('id', profileId)
+      .maybeSingle();
 
     if (!profile?.onboarding_complete) {
-      if (!profile) {
-        const { error } = await supabase.from('profiles').upsert({ id: profileId }, { ignoreDuplicates: true });
-        if (error) throw error;
-      }
-
-      const { data: existingAnalysis, error: analysisError } = await supabase
-        .from('analyses').select('id').eq('profile_id', profileId).limit(1).maybeSingle();
-      if (analysisError) throw analysisError;
-
-      const analysisId = existingAnalysis?.id ?? profileId;
-      if (!existingAnalysis) {
-        const { error } = await supabase.from('analyses').upsert({
-          id: analysisId, profile_id: profileId, ...demoAnalysis, raw_response: { sample: true },
-        }, { ignoreDuplicates: true });
-        if (error) throw error;
-      }
-
-      const [matches, tasks] = await Promise.all([
-        supabase.from('company_recommendations').select('id').eq('profile_id', profileId).limit(1).maybeSingle(),
-        supabase.from('tasks').select('id').eq('profile_id', profileId).limit(1).maybeSingle(),
-      ]);
-      if (matches.error || tasks.error) throw matches.error ?? tasks.error;
-
-      if (!matches.data) {
-        const { error } = await supabase.from('company_recommendations')
-          .upsert({ id: profileId, profile_id: profileId, analysis_id: analysisId, ...demoMatches }, { ignoreDuplicates: true });
-        if (error) throw error;
-      }
-      if (!tasks.data) {
-        const today = new Date().toISOString().slice(0, 10);
-        const { error } = await supabase.from('tasks').upsert([
-          { title: 'Implement an LRU cache', description: 'Use a hash map and a doubly linked list for constant-time reads and writes.', category: 'dsa', difficulty: 'medium', day_number: 1, completed: true, completed_at: new Date().toISOString() },
-          { title: 'Design a rate limiter', description: 'Compare a token bucket with a sliding window and explain how each handles bursts.', category: 'system_design', difficulty: 'hard', day_number: 2 },
-          { title: 'Practice graph traversal', description: 'Explain how to detect a cycle in a directed graph during an interview.', category: 'dsa', difficulty: 'medium', day_number: 3 },
-        ].map((task) => ({
-          id: sampleTaskId(profileId, task.day_number), profile_id: profileId, analysis_id: analysisId,
-          type: 'daily', week_number: 1, priority: 1, due_date: today, completed: false, completed_at: null, ...task,
-        })), { ignoreDuplicates: true });
-        if (error) throw error;
-      }
-
-      const { error } = await supabase.from('profiles').update({
+      // Upsert profile
+      await dbClient.from('profiles').upsert({
+        id: profileId,
         full_name: demoName,
         skills: demoSkills,
         skill_ratings: { TypeScript: 7, React: 7, 'Node.js': 6, PostgreSQL: 6, 'System Design': 5 },
@@ -153,12 +178,83 @@ export async function POST(request: Request) {
         preferred_locations: ['Remote'],
         onboarding_complete: true,
         updated_at: new Date().toISOString(),
-      }).eq('id', profileId);
-      if (error) throw error;
+      }, { onConflict: 'id' });
+
+      // Upsert analysis
+      const analysisId = profileId;
+      await dbClient.from('analyses').upsert({
+        id: analysisId,
+        profile_id: profileId,
+        ...demoAnalysis,
+        raw_response: { sample: true },
+      }, { onConflict: 'id' });
+
+      // Upsert company recommendations
+      await dbClient.from('company_recommendations').upsert({
+        id: profileId,
+        profile_id: profileId,
+        analysis_id: analysisId,
+        ...demoMatches,
+      }, { onConflict: 'id' });
+
+      // Upsert demo tasks
+      const today = new Date().toISOString().slice(0, 10);
+      await dbClient.from('tasks').upsert([
+        {
+          id: sampleTaskId(profileId, 1),
+          profile_id: profileId,
+          analysis_id: analysisId,
+          type: 'daily',
+          week_number: 1,
+          priority: 1,
+          due_date: today,
+          title: 'Implement an LRU cache',
+          description: 'Use a hash map and a doubly linked list for constant-time reads and writes.',
+          category: 'dsa',
+          difficulty: 'medium',
+          day_number: 1,
+          completed: true,
+          completed_at: new Date().toISOString(),
+        },
+        {
+          id: sampleTaskId(profileId, 2),
+          profile_id: profileId,
+          analysis_id: analysisId,
+          type: 'daily',
+          week_number: 1,
+          priority: 1,
+          due_date: today,
+          title: 'Design a rate limiter',
+          description: 'Compare a token bucket with a sliding window and explain how each handles bursts.',
+          category: 'system_design',
+          difficulty: 'hard',
+          day_number: 2,
+          completed: false,
+        },
+        {
+          id: sampleTaskId(profileId, 3),
+          profile_id: profileId,
+          analysis_id: analysisId,
+          type: 'daily',
+          week_number: 1,
+          priority: 1,
+          due_date: today,
+          title: 'Practice graph traversal',
+          description: 'Explain how to detect a cycle in a directed graph during an interview.',
+          category: 'dsa',
+          difficulty: 'medium',
+          day_number: 3,
+          completed: false,
+        },
+      ], { onConflict: 'id' });
     }
 
     return NextResponse.json({ success: true, redirect: '/dashboard', user: { id: profileId } });
-  } catch {
-    return NextResponse.json({ success: false, error: 'Guest workspace setup was interrupted. Please try again.' }, { status: 503 });
+  } catch (err) {
+    console.error('[guest-auth] Unexpected error during guest setup:', err);
+    return NextResponse.json(
+      { success: false, error: 'Guest workspace setup was interrupted. Please try again.' },
+      { status: 503 }
+    );
   }
 }
