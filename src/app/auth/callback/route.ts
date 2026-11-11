@@ -17,7 +17,17 @@ const destinations = new Set([
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const origin = process.env.NEXT_PUBLIC_APP_URL || requestUrl.origin;
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+
+  // Determine origin dynamically from the incoming request headers (Vercel/proxy aware)
+  let origin = requestUrl.origin;
+  if (forwardedHost) {
+    origin = `${forwardedProto}://${forwardedHost}`;
+  } else if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes('localhost')) {
+    origin = process.env.NEXT_PUBLIC_APP_URL;
+  }
+
   const searchParams = requestUrl.searchParams;
 
   const code = searchParams.get('code');
