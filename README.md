@@ -14,6 +14,7 @@
 [![Gemini](https://img.shields.io/badge/Google_Gemini-2.5_Flash-4285f4?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![Groq](https://img.shields.io/badge/Groq_LPU-Llama_3.3_70B-f55036?style=for-the-badge&logo=fastapi&logoColor=white)](https://groq.com/)
 [![Vitest](https://img.shields.io/badge/Tests-10%2F10_Passing-brightgreen?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-career--coach--snowy.vercel.app-blueviolet?style=for-the-badge&logo=vercel&logoColor=white)](https://career-coach-snowy.vercel.app)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
 <br />
@@ -257,6 +258,7 @@ Populate `.env.local` with your credentials:
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # AI Evaluation & Mentorship Engines
 GEMINI_API_KEY=AIzaSy...
@@ -265,6 +267,7 @@ GROQ_API_KEY=gsk_...
 # Optional: Real-time Job Search & Security CAPTCHA
 APIFY_API_TOKEN=apify_api_...
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAAAA...
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ---
@@ -280,11 +283,17 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAAAA...
 
 ### Step 4: Supabase Authentication Configuration
 
-In your Supabase project under **Authentication &gt; Providers &gt; Email**:
-1. Enable **Confirm Email** and ensure email confirmation links utilize the PKCE flow (`/auth/callback`).
-2. Under **Authentication &gt; Advanced**, enable **Anonymous Sign-ins**.
-3. In **URL Configuration**, set the Site URL to `http://localhost:3000` and add `http://localhost:3000/auth/callback` to the redirect whitelist.
-4. *(Optional)* If using Cloudflare Turnstile, add your secret key in **Authentication &gt; Attack Protection &gt; CAPTCHA**.
+In your Supabase project under **Authentication**:
+1. **Email Provider**: Under **Providers > Email**, enable email sign-in.
+2. **Google OAuth Provider**: Under **Providers > Google**, toggle Google on and configure your Client ID & Secret from Google Cloud Console.
+3. **URL Configuration**:
+   - Set **Site URL** to `http://localhost:3000` (or `https://career-coach-snowy.vercel.app` in production).
+   - Under **Redirect URLs**, add the following (wildcard `/**` ensures all callback routes are accepted):
+     - `http://localhost:3000/**`
+     - `http://localhost:3000/auth/callback`
+     - `http://127.0.0.1:3000/**`
+     - `https://career-coach-snowy.vercel.app/**` (for live Vercel deployment)
+4. **Resilient Guest Authentication**: The platform features a resilient multi-tier fallback that automatically handles guest logins and provisions isolated demo sandboxes even if the native anonymous provider is disabled in Supabase.
 
 ---
 
