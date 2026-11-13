@@ -72,6 +72,86 @@ function readSettings(body: Record<string, unknown> | null): RoadmapSettings | n
   return { dreamCompany, targetRole, timelineMonths, hoursPerDay, focusAreas: [...new Set(focusAreas)] };
 }
 
+function normalizeOutline(raw: any, weeksPerPhase: number[], focusAreas: FocusArea[]): Outline {
+  if (!raw || typeof raw !== 'object') return raw;
+
+  const rawFeasibility = String(raw.overview?.feasibility || 'realistic').toLowerCase();
+  const feasibility = ['realistic', 'ambitious', 'unrealistic'].includes(rawFeasibility)
+    ? (rawFeasibility as 'realistic' | 'ambitious' | 'unrealistic')
+    : 'realistic';
+  const overview = {
+    feasibility,
+    feasibilityNote: String(raw.overview?.feasibilityNote || 'A structured plan to achieve your target role.'),
+    targetReadiness: Number(raw.overview?.targetReadiness) || 85,
+    estimatedFinalReadiness: Number(raw.overview?.estimatedFinalReadiness) || 80,
+  };
+
+  const phases = Array.isArray(raw.phases) ? raw.phases : [];
+  const normalizedPhases = weeksPerPhase.map((expectedWeeks, index) => {
+    const phase = phases[index] || {};
+    let focusArea = String(phase.focusArea || '').toLowerCase().replace(/[\s-]+/g, '_') as FocusArea;
+    if (!focusAreas.includes(focusArea)) {
+      focusArea = focusAreas[index % focusAreas.length];
+    }
+    const weeks = Array.isArray(phase.weeks) ? phase.weeks : [];
+    const normalizedWeeks = Array.from({ length: expectedWeeks }, (_, wIdx) => {
+      const w = weeks[wIdx] || {};
+      return {
+        focus: String(w.focus || `Core concepts practice - Week ${wIdx + 1}`),
+        exercise: String(w.exercise || 'Complete assigned problem set and review explanations.'),
+        deliverable: String(w.deliverable || 'Verified working implementation and notes.'),
+      };
+    });
+
+    return {
+      title: String(phase.title || `Phase ${index + 1}: ${FOCUS[focusArea]?.label || 'Core Fundamentals'}`),
+      focusArea,
+      objective: String(phase.objective || `Master key topics in ${FOCUS[focusArea]?.label || 'the curriculum'}.`),
+      milestone: String(phase.milestone || `Complete milestones for Month ${index + 1}.`),
+      weeks: normalizedWeeks,
+    };
+  });
+
+  const skills = Array.isArray(raw.keySkillsToAcquire) ? raw.keySkillsToAcquire : [];
+  const normalizedSkills = skills.map((item: any) => {
+    const rawPriority = String(item?.priority || 'medium').toLowerCase();
+    const priority = ['critical', 'high', 'medium', 'low'].includes(rawPriority) ? rawPriority : 'medium';
+    return {
+      skill: String(item?.skill || 'Technical Competency'),
+      currentLevel: String(item?.currentLevel || 'Intermediate'),
+      targetLevel: String(item?.targetLevel || 'Advanced'),
+      estimatedWeeks: Number(item?.estimatedWeeks) || 4,
+      priority,
+    };
+  });
+
+  const interview = raw.interviewPrep || {};
+  const normalizedInterview = {
+    dsaProblemsTarget: Number(interview.dsaProblemsTarget) || 40,
+    systemDesignTopics: Array.isArray(interview.systemDesignTopics) && interview.systemDesignTopics.length > 0
+      ? interview.systemDesignTopics.map(String)
+      : ['Caching and CDN', 'Database Sharding', 'Load Balancing', 'Microservices Architecture'],
+    mockInterviewsTarget: Number(interview.mockInterviewsTarget) || 4,
+    companySpecificTips: Array.isArray(interview.companySpecificTips) && interview.companySpecificTips.length > 0
+      ? interview.companySpecificTips.map(String)
+      : ['Review company leadership principles and core technical architecture.'],
+  };
+
+  const warnings = Array.isArray(raw.warnings) && raw.warnings.length > 0
+    ? raw.warnings.map(String)
+    : ['Stay consistent with daily dedicated practice hours.'];
+
+  return {
+    overview,
+    phases: normalizedPhases,
+    keySkillsToAcquire: normalizedSkills.length > 0 ? normalizedSkills : [
+      { skill: 'Data Structures', currentLevel: 'Intermediate', targetLevel: 'Advanced', estimatedWeeks: 4, priority: 'high' }
+    ],
+    interviewPrep: normalizedInterview,
+    warnings,
+  };
+}
+
 function validateOutline(outline: Outline, weeksPerPhase: number[], focusAreas: FocusArea[]): boolean {
   const overview = outline?.overview;
   const interview = outline?.interviewPrep;
@@ -167,7 +247,7 @@ export async function POST(request: NextRequest) {
       Math.round((month + 1) * 52 / 12) - Math.round(month * 52 / 12)
     );
     const currentReadiness = analysis.data?.readiness_score ?? 0;
-    const outline = await callAI<Outline>({
+    const rawOutline = await callAI<Outline>({
       systemPrompt: 'You are a placement coach creating a practical study curriculum. Return only valid JSON matching the requested structure.',
       userPrompt: `Target: ${targetRole} at ${dreamCompany}. Time available: ${hoursPerDay} hours per day.
 Candidate level: ${profile.data?.experience_level || 'fresher'}. Current readiness: ${currentReadiness}/100.
@@ -182,6 +262,8 @@ Return this shape:
       temperature: 0.4,
       maxTokens: 12000,
     }, 'gemini');
+
+    const outline = normalizeOutline(rawOutline, weeksPerPhase, focusAreas);
 
     if (!validateOutline(outline, weeksPerPhase, focusAreas)) {
       return NextResponse.json(

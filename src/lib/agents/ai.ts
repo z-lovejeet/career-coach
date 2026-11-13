@@ -175,7 +175,7 @@ export async function callGemini<T = string>({
           config.responseMimeType = 'application/json';
         }
 
-        const timeoutMs = model === 'gemini-3.8-flash' ? 6000 : 35000;
+        const timeoutMs = model === 'gemini-3.8-flash' ? (maxTokens > 4000 ? 25000 : 12000) : 45000;
         let timeoutHandle: NodeJS.Timeout;
         const timeoutPromise = new Promise<never>((_, reject) => {
           timeoutHandle = setTimeout(
