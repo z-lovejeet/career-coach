@@ -341,16 +341,16 @@ export function InterestsStep({ draft, update }: StepProps) {
   const done = Object.keys(answers).length;
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_280px]">
+      <div className="grid grid-cols-1 gap-5">
         <Section title="How would you feel doing this?" hint={`${done} of ${RIASEC_ITEMS.length} answered`}>
-          <ol className="space-y-1">
+          <ol>
             {RIASEC_ITEMS.map((item, i) => (
-              <li key={item.id} className="grid grid-cols-1 gap-2 border-b border-line py-3 last:border-0 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-6">
-                <p className="text-[14.5px] text-ink"><span className="num mr-2 text-xs text-faint">{String(i + 1).padStart(2, "0")}</span>{item.text}</p>
-                <div className="flex gap-1" role="radiogroup" aria-label={item.text}>
+              <li key={item.id} className="grid grid-cols-1 gap-3.5 border-b border-line py-5 first:pt-1 last:border-0 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-10">
+                <p className="text-[15.5px] leading-relaxed text-ink"><span className="num mr-3 text-xs text-faint">{String(i + 1).padStart(2, "0")}</span>{item.text}</p>
+                <div className="flex gap-2" role="radiogroup" aria-label={item.text}>
                   {SCALE.map((label, v) => (
                     <button key={label} type="button" role="radio" aria-checked={answers[item.id] === v + 1} title={label} onClick={() => answer(item.id, v + 1)}
-                      className={cn("size-8 rounded-full border text-xs transition-all", answers[item.id] === v + 1 ? "border-accent bg-accent text-accent-ink" : "border-line-strong text-muted hover:border-accent hover:text-accent")}>
+                      className={cn("size-10 rounded-full border text-[13px] transition-all", answers[item.id] === v + 1 ? "border-accent bg-accent text-accent-ink" : "border-line-strong text-muted hover:border-accent hover:text-accent")}>
                       {v + 1}
                     </button>
                   ))}
@@ -358,18 +358,22 @@ export function InterestsStep({ draft, update }: StepProps) {
               </li>
             ))}
           </ol>
-          <p className="mt-3 text-xs text-muted">1 = dislike · 3 = neutral · 5 = love</p>
+          <p className="mt-4 text-xs text-muted">1 = dislike · 3 = neutral · 5 = love</p>
         </Section>
-        <aside className="card flex flex-col items-center p-6 xl:sticky xl:top-28 xl:self-start">
-          <p className="eyebrow self-start">Your interest profile</p>
-          <div className="my-4"><Radar values={RIASEC_TYPES.map((t) => ({ label: t.label, value: scores[t.type] }))} /></div>
-          <p className="text-center text-sm text-muted">Holland code</p>
-          <p className="num text-3xl text-ink">{done >= 6 ? hollandCode(scores) : "—"}</p>
-          <ul className="mt-4 w-full space-y-1.5 border-t border-line pt-4">
-            {[...RIASEC_TYPES].sort((a, b) => scores[b.type] - scores[a.type]).slice(0, 2).map((t) => (
-              <li key={t.type} className="text-xs leading-relaxed text-muted"><span className="font-medium text-ink">{t.label} ({t.type})</span> — {t.blurb}</li>
-            ))}
-          </ul>
+        <aside className="card grid grid-cols-1 items-center gap-6 p-6 sm:grid-cols-[auto_1fr] sm:gap-10 sm:p-7">
+          <div className="flex flex-col items-center">
+            <p className="eyebrow self-start">Your interest profile</p>
+            <div className="my-4"><Radar values={RIASEC_TYPES.map((t) => ({ label: t.label, value: scores[t.type] }))} /></div>
+          </div>
+          <div>
+            <p className="text-sm text-muted">Holland code</p>
+            <p className="num text-3xl text-ink">{done >= 6 ? hollandCode(scores) : "—"}</p>
+            <ul className="mt-4 space-y-2 border-t border-line pt-4">
+              {[...RIASEC_TYPES].sort((a, b) => scores[b.type] - scores[a.type]).slice(0, 2).map((t) => (
+                <li key={t.type} className="text-[13px] leading-relaxed text-muted"><span className="font-medium text-ink">{t.label} ({t.type})</span> — {t.blurb}</li>
+              ))}
+            </ul>
+          </div>
         </aside>
       </div>
       <Section title="Areas that excite you">
