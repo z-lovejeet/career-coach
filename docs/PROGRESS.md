@@ -2,6 +2,14 @@
 
 Newest first. Each entry: what changed, what's verified, what's next / blocked.
 
+## 2026-11-16 (night) — deployed
+
+- Vercel project `career-coach`: Root Directory set to `web` via CLI; functions pinned to `bom1` (Mumbai) next to Supabase `ap-south-1`.
+- Merged `redesign/careercompass` → `main`; production live at https://career-coach-snowy.vercel.app.
+- Fixed first deploy failure: `public/` no longer in git, so the pdf.js worker copy now creates it.
+- Verified in production: `/`, `/login`, `/samples` → 200; `/dashboard` → redirect to login; APIs → 401 without a session; samples read from Supabase.
+- Not yet verified in production (needs the owner to sign in): Google OAuth redirect, Groq calls with the production key.
+
 ## 2026-11-16 (evening)
 
 **Whole platform built on `redesign/careercompass`.**

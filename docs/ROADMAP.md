@@ -46,10 +46,10 @@ Status keys: ⬜ not started · 🟨 in progress · ✅ done
 ## M7 — Interviews ✅ (adaptive interviewer, Whisper voice, panel report)
 ## M8 — Mentor ✅ (plan → act → answer with tools, threads)
 
-## M9 — Ship 🟨
+## M9 — Ship ✅ (final owner checks pending)
 - ✅ Tests (roadmap ops, RIASEC, links), lint, typecheck, production build
 - ✅ README + CI for web + ML
-- ⬜ Vercel: Root Directory → `web`, check env vars, deploy, smoke-test production (needs owner)
-- ⬜ Supabase Auth: add production URL + `/auth/callback` to redirect URLs (needs owner)
+- ✅ Vercel: Root Directory → `web`, env vars present, region `bom1`, deployed; public smoke test passed
+- 🟨 Supabase Auth redirect for production `/auth/callback` (owner to confirm by signing in with Google)
 - ⬜ Mobile pass, final polish
-- ⬜ Merge `redesign/careercompass` → `main`
+- ✅ Merge `redesign/careercompass` → `main`
