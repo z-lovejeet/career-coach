@@ -332,7 +332,7 @@ $$;
 
 create or replace function public.cc_groq_status()
 returns jsonb language sql security definer set search_path = '' as $$
-  select coalesce(jsonb_object_agg(model, jsonb_build_object(
+  select coalesce(jsonb_object_agg(models.model, jsonb_build_object(
     'minuteRequests', coalesce(m.requests, 0), 'minuteTokens', coalesce(m.tokens, 0),
     'dayRequests', coalesce(d.requests, 0), 'dayTokens', coalesce(d.tokens, 0),
     'cooldownUntil', c.until)), '{}'::jsonb)

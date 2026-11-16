@@ -1,36 +1,36 @@
-import type { Metadata } from "next";
-import { Manrope, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
-import { SceneEnvironment } from "@/components/studio/appearance";
-import { MotionEnvironment } from "@/components/studio/motion-environment";
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
-const sans = Manrope({ subsets: ["latin"], variable: "--font-studio", display: "swap" });
-const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-numbers", display: "swap" });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
+const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
+const newsreader = Newsreader({ subsets: ["latin"], variable: "--font-newsreader", display: "swap", style: ["normal", "italic"] });
 
 export const metadata: Metadata = {
-  title: { default: "CareerAI — Technical interview preparation", template: "%s · CareerAI" },
-  description: "Build a personal study plan, practice technical interviews, and track your progress toward your next engineering role.",
-  openGraph: {
-    title: "CareerAI — Technical interview preparation",
-    description: "A focused workspace to plan, practice, and measure your progress.",
-    type: "website",
-  },
+  title: { default: "CareerCompass — Career & Education Advisor", template: "%s · CareerCompass" },
+  description: "An AI agent that turns your interests and background into a personal roadmap: courses → skills → career. Built on the O*NET database.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f3ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1211" },
+  ],
+};
+
+// Apply the saved theme before paint to avoid a flash.
+const themeScript = `try{var t=localStorage.getItem('cc-theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}`;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${sans.variable} ${mono.variable} font-sans`}>
-        <MotionEnvironment>
-          <SceneEnvironment />
-          <TooltipProvider>
-            <a className="skip-link" href="#main-content">Skip to content</a>
-            {children}
-            <Toaster richColors position="bottom-right" />
-          </TooltipProvider>
-        </MotionEnvironment>
+    <html lang="en" suppressHydrationWarning className={`${geist.variable} ${mono.variable} ${newsreader.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-dvh">
+        {children}
+        <Toaster position="bottom-right" toastOptions={{ className: "!rounded-[10px] !border-line !bg-surface !text-ink !shadow-float" }} />
       </body>
     </html>
   );

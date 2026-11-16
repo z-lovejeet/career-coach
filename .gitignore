@@ -47,3 +47,6 @@ scratch/
 tmp/
 *.tmp
 *.bak
+
+# Copied from pdfjs-dist on install
+web/public/pdf.worker.min.mjs

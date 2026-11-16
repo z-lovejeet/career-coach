@@ -1,17 +1,20 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { isLegacyGuestEmail } from "@/lib/supabase/legacy-guest";
-import { WorkspaceShell } from "@/components/studio/workspace-shell";
+import { getSession } from "@/server/db/supabase";
+import { AppShell } from "@/components/app-shell";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user || isLegacyGuestEmail(user.email)) redirect("/auth");
+export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
+  const session = await getSession();
+  if (!session) redirect("/login");
 
-  const metadataName = user.user_metadata?.full_name;
-  const name = user.is_anonymous
-    ? "Guest"
-    : (typeof metadataName === "string" ? metadataName.trim() : "") || user.email?.split("@")[0] || "Your account";
+  const { data: profile } = await session.supabase
+    .from("profiles")
+    .select("full_name, onboarding_complete, education")
+    .eq("id", session.user.id)
+    .maybeSingle();
 
-  return <WorkspaceShell key={user.id} name={name} guest={Boolean(user.is_anonymous)}>{children}</WorkspaceShell>;
+  if (!profile?.onboarding_complete) redirect("/onboarding");
+
+  const name = profile.full_name || session.user.user_metadata?.full_name || "Student";
+  const subtitle = [profile.education?.degree, profile.education?.branch].filter(Boolean).join(" · ");
+  return <AppShell name={name} subtitle={subtitle}>{children}</AppShell>;
 }
