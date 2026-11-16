@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BookOpenCheck, Compass, LayoutGrid, LogOut, Menu, MessageCircle, Mic, Moon, Route, Sun, UserRound, X } from "lucide-react";
@@ -16,14 +16,18 @@ const NAV = [
   { href: "/mentor", label: "Mentor", icon: MessageCircle },
 ];
 
+function subscribeTheme(callback: () => void) {
+  const observer = new MutationObserver(callback);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  return () => observer.disconnect();
+}
+
 function useTheme() {
-  const [dark, setDark] = useState(false);
-  useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
+  const dark = useSyncExternalStore(subscribeTheme, () => document.documentElement.classList.contains("dark"), () => false);
   const toggle = () => {
     const next = !document.documentElement.classList.contains("dark");
     document.documentElement.classList.toggle("dark", next);
     try { localStorage.setItem("cc-theme", next ? "dark" : "light"); } catch {}
-    setDark(next);
   };
   return { dark, toggle };
 }

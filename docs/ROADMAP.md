@@ -6,54 +6,50 @@ Live log: [`PROGRESS.md`](PROGRESS.md)
 
 Status keys: ⬜ not started · 🟨 in progress · ✅ done
 
-## M0 — Groundwork (Mon 16)
-- ⬜ Branch `redesign/careercompass`, design + roadmap + progress docs
-- ⬜ Restructure repo: `web/`, `ml/`, `data/`, `supabase/`, `docs/`
-- ⬜ Remove Gemini + old features; keep reusable pieces (Supabase clients, resume path checks)
+## M0 — Groundwork (Mon 16) ✅
+- ✅ Branch `redesign/careercompass`, design + roadmap + progress docs
+- ✅ Restructure repo: `web/`, `ml/`, `data/`, `supabase/`, `docs/`
+- ✅ Remove Gemini + old features
 
-## M1 — Supervised learning on O*NET (Mon 16 → Tue 17) · needed for the report
-- ⬜ Download O*NET 31.0 (scripted) → `data/raw/`
-- ⬜ Preprocess: feature matrix (skills, knowledge, RIASEC, job zone), labels (occupation, family)
-- ⬜ Synthetic student dataset (noise + masking), stratified split
-- ⬜ Train + compare: LogReg, kNN, RandomForest, LinearSVM, MLP
-- ⬜ Metrics: accuracy, macro-F1, top-3, confusion matrix, robustness vs noise → `ml/reports/`
-- ⬜ Export deployed model JSON → `web/src/server/ml/model/`
-- ⬜ Notebook for the report
+## M1 — Supervised learning on O*NET ✅
+- ✅ Download O*NET 31.0 (scripted) → `data/raw/`
+- ✅ Preprocess: 75-feature matrix (skills, knowledge, RIASEC, job zone), labels (occupation, family)
+- ✅ Synthetic student dataset (noise + masking)
+- ✅ Train + compare: LogReg, kNN, RandomForest, LinearSVM, MLP
+- ✅ Metrics: stratified + unseen-occupation splits, robustness, ranking, calibration → `ml/reports/`
+- ✅ Export deployed model JSON → `web/src/server/ml/model/`
+- ✅ Alternate job titles index for career search
+- 🟨 Report notebook (`ml/notebooks/career_matcher.ipynb`)
 
-## M2 — Foundation (Tue 17)
-- ⬜ Supabase schema + RLS + RPCs (limiter, cache, quota) migration applied
-- ⬜ Groq layer: registry, token-aware limiter, cooldown fallback, cache, JSON validation, streaming
-- ⬜ Design system: tokens, type, primitives, app shell, dark mode
-- ⬜ Splash screen, auth (email + Google), proxy route protection
+## M2 — Foundation ✅
+- ✅ Supabase schema + RLS + RPCs (limiter, cache, quota) applied
+- ✅ Groq layer: registry, token-aware limiter, cooldown fallback, cache, JSON validation, streaming, Whisper
+- ✅ Design system, app shell, dark mode
+- ✅ Splash screen, auth (email + Google), proxy route protection
 
-## M3 — Onboarding (Tue 17)
-- ⬜ CV upload: pdf.js text extraction, scanned → image → vision OCR, contact scrubbing
-- ⬜ Immersive multi-step profile (education, skills, experience, interests quiz, goals)
-- ⬜ Profile Analyst → O*NET vector → career matches saved
+## M3 — Onboarding ✅
+- ✅ CV upload: pdf.js text extraction, scanned → vision OCR, contact scrubbing
+- ✅ Immersive 8-step profile (education, skills, experience, RIASEC quiz, goals)
+- ✅ Profile Analyst → O*NET vector → career matches
 
-## M4 — Roadmap agent (Wed 18)
-- ⬜ 7-step pipeline with NDJSON streaming + persisted trace
-- ⬜ Graph view (course → skill → career) + timeline view
-- ⬜ Edit nodes, status, pace; "Ask the agent" revisions with validated patches; versions
-- ⬜ Public samples page (3 agent-generated roadmaps)
+## M4 — Roadmap agent ✅
+- ✅ 7-step pipeline with NDJSON streaming + persisted trace
+- ✅ Graph view (course → skill → career) + timeline view + node inspector
+- ✅ Edit, status, pace; "Ask the agent" with preview; AI suggestions; versions/restore
+- ✅ Public samples page (3 agent-generated roadmaps)
 
-## M5 — Dashboard + progress (Wed 18)
-- ⬜ Readiness score (algorithmic), career matches, company suggestions (AI, cached)
-- ⬜ Activity log, XP/level/streak, heatmap, next actions, weak topics
+## M5 — Dashboard + progress ✅
+- ✅ Readiness (algorithmic), career matches, Company Scout (LLM + skill-overlap fit)
+- ✅ Activity log, XP/level/streak, heatmap, next actions, weak topics
 
-## M6 — Practice (Thu 19)
-- ⬜ Subjects/topics catalogue, shared question bank, generation on demand
-- ⬜ Timed sessions, instant feedback, explanations, topic accuracy
+## M6 — Practice ✅
+## M7 — Interviews ✅ (adaptive interviewer, Whisper voice, panel report)
+## M8 — Mentor ✅ (plan → act → answer with tools, threads)
 
-## M7 — Interviews (Thu 19)
-- ⬜ Setup (role/subject, company, difficulty, type), adaptive interviewer
-- ⬜ Voice: Whisper STT + browser speech; final report
-
-## M8 — Mentor (Thu 19)
-- ⬜ Streaming chat with tools (O*NET career info, matcher, my progress), threads
-
-## M9 — Ship (Thu 19 → Fri 20)
-- ⬜ Generate 3 sample roadmaps with the live agent
-- ⬜ Tests (limiter, matcher, validators), lint, typecheck, build
-- ⬜ Vercel: root dir `web`, env vars, deploy, smoke test production
-- ⬜ README + architecture doc for the report
+## M9 — Ship 🟨
+- ✅ Tests (roadmap ops, RIASEC, links), lint, typecheck, production build
+- ✅ README + CI for web + ML
+- ⬜ Vercel: Root Directory → `web`, check env vars, deploy, smoke-test production (needs owner)
+- ⬜ Supabase Auth: add production URL + `/auth/callback` to redirect URLs (needs owner)
+- ⬜ Mobile pass, final polish
+- ⬜ Merge `redesign/careercompass` → `main`

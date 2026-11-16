@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { ArrowLeft, ArrowRight, Check, MessageCircle, RotateCcw, Timer, X } from "lucide-react";
@@ -16,30 +16,53 @@ type Response = { questionId: string; chosen: number | null; correct: boolean; m
 type Session = { id: string; subject: string; topic: string; difficulty: "easy" | "medium" | "hard"; total: number; correct: number; status: string; responses: Response[]; questions: Question[] };
 type Graded = { correct: boolean; answer: number; explanation: string; chosen: number | null };
 
+function restore(data: Session) {
+  const graded: Record<string, Graded> = {};
+  for (const r of data.responses) {
+    const q = data.questions.find((x) => x.id === r.questionId);
+    if (q?.answer !== undefined) graded[r.questionId] = { correct: r.correct, answer: q.answer, explanation: q.explanation ?? "", chosen: r.chosen };
+  }
+  return { graded, index: data.status === "completed" ? data.questions.length : data.responses.length };
+}
+
+/** Per-question countdown; keyed by question so it resets naturally. */
+function Countdown({ limit, paused, onExpire, children }: { limit: number; paused: boolean; onExpire: () => void; children: (left: number) => ReactNode }) {
+  const [left, setLeft] = useState(limit);
+  const expire = useRef(onExpire);
+  useEffect(() => { expire.current = onExpire; });
+  useEffect(() => {
+    if (paused) return;
+    const start = Date.now();
+    const t = setInterval(() => {
+      const remaining = limit - Math.floor((Date.now() - start) / 1000);
+      setLeft(Math.max(0, remaining));
+      if (remaining <= 0) { clearInterval(t); expire.current(); }
+    }, 250);
+    return () => clearInterval(t);
+  }, [paused, limit]);
+  return <>{children(left)}</>;
+}
+
 export default function PracticeSession({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data, mutate } = useSWR<Session>(`/api/practice/${id}`, fetcher, { revalidateOnFocus: false });
-  const [index, setIndex] = useState<number | null>(null);
-  const [graded, setGraded] = useState<Record<string, Graded>>({});
+  if (!data) return <div className="space-y-4"><Skeleton className="h-10 w-72" /><Skeleton className="h-80" /></div>;
+  return <Runner key={data.id} data={data} refresh={() => void mutate()} />;
+}
+
+function Runner({ data, refresh }: { data: Session; refresh: () => void }) {
+  const id = data.id;
+  const [initial] = useState(() => restore(data));
+  const [index, setIndex] = useState(initial.index);
+  const [graded, setGraded] = useState<Record<string, Graded>>(initial.graded);
   const [busy, setBusy] = useState(false);
-  const [left, setLeft] = useState(0);
-  const started = useRef(Date.now());
+  const started = useRef(0);
 
-  // Restore progress from the server.
-  useEffect(() => {
-    if (!data || index !== null) return;
-    const restored: Record<string, Graded> = {};
-    for (const r of data.responses) {
-      const q = data.questions.find((x) => x.id === r.questionId);
-      if (q?.answer !== undefined) restored[r.questionId] = { correct: r.correct, answer: q.answer, explanation: q.explanation ?? "", chosen: r.chosen };
-    }
-    setGraded(restored);
-    setIndex(data.status === "completed" ? data.questions.length : data.responses.length);
-  }, [data, index]);
-
-  const q = data && index !== null ? data.questions[index] : undefined;
+  const q = data.questions[index] as Question | undefined;
   const result = q ? graded[q.id] : undefined;
-  const limit = data ? SECONDS_PER_QUESTION[data.difficulty] : 60;
+  const limit = SECONDS_PER_QUESTION[data.difficulty];
+
+  useEffect(() => { started.current = Date.now(); }, [q?.id]);
 
   const answer = useCallback(async (chosen: number | null) => {
     if (!q || result || busy) return;
@@ -49,39 +72,24 @@ export default function PracticeSession({ params }: { params: Promise<{ id: stri
         method: "POST", json: { questionId: q.id, chosen, ms: Date.now() - started.current },
       });
       setGraded((g) => ({ ...g, [q.id]: { ...res, chosen } }));
-      if (res.completed) void mutate();
+      if (res.completed) refresh();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
       setBusy(false);
     }
-  }, [q, result, busy, id, mutate]);
-
-  // Countdown per question.
-  useEffect(() => {
-    if (!q || result) return;
-    started.current = Date.now();
-    setLeft(limit);
-    const t = setInterval(() => {
-      const remaining = limit - Math.floor((Date.now() - started.current) / 1000);
-      setLeft(Math.max(0, remaining));
-      if (remaining <= 0) { clearInterval(t); void answer(null); }
-    }, 250);
-    return () => clearInterval(t);
-  }, [q, result, limit, answer]);
+  }, [q, result, busy, id, refresh]);
 
   // Keyboard: 1–4 to answer, Enter for next.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!q || (e.target as HTMLElement).tagName === "TEXTAREA") return;
       if (!result && ["1", "2", "3", "4"].includes(e.key)) void answer(Number(e.key) - 1);
-      if (result && e.key === "Enter") setIndex((i) => (i ?? 0) + 1);
+      if (result && e.key === "Enter") setIndex((i) => i + 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [q, result, answer]);
-
-  if (!data || index === null) return <div className="space-y-4"><Skeleton className="h-10 w-72" /><Skeleton className="h-80" /></div>;
 
   const answered = Object.keys(graded).length;
   const correct = Object.values(graded).filter((g) => g.correct).length;
@@ -126,6 +134,7 @@ export default function PracticeSession({ params }: { params: Promise<{ id: stri
   }
 
   return (
+    <Countdown key={q?.id ?? "done"} limit={limit} paused={!!result || !q} onExpire={() => void answer(null)}>{(left) => (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center justify-between gap-4">
         <Link href="/practice" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink"><ArrowLeft className="size-4" /> Practice</Link>
@@ -182,5 +191,6 @@ export default function PracticeSession({ params }: { params: Promise<{ id: stri
         </Card>
       )}
     </div>
+    )}</Countdown>
   );
 }

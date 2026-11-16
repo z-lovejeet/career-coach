@@ -11,14 +11,14 @@ import { cn } from "@/lib/utils";
  */
 const ICON = { course: BookOpen, project: FlaskConical, skill: Sparkles, career: Briefcase, milestone: Check };
 
-function NodeCard({ node, active, dim, onSelect, onHover, refFn }: {
-  node: RoadmapNode; active: boolean; dim: boolean; onSelect: () => void; onHover: (id: string | null) => void; refFn: (el: HTMLButtonElement | null) => void;
+function NodeCard({ node, active, dim, onSelect, onHover }: {
+  node: RoadmapNode; active: boolean; dim: boolean; onSelect: () => void; onHover: (id: string | null) => void;
 }) {
   const Icon = ICON[node.kind];
   const done = node.status === "done";
   return (
     <button
-      ref={refFn}
+      data-node-id={node.id}
       type="button"
       onClick={onSelect}
       onMouseEnter={() => onHover(node.id)}
@@ -53,7 +53,6 @@ function NodeCard({ node, active, dim, onSelect, onHover, refFn }: {
 
 export function GraphView({ graph, selected, onSelect }: { graph: RoadmapGraph; selected: string | null; onSelect: (id: string) => void }) {
   const container = useRef<HTMLDivElement>(null);
-  const refs = useRef(new Map<string, HTMLButtonElement>());
   const [paths, setPaths] = useState<{ key: string; from: string; to: string; d: string }[]>([]);
   const [hover, setHover] = useState<string | null>(null);
 
@@ -76,11 +75,13 @@ export function GraphView({ graph, selected, onSelect }: { graph: RoadmapGraph; 
   }, [focus, graph]);
 
   const measure = useCallback(() => {
-    const root = container.current?.getBoundingClientRect();
-    if (!root) return;
+    const el = container.current;
+    const root = el?.getBoundingClientRect();
+    if (!el || !root) return;
+    const rect = (id: string) => el.querySelector<HTMLElement>(`[data-node-id="${CSS.escape(id)}"]`)?.getBoundingClientRect();
     const next = graph.edges.flatMap((e, i) => {
-      const a = refs.current.get(e.from)?.getBoundingClientRect();
-      const b = refs.current.get(e.to)?.getBoundingClientRect();
+      const a = rect(e.from);
+      const b = rect(e.to);
       if (!a || !b) return [];
       const x1 = a.right - root.left, y1 = a.top + a.height / 2 - root.top;
       const x2 = b.left - root.left, y2 = b.top + b.height / 2 - root.top;
@@ -98,7 +99,6 @@ export function GraphView({ graph, selected, onSelect }: { graph: RoadmapGraph; 
     return () => { observer.disconnect(); window.removeEventListener("resize", measure); };
   }, [measure]);
 
-  const bind = (id: string) => (el: HTMLButtonElement | null) => { if (el) refs.current.set(id, el); else refs.current.delete(id); };
   const dim = (id: string) => !!connected && !connected.has(id);
 
   return (
@@ -119,7 +119,7 @@ export function GraphView({ graph, selected, onSelect }: { graph: RoadmapGraph; 
             return (
               <div key={phase.id} className="space-y-2">
                 <p className="text-[11px] font-medium text-faint"><span className="num">W{phase.startWeek}–{phase.startWeek + phase.weeks - 1}</span> · {phase.title}</p>
-                {items.map((n) => <NodeCard key={n.id} node={n} active={selected === n.id} dim={dim(n.id)} onSelect={() => onSelect(n.id)} onHover={setHover} refFn={bind(n.id)} />)}
+                {items.map((n) => <NodeCard key={n.id} node={n} active={selected === n.id} dim={dim(n.id)} onSelect={() => onSelect(n.id)} onHover={setHover} />)}
               </div>
             );
           })}
@@ -128,14 +128,14 @@ export function GraphView({ graph, selected, onSelect }: { graph: RoadmapGraph; 
         <div className="flex flex-col">
           <p className="eyebrow mb-5">Skills</p>
           <div className="flex flex-1 flex-col justify-center gap-2">
-            {skills.map((n) => <NodeCard key={n.id} node={n} active={selected === n.id} dim={dim(n.id)} onSelect={() => onSelect(n.id)} onHover={setHover} refFn={bind(n.id)} />)}
+            {skills.map((n) => <NodeCard key={n.id} node={n} active={selected === n.id} dim={dim(n.id)} onSelect={() => onSelect(n.id)} onHover={setHover} />)}
           </div>
         </div>
 
         <div className="flex flex-col">
           <p className="eyebrow mb-5">Career</p>
           <div className="flex flex-1 items-center">
-            {careerNode && <NodeCard node={careerNode} active={selected === careerNode.id} dim={dim(careerNode.id)} onSelect={() => onSelect(careerNode.id)} onHover={setHover} refFn={bind(careerNode.id)} />}
+            {careerNode && <NodeCard node={careerNode} active={selected === careerNode.id} dim={dim(careerNode.id)} onSelect={() => onSelect(careerNode.id)} onHover={setHover} />}
           </div>
         </div>
       </div>

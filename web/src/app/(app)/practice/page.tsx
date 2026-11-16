@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
@@ -27,7 +27,6 @@ function PracticeHome() {
   const [starting, setStarting] = useState(false);
 
   const subject = SUBJECTS.find((s) => s.id === subjectId)!;
-  useEffect(() => { if (topic && !subject.topics.includes(topic)) setTopic(null); }, [subject, topic]);
 
   const accuracy = useMemo(() => (t: string) => {
     const s = data?.stats[`${subject.name}::${t}`];
@@ -52,10 +51,10 @@ function PracticeHome() {
       <PageHeader eyebrow="Practice" title="Real-time practice" description="Timed questions on university subjects and placement-test sections. Every answer is graded instantly with an explanation, and your weak topics feed back into your dashboard and roadmap." />
       <div className="grid items-start gap-6 xl:grid-cols-[1fr_340px]">
         <div className="space-y-5">
-          <Segmented value={group} onChange={(g) => { setGroup(g); setSubjectId(SUBJECTS.find((s) => s.group === g)!.id); }} options={[{ value: "academic", label: "Academic subjects" }, { value: "placement", label: "Placement preparation" }]} />
+          <Segmented value={group} onChange={(g) => { setGroup(g); setSubjectId(SUBJECTS.find((s) => s.group === g)!.id); setTopic(null); }} options={[{ value: "academic", label: "Academic subjects" }, { value: "placement", label: "Placement preparation" }]} />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {SUBJECTS.filter((s) => s.group === group).map((s) => (
-              <button key={s.id} type="button" onClick={() => setSubjectId(s.id)}
+              <button key={s.id} type="button" onClick={() => { setSubjectId(s.id); setTopic(null); }}
                 className={cn("rounded-[12px] border p-4 text-left transition-all", s.id === subjectId ? "border-accent bg-surface ring-1 ring-accent shadow-card" : "border-line bg-surface hover:border-line-strong")}>
                 <span className="block text-[14px] font-semibold leading-snug text-ink">{s.name}</span>
                 <span className="mt-1 block text-xs leading-relaxed text-muted">{s.blurb}</span>

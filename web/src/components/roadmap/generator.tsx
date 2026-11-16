@@ -25,7 +25,7 @@ export function RoadmapGenerator({ matches, defaults, compact }: { matches: Care
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (query.trim().length < 2) { setResults([]); return; }
+    if (query.trim().length < 2) return;
     const t = setTimeout(() => api<Option[]>(`/api/careers/search?q=${encodeURIComponent(query)}`).then(setResults).catch(() => {}), 220);
     return () => clearTimeout(t);
   }, [query]);
