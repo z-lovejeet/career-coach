@@ -16,7 +16,7 @@ const STEPS = [
 
 export default function LoginPage() {
   return (
-    <main className="grid min-h-dvh lg:grid-cols-[1.05fr_1fr]">
+    <main className="grid min-h-dvh grid-cols-1 lg:grid-cols-[1.05fr_1fr]">
       <aside className="paper-grain relative hidden flex-col justify-between border-r border-line bg-surface-2 p-12 lg:flex">
         <Brand />
         <div className="max-w-md">

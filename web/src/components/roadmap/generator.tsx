@@ -87,7 +87,7 @@ export function RoadmapGenerator({ matches, defaults, compact }: { matches: Care
 
   return (
     <section className={cn("card", compact ? "p-6" : "p-6 sm:p-8")}>
-      <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.2fr_1fr]">
         <div>
           <p className="text-[13px] font-medium text-ink-2">1 · Destination career</p>
           <div className="relative mt-3">
@@ -95,7 +95,7 @@ export function RoadmapGenerator({ matches, defaults, compact }: { matches: Care
             <Input value={query} onChange={(e) => { setQuery(e.target.value); setPicked(null); }} placeholder="Search 910 careers — e.g. Data Scientist, Product Manager" className="pl-10" />
           </div>
           <p className="mt-4 mb-2 text-xs text-muted">{query.trim().length >= 2 ? "Search results (O*NET titles and alternate titles)" : "Your top matches from the career model"}</p>
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {options.map((o) => (
               <li key={o.code}>
                 <button type="button" onClick={() => setPicked(o)}

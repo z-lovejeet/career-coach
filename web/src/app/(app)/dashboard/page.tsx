@@ -57,7 +57,7 @@ export default async function DashboardPage() {
       </header>
 
       {/* Row 1 — readiness · next actions · momentum */}
-      <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-[1.2fr_1fr_0.85fr]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-[1.2fr_1fr_0.85fr]">
         <Card className="p-6">
           <CardHeader title="Readiness" description={target ? `For ${target.title} · O*NET ${progress.readiness.targetCode}` : "Analyse your profile to see this"} />
           <div className="mt-5 flex flex-col items-center gap-7 sm:flex-row sm:items-center">
@@ -110,7 +110,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Row 2 — career matches · companies */}
-      <div className="grid gap-5 xl:grid-cols-[1fr_1.15fr]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1.15fr]">
         <Card className="p-6">
           <CardHeader title="Careers that fit you" description="Career matcher trained on 910 O*NET occupations" action={<Badge tone="warm">ML model</Badge>} />
           {matches.length ? (
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Row 3 — roadmap · practice · interviews */}
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Card className="p-6">
           <CardHeader title="Roadmap" action={progress.roadmap && <Link href={`/roadmap/${progress.roadmap.id}`} className="text-xs text-accent hover:underline">Open</Link>} />
           {graph ? (

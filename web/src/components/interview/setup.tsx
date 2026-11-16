@@ -35,9 +35,9 @@ export function InterviewSetup({ defaults, history }: { defaults: { role: string
   }
 
   return (
-    <div className="grid items-start gap-6 xl:grid-cols-[1fr_340px]">
+    <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
       <Card className="p-6 sm:p-8">
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <Field label="Role"><Input value={role} onChange={(e) => setRole(e.target.value)} /></Field>
           <Field label="Company"><Input value={company} onChange={(e) => setCompany(e.target.value)} /></Field>
         </div>

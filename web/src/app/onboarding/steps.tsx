@@ -34,7 +34,7 @@ export function WelcomeStep({ onCv, onManual }: { onCv: () => void; onManual: ()
   const items = ["Education & academics", "Skills (self-rated)", "Projects, internships, certifications", "Interest profile", "Goals & time budget"];
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <button onClick={onCv} className="group card flex flex-col items-start p-6 text-left transition-all hover:-translate-y-0.5 hover:border-accent-line hover:shadow-float">
           <span className="grid size-11 place-items-center rounded-full bg-accent text-accent-ink"><FileUp className="size-5" /></span>
           <span className="mt-5 text-[17px] font-semibold text-ink">Upload my CV</span>
@@ -173,13 +173,13 @@ export function EducationStep({ draft, update }: StepProps) {
   return (
     <div className="space-y-5">
       <Section title="About you">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Full name" htmlFor="name"><Input id="name" value={draft.full_name ?? ""} onChange={(ev) => update({ full_name: ev.target.value })} /></Field>
           <Field label="One-line headline" htmlFor="headline" hint="How you'd introduce yourself."><Input id="headline" placeholder="B.Tech CSE (AI & ML) student who loves building ML apps" value={draft.headline ?? ""} onChange={(ev) => update({ headline: ev.target.value })} /></Field>
         </div>
       </Section>
       <Section title="Current education">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Degree" htmlFor="degree"><Input id="degree" placeholder="B.Tech" value={e.degree ?? ""} onChange={(ev) => set("degree", ev.target.value)} /></Field>
           <Field label="Branch / major" htmlFor="branch"><Input id="branch" placeholder="Computer Science (AI & ML)" value={e.branch ?? ""} onChange={(ev) => set("branch", ev.target.value)} /></Field>
           <Field label="Institution" htmlFor="inst" className="sm:col-span-2"><Input id="inst" placeholder="Lovely Professional University" value={e.institution ?? ""} onChange={(ev) => set("institution", ev.target.value)} /></Field>
@@ -198,7 +198,7 @@ export function EducationStep({ draft, update }: StepProps) {
       <Section title="Academics" hint="Subjects drive the 'courses' layer of your roadmap.">
         <div className="space-y-5">
           <Field label="Subjects you've studied"><ChipInput value={a.coursework ?? []} onChange={(v) => update({ academics: { ...a, coursework: v } })} suggestions={COURSEWORK} placeholder="Type a subject and press Enter" /></Field>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field label="Strongest subjects"><ChipInput value={a.strongSubjects ?? []} onChange={(v) => update({ academics: { ...a, strongSubjects: v } })} suggestions={(a.coursework ?? []).slice(0, 6)} placeholder="e.g. DBMS" /></Field>
             <Field label="Subjects you find hard"><ChipInput value={a.weakSubjects ?? []} onChange={(v) => update({ academics: { ...a, weakSubjects: v } })} suggestions={(a.coursework ?? []).slice(0, 6)} placeholder="e.g. Computer Networks" /></Field>
           </div>
@@ -286,10 +286,10 @@ export function ExperienceStep({ draft, update }: StepProps) {
         <Repeater items={draft.projects} onChange={(projects) => update({ projects })} empty="No projects yet." addLabel="Add project"
           blank={{ title: "", description: "", tech: [], link: "" }}
           render={(p, set) => (
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <Input placeholder="Project title" value={p.title} onChange={(e) => set({ title: e.target.value })} />
               <Textarea placeholder="What did you build, and what was your part?" value={p.description} onChange={(e) => set({ description: e.target.value })} className="min-h-20" />
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Input placeholder="Tech (comma separated)" value={p.tech.join(", ")} onChange={(e) => set({ tech: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} />
                 <Input placeholder="Link (optional)" value={p.link} onChange={(e) => set({ link: e.target.value })} />
               </div>
@@ -300,7 +300,7 @@ export function ExperienceStep({ draft, update }: StepProps) {
         <Repeater items={draft.experience} onChange={(experience) => update({ experience })} empty="None yet — that's fine." addLabel="Add experience"
           blank={{ role: "", organization: "", type: "internship", duration: "", description: "" }}
           render={(x, set) => (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input placeholder="Role" value={x.role} onChange={(e) => set({ role: e.target.value })} />
               <Input placeholder="Organisation" value={x.organization} onChange={(e) => set({ organization: e.target.value })} />
               <Select value={x.type} onChange={(e) => set({ type: e.target.value })}>{["internship", "job", "research", "freelance", "volunteer", "club"].map((t) => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}</Select>
@@ -309,12 +309,12 @@ export function ExperienceStep({ draft, update }: StepProps) {
             </div>
           )} />
       </Section>
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Section title="Certifications">
           <Repeater items={draft.certifications} onChange={(certifications) => update({ certifications })} empty="None added." addLabel="Add"
             blank={{ name: "", issuer: "", year: "" }}
             render={(c, set) => (
-              <div className="grid gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <Input placeholder="Certificate" value={c.name} onChange={(e) => set({ name: e.target.value })} />
                 <div className="grid grid-cols-[1fr_88px] gap-2"><Input placeholder="Issuer" value={c.issuer} onChange={(e) => set({ issuer: e.target.value })} /><Input placeholder="Year" value={c.year} onChange={(e) => set({ year: e.target.value })} /></div>
               </div>
@@ -341,11 +341,11 @@ export function InterestsStep({ draft, update }: StepProps) {
   const done = Object.keys(answers).length;
   return (
     <div className="space-y-5">
-      <div className="grid gap-5 xl:grid-cols-[1fr_280px]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1fr_280px]">
         <Section title="How would you feel doing this?" hint={`${done} of ${RIASEC_ITEMS.length} answered`}>
           <ol className="space-y-1">
             {RIASEC_ITEMS.map((item, i) => (
-              <li key={item.id} className="grid gap-2 border-b border-line py-3 last:border-0 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-6">
+              <li key={item.id} className="grid grid-cols-1 gap-2 border-b border-line py-3 last:border-0 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-6">
                 <p className="text-[14.5px] text-ink"><span className="num mr-2 text-xs text-faint">{String(i + 1).padStart(2, "0")}</span>{item.text}</p>
                 <div className="flex gap-1" role="radiogroup" aria-label={item.text}>
                   {SCALE.map((label, v) => (
@@ -393,7 +393,7 @@ export function GoalsStep({ draft, update }: StepProps) {
   return (
     <div className="space-y-5">
       <Section title="Direction">
-        <div className="grid gap-2.5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {PATHS.map((p) => (
             <button key={p.value} type="button" onClick={() => set({ path: p.value })}
               className={cn("rounded-[12px] border p-4 text-left transition-all", g.path === p.value ? "border-accent bg-accent-soft/60 ring-1 ring-accent" : "border-line hover:border-line-strong")}>
@@ -407,14 +407,14 @@ export function GoalsStep({ draft, update }: StepProps) {
         <div className="space-y-5">
           <Field label="Roles you're considering"><ChipInput value={g.targetRoles ?? []} onChange={(targetRoles) => set({ targetRoles })} suggestions={ROLES} placeholder="e.g. ML Engineer" /></Field>
           <Field label="Dream companies"><ChipInput value={g.dreamCompanies ?? []} onChange={(dreamCompanies) => set({ dreamCompanies })} suggestions={COMPANIES} placeholder="e.g. Google" /></Field>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Field label="Industries"><ChipInput value={g.industries ?? []} onChange={(industries) => set({ industries })} suggestions={INDUSTRIES.slice(0, 6)} /></Field>
             <Field label="Preferred locations"><ChipInput value={g.locations ?? []} onChange={(locations) => set({ locations })} suggestions={LOCATIONS.slice(0, 6)} /></Field>
           </div>
         </div>
       </Section>
       <Section title="Time budget" hint="This sets the pace of your roadmap.">
-        <div className="grid gap-8 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
           <div>
             <div className="mb-2 flex items-baseline justify-between"><span className="text-[13px] font-medium text-ink-2">Hours per week</span><span className="num text-2xl text-ink">{g.hoursPerWeek ?? 12}</span></div>
             <input type="range" min={3} max={40} value={g.hoursPerWeek ?? 12} onChange={(e) => set({ hoursPerWeek: Number(e.target.value) })} className="w-full" aria-label="Hours per week" />

@@ -174,7 +174,7 @@ export function RoadmapWorkspace({ initial, revisions: initialRevisions, readOnl
         <p className="text-xs text-muted">{view === "map" ? "Hover to trace a path · click a node for details" : view === "timeline" ? "Tick off steps, reorder, add your own" : ""}</p>
       </div>
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0">
           {view === "map" && <Card className="p-5 sm:p-6"><GraphView graph={shown} selected={selected} onSelect={setSelected} /></Card>}
           {view === "timeline" && <Timeline graph={shown} selected={selected} onSelect={setSelected} onChange={(g, note) => (proposal ? toast.info("Apply or discard the proposal first.") : save(g, note))} />}

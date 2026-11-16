@@ -91,7 +91,7 @@ export function AppShell({ name, subtitle, children }: { name: string; subtitle?
   );
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_1fr]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line bg-surface-2 px-4 pb-4 pt-6 lg:flex">
         <Brand href="/dashboard" className="px-2" />

@@ -98,7 +98,7 @@ export function Wizard({ initial }: { initial: Profile }) {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-6xl gap-10 px-5 py-10 sm:px-8 lg:grid-cols-[minmax(0,380px)_1fr] lg:gap-16 lg:py-16">
+      <main className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-5 py-10 sm:px-8 lg:grid-cols-[minmax(0,380px)_1fr] lg:gap-16 lg:py-16">
         <div key={`intro-${step}`} className="animate-rise lg:sticky lg:top-28 lg:self-start">
           <p className="eyebrow mb-3">Step {step + 1} · {current.label}</p>
           <h1 className="display text-[38px] leading-[1.08] text-ink sm:text-[46px]">{current.title}</h1>

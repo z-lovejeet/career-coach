@@ -138,7 +138,7 @@ export function InterviewRoom({ initial }: { initial: Interview }) {
     return (
       <div className="mx-auto max-w-5xl">
         {header}
-        <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_1.4fr]">
           <Card className="p-7 animate-rise">
             <p className="eyebrow">Panel verdict</p>
             <p className="num mt-4 text-[64px] leading-none text-ink">{Math.round(r.overall)}<span className="text-xl text-muted">/100</span></p>
@@ -147,7 +147,7 @@ export function InterviewRoom({ initial }: { initial: Interview }) {
             <div className="mt-6 space-y-3.5 border-t border-line pt-5">{r.dimensions.map((d) => <Meter key={d.name} label={d.name} value={d.score * 10} detail={`${d.score}/10`} />)}</div>
           </Card>
           <div className="space-y-5">
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Card className="p-5"><CardHeader title="Strengths" /><ul className="mt-3 space-y-2">{r.strengths.map((s) => <li key={s} className="flex gap-2 text-sm text-ink-2"><Check className="mt-0.5 size-4 shrink-0 text-success" />{s}</li>)}</ul></Card>
               <Card className="p-5"><CardHeader title="Work on" /><ul className="mt-3 space-y-2">{r.improvements.map((s) => <li key={s} className="flex gap-2 text-sm text-ink-2"><span className="mt-2 size-1.5 shrink-0 rounded-full bg-warm" />{s}</li>)}</ul></Card>
             </div>

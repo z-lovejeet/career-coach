@@ -63,7 +63,7 @@ export function ProfileView({ profile, matches, model }: { profile: Profile; mat
       ]} />
 
       {tab === "overview" ? (
-        <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr]">
           <div className="space-y-5">
             <Card className="p-6">
               <CardHeader title="Profile analyst" description={profile.analysis ? `Updated ${new Date(profile.analysis.analyzedAt).toLocaleDateString("en-IN")} · ${profile.analysis.model.replace("openai/", "")}` : "Not analysed yet"} action={<BrainCircuit className="size-5 text-accent" />} />

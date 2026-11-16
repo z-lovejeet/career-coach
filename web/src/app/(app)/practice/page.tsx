@@ -49,10 +49,10 @@ function PracticeHome() {
   return (
     <>
       <PageHeader eyebrow="Practice" title="Real-time practice" description="Timed questions on university subjects and placement-test sections. Every answer is graded instantly with an explanation, and your weak topics feed back into your dashboard and roadmap." />
-      <div className="grid items-start gap-6 xl:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[1fr_340px]">
         <div className="space-y-5">
           <Segmented value={group} onChange={(g) => { setGroup(g); setSubjectId(SUBJECTS.find((s) => s.group === g)!.id); setTopic(null); }} options={[{ value: "academic", label: "Academic subjects" }, { value: "placement", label: "Placement preparation" }]} />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {SUBJECTS.filter((s) => s.group === group).map((s) => (
               <button key={s.id} type="button" onClick={() => { setSubjectId(s.id); setTopic(null); }}
                 className={cn("rounded-[12px] border p-4 text-left transition-all", s.id === subjectId ? "border-accent bg-surface ring-1 ring-accent shadow-card" : "border-line bg-surface hover:border-line-strong")}>
