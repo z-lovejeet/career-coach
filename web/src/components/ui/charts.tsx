@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 
 /** Circular gauge with tick marks — used for readiness. */
 export function Gauge({ value, size = 168, label, sublabel }: { value: number; size?: number; label?: string; sublabel?: string }) {
