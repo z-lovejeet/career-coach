@@ -46,6 +46,38 @@ export default async function RoadmapsPage() {
       )}
       {!!roadmaps?.length && <h2 className="mb-4 text-[15px] font-semibold text-ink">Plan another route</h2>}
       <RoadmapGenerator matches={(matches?.matches ?? []) as CareerMatch[]} defaults={{ hoursPerWeek: profile?.goals?.hoursPerWeek ?? 10, timelineMonths: profile?.goals?.timelineMonths ?? 6 }} />
+
+      <section className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
+        <div className="card p-6">
+          <p className="text-[15px] font-semibold text-ink">How your roadmap is built</p>
+          <p className="mt-0.5 text-[13px] text-muted">Seven steps run in order. You&apos;ll see each one complete live, and the full trace is saved with the roadmap.</p>
+          <ol className="mt-5 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+            {[
+              ["Profile Analyst", "Rates you on 68 O*NET skill and knowledge descriptors."],
+              ["Career Matcher", "Scores 910 occupations with the trained model."],
+              ["Navigator", "Settles on the destination career you chose or fit best."],
+              ["Gap Analyzer", "Compares your level with what the role requires."],
+              ["Curriculum Planner", "Picks subjects, courses and projects for each gap."],
+              ["Roadmap Composer", "Orders them into phases with milestones."],
+              ["Critic", "Checks coverage and timeline, and repairs gaps."],
+            ].map(([name, body], i) => (
+              <li key={name} className="flex gap-3">
+                <span className="num mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border border-line-strong text-[11px] text-ink-2">{i + 1}</span>
+                <span><span className="block text-[14px] font-medium text-ink">{name}</span><span className="block text-[13px] leading-relaxed text-muted">{body}</span></span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="card p-6">
+          <p className="text-[15px] font-semibold text-ink">Getting the most out of it</p>
+          <ul className="mt-4 space-y-4 text-[13.5px] leading-relaxed text-ink-2">
+            <li><span className="font-medium text-ink">Be honest about time.</span> A plan at 8 hours a week that you follow beats one at 25 that you abandon in week two.</li>
+            <li><span className="font-medium text-ink">Use the request box.</span> Tell the planner what you already know or prefer — free resources, GATE alongside placements, more projects.</li>
+            <li><span className="font-medium text-ink">Keep it alive.</span> Tick off steps as you go: your readiness score rises, and “Suggest improvements” uses your practice results to adjust the plan.</li>
+            <li><span className="font-medium text-ink">Try more than one route.</span> Generate roadmaps for two careers you&apos;re torn between and compare the gaps.</li>
+          </ul>
+        </div>
+      </section>
     </>
   );
 }

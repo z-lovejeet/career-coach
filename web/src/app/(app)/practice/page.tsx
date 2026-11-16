@@ -87,6 +87,7 @@ function PracticeHome() {
           </Card>
         </div>
 
+        <div className="space-y-5">
         <Card className="p-5">
           <CardHeader title="Recent sessions" />
           {!data ? <div className="mt-4 space-y-2">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-12" />)}</div> : data.sessions.length ? (
@@ -102,6 +103,16 @@ function PracticeHome() {
             </ul>
           ) : <p className="mt-4 flex items-start gap-2 text-sm text-muted"><GraduationCap className="mt-0.5 size-4 shrink-0" /> Your sessions will appear here.</p>}
         </Card>
+        <Card className="p-5">
+          <CardHeader title="How practice works" />
+          <ul className="mt-4 space-y-3.5 text-[13px] leading-relaxed text-ink-2">
+            <li><span className="font-medium text-ink">Timed like the real thing.</span> Each question has a clock — 45 s easy, 75 s medium, 120 s hard. Running out counts as a miss.</li>
+            <li><span className="font-medium text-ink">Graded on the server.</span> Answers stay hidden until you commit, then you get the correct option and a worked explanation.</li>
+            <li><span className="font-medium text-ink">Always new questions.</span> You&apos;re served questions you haven&apos;t seen first; when the bank runs low, the Question Setter agent writes more.</li>
+            <li><span className="font-medium text-ink">It feeds your plan.</span> Topic accuracy appears on your dashboard, lowers or raises readiness, and shapes the roadmap&apos;s suggestions.</li>
+          </ul>
+        </Card>
+        </div>
       </div>
     </>
   );

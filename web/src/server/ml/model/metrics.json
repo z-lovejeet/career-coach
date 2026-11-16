@@ -1,0 +1,165 @@
+{
+  "dataset": {
+    "onet_version": "31.0",
+    "occupations": 910,
+    "features": 75,
+    "families": 22,
+    "samples": 91000,
+    "samples_per_occupation": 100,
+    "noise_range": [
+      0.04,
+      0.22
+    ],
+    "mask_range": [
+      0.0,
+      0.35
+    ],
+    "family_distribution": {
+      "Management": 55,
+      "Business & Financial": 46,
+      "Computer & Mathematical": 36,
+      "Architecture & Engineering": 55,
+      "Life, Physical & Social Science": 59,
+      "Community & Social Service": 14,
+      "Legal": 7,
+      "Education & Library": 62,
+      "Arts, Design, Media & Sports": 39,
+      "Healthcare Practitioners": 84,
+      "Healthcare Support": 19,
+      "Protective Service": 26,
+      "Food Preparation & Serving": 16,
+      "Building & Grounds Maintenance": 8,
+      "Personal Care & Service": 30,
+      "Sales": 22,
+      "Office & Administrative Support": 51,
+      "Farming, Fishing & Forestry": 12,
+      "Construction & Extraction": 61,
+      "Installation, Maintenance & Repair": 50,
+      "Production": 107,
+      "Transportation & Material Moving": 51
+    }
+  },
+  "A_stratified": {
+    "Logistic Regression": {
+      "accuracy": 0.7088,
+      "macro_f1": 0.6745,
+      "top3_accuracy": 0.928,
+      "train_seconds": 1.0
+    },
+    "k-Nearest Neighbours": {
+      "accuracy": 0.9064,
+      "macro_f1": 0.8976,
+      "top3_accuracy": 0.9853,
+      "train_seconds": 30.3
+    },
+    "Random Forest": {
+      "accuracy": 0.7826,
+      "macro_f1": 0.7508,
+      "top3_accuracy": 0.9601,
+      "train_seconds": 16.4
+    },
+    "Linear SVM": {
+      "accuracy": 0.7025,
+      "macro_f1": 0.6579,
+      "top3_accuracy": 0.9128,
+      "train_seconds": 11.7
+    },
+    "MLP (128-64)": {
+      "accuracy": 0.8345,
+      "macro_f1": 0.8128,
+      "top3_accuracy": 0.9726,
+      "train_seconds": 5.4
+    }
+  },
+  "B_unseen_occupations": {
+    "Logistic Regression": {
+      "accuracy": 0.6093,
+      "macro_f1": 0.5351,
+      "top3_accuracy": 0.8727
+    },
+    "k-Nearest Neighbours": {
+      "accuracy": 0.5801,
+      "macro_f1": 0.5006,
+      "top3_accuracy": 0.8259
+    },
+    "Random Forest": {
+      "accuracy": 0.6059,
+      "macro_f1": 0.5284,
+      "top3_accuracy": 0.8667
+    },
+    "Linear SVM": {
+      "accuracy": 0.6013,
+      "macro_f1": 0.5229,
+      "top3_accuracy": 0.8522
+    },
+    "MLP (128-64)": {
+      "accuracy": 0.5955,
+      "macro_f1": 0.5204,
+      "top3_accuracy": 0.8562
+    }
+  },
+  "calibration": {
+    "temperature": 1.0,
+    "nll_before": 0.8796,
+    "nll_after": 0.8796
+  },
+  "C_robustness": [
+    {
+      "noise": 0.02,
+      "accuracy": 0.8202,
+      "macro_f1": 0.802,
+      "top3_accuracy": 0.976
+    },
+    {
+      "noise": 0.08,
+      "accuracy": 0.7854,
+      "macro_f1": 0.7584,
+      "top3_accuracy": 0.9658
+    },
+    {
+      "noise": 0.15,
+      "accuracy": 0.706,
+      "macro_f1": 0.6683,
+      "top3_accuracy": 0.9326
+    },
+    {
+      "noise": 0.25,
+      "accuracy": 0.5598,
+      "macro_f1": 0.518,
+      "top3_accuracy": 0.8461
+    },
+    {
+      "noise": 0.35,
+      "accuracy": 0.4228,
+      "macro_f1": 0.3842,
+      "top3_accuracy": 0.7266
+    }
+  ],
+  "D_ranking": {
+    "cosine only": {
+      "top1": 0.8418,
+      "top5": 0.9555,
+      "top10": 0.9775
+    },
+    "hybrid \u03b1=0.85": {
+      "top1": 0.7852,
+      "top5": 0.9175,
+      "top10": 0.9567
+    },
+    "hybrid \u03b1=0.7": {
+      "top1": 0.7212,
+      "top5": 0.842,
+      "top10": 0.8852
+    },
+    "hybrid \u03b1=0.55": {
+      "top1": 0.6837,
+      "top5": 0.7803,
+      "top10": 0.8218
+    }
+  },
+  "deployed": {
+    "classifier": "Logistic Regression",
+    "alpha": 1.0
+  },
+  "runtime_seconds": 114.9
+}

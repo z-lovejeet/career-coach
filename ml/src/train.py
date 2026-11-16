@@ -206,6 +206,7 @@ def main():
     export(cols, meta, impute, lr, families, fam_names, df, occ_z, occ_family_idx, z_mean, z_std, best_alpha, report, temperature)
     report["runtime_seconds"] = round(time.time() - t0, 1)
     (REPORTS / "metrics.json").write_text(json.dumps(report, indent=2))
+    (EXPORT.parent / "metrics.json").write_text(json.dumps(report, indent=2))  # shown on the landing page
     write_markdown(report)
     print(f"done in {report['runtime_seconds']}s")
 

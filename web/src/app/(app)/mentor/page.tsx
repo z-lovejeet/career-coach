@@ -97,7 +97,10 @@ function Mentor() {
               <CompassMark className="size-12 text-ink" />
               <h1 className="display mt-5 text-[36px] leading-tight text-ink">Ask your mentor anything</h1>
               <p className="mt-2 max-w-md text-[15px] text-muted">Career choices, placements, higher studies, or any CS subject. The mentor checks O*NET, your career matches, progress and roadmap before it answers.</p>
-              <div className="mt-8 grid w-full gap-2 sm:grid-cols-2">
+              <div className="mt-6 flex flex-wrap justify-center gap-1.5">
+                {["O*NET career data", "Career search", "Your career matches", "Your progress", "Your roadmap"].map((t) => <Badge key={t} tone="outline"><Database /> {t}</Badge>)}
+              </div>
+              <div className="mt-8 grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
                 {STARTERS.map((s) => (
                   <button key={s} onClick={() => send(s)} className="rounded-[12px] border border-line bg-surface px-4 py-3 text-left text-[13.5px] text-ink-2 transition-all hover:-translate-y-0.5 hover:border-accent-line hover:text-ink">{s}</button>
                 ))}

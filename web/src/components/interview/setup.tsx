@@ -79,6 +79,7 @@ export function InterviewSetup({ defaults, history }: { defaults: { role: string
         </div>
       </Card>
 
+      <div className="space-y-5">
       <Card className="p-5">
         <CardHeader title="Past interviews" />
         {history.length ? (
@@ -94,6 +95,20 @@ export function InterviewSetup({ defaults, history }: { defaults: { role: string
           </ul>
         ) : <p className="mt-4 flex items-start gap-2 text-sm text-muted"><Users className="mt-0.5 size-4 shrink-0" /> Your interview reports will be kept here.</p>}
       </Card>
+      <Card className="p-5">
+        <CardHeader title="What the panel scores" />
+        <ul className="mt-4 space-y-3">
+          {[
+            ["Technical depth", "Correctness and how far below the surface you can go."],
+            ["Problem solving", "How you break a problem down, weigh trade-offs and handle hints."],
+            ["Communication", "Whether a busy interviewer can follow your reasoning."],
+            ["Structure & clarity", "Clear openings, ordered points, STAR for behavioural answers."],
+            ["Company fit", "How well your answers reflect the company's values and style."],
+          ].map(([t, d]) => <li key={t}><p className="text-[13px] font-medium text-ink">{t}</p><p className="text-[12.5px] leading-relaxed text-muted">{d}</p></li>)}
+        </ul>
+        <p className="mt-4 border-t border-line pt-4 text-[12.5px] leading-relaxed text-ink-2"><span className="font-medium text-ink">Tip:</span> think aloud. A vague answer earns a follow-up question — that&apos;s your chance to recover, just like a real interview.</p>
+      </Card>
+      </div>
     </div>
   );
 }

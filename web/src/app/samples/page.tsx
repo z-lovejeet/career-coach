@@ -56,6 +56,29 @@ export default async function SamplesPage() {
           })}
         </div>
         {!samples.length && <p className="mt-10 text-muted">Samples are being generated.</p>}
+
+        <section className="mt-16 grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="card p-6">
+            <p className="eyebrow">Reading a roadmap</p>
+            <ul className="mt-4 space-y-3 text-[13.5px] leading-relaxed text-ink-2">
+              <li><span className="font-medium text-ink">Map</span> — courses and projects on the left build the skills in the middle, which lead to the career on the right. Hover any node to trace its path.</li>
+              <li><span className="font-medium text-ink">Timeline</span> — the same steps grouped into phases, each with a goal, a week range and a checkable milestone.</li>
+              <li><span className="font-medium text-ink">Skill gaps</span> — the student&apos;s current level against what O*NET says the role requires.</li>
+            </ul>
+          </div>
+          <div className="card p-6">
+            <p className="eyebrow">Reading the trace</p>
+            <ul className="mt-4 space-y-3 text-[13.5px] leading-relaxed text-ink-2">
+              <li><span className="font-medium text-ink">LLM agent</span> steps call open models on Groq; the badge shows which model answered (the system falls back automatically when one is busy).</li>
+              <li><span className="font-medium text-ink">ML model</span> is the supervised career matcher trained on O*NET, running inside the app.</li>
+              <li><span className="font-medium text-ink">Critic checks</span> confirm every major gap is covered and the plan fits the timeline.</li>
+            </ul>
+          </div>
+          <div className="card p-6">
+            <p className="eyebrow">Why these three</p>
+            <p className="mt-4 text-[13.5px] leading-relaxed text-ink-2">They deliberately differ: a CS student with a clear goal, an ECE student who is undecided (so the career model picks the destination), and a business student moving into design — to show the agent working across backgrounds, not just for programmers.</p>
+          </div>
+        </section>
         <div className="mt-14 flex flex-wrap items-center gap-4 border-t border-line pt-8">
           <Link href="/login?mode=signup" className={buttonClass("primary", "lg")}>Make my own roadmap <ArrowRight /></Link>
           <p className="text-sm text-muted">Career data: O*NET 31.0 Database (U.S. Department of Labor), CC BY 4.0.</p>
