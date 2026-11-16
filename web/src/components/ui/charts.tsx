@@ -51,26 +51,6 @@ export function Meter({ label, value, detail, tone = "accent" }: { label: string
   );
 }
 
-/** GitHub-style activity grid (weeks × 7 days). */
-export function Heatmap({ days, className }: { days: { date: string; count: number }[]; className?: string }) {
-  const max = Math.max(1, ...days.map((d) => d.count));
-  const weeks: { date: string; count: number }[][] = [];
-  days.forEach((d, i) => { (weeks[Math.floor(i / 7)] ??= []).push(d); });
-  const level = (n: number) => (n === 0 ? 0 : Math.ceil((n / max) * 4));
-  const fills = ["var(--sunken)", "color-mix(in oklab, var(--accent) 25%, var(--surface))", "color-mix(in oklab, var(--accent) 50%, var(--surface))", "color-mix(in oklab, var(--accent) 75%, var(--surface))", "var(--accent)"];
-  return (
-    <div className={cn("flex gap-[3px] overflow-x-auto scrollbar-thin", className)}>
-      {weeks.map((week, w) => (
-        <div key={w} className="flex flex-col gap-[3px]">
-          {week.map((d) => (
-            <div key={d.date} title={`${d.date}: ${d.count} activities`} className="size-[11px] rounded-[3px]" style={{ background: fills[level(d.count)] }} />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 /** Radar chart for the RIASEC interest profile. */
 export function Radar({ values, size = 220 }: { values: { label: string; value: number }[]; size?: number }) {
   const cx = size / 2, cy = size / 2, r = size / 2 - 30;

@@ -21,9 +21,10 @@ export function effectiveVector(vector: Record<string, number>, graph?: RoadmapG
 }
 
 export async function loadProgress(supabase: SupabaseClient, profileId: string) {
-  const since = new Date(Date.now() - 126 * 86_400_000).toISOString();
+  const HEATMAP_DAYS = 371; // 53 weeks
+  const since = new Date(Date.now() - HEATMAP_DAYS * 86_400_000).toISOString();
   const [activity, xpAll, sessions, interviews, roadmap, profile, matches] = await Promise.all([
-    supabase.from("activity").select("kind, xp, created_at").eq("profile_id", profileId).gte("created_at", since).order("created_at", { ascending: false }).limit(2000),
+    supabase.from("activity").select("kind, xp, created_at").eq("profile_id", profileId).gte("created_at", since).order("created_at", { ascending: false }).limit(6000),
     supabase.from("activity").select("xp").eq("profile_id", profileId).limit(10000),
     supabase.from("practice_sessions").select("subject, topic, correct, total, responses, status, completed_at, started_at").eq("profile_id", profileId).order("started_at", { ascending: false }).limit(200),
     supabase.from("interviews").select("id, config, score, status, created_at, completed_at").eq("profile_id", profileId).order("created_at", { ascending: false }).limit(50),
@@ -38,8 +39,8 @@ export async function loadProgress(supabase: SupabaseClient, profileId: string) 
   const perDay = new Map<string, number>();
   for (const a of activity.data ?? []) perDay.set(dayKey(a.created_at), (perDay.get(dayKey(a.created_at)) ?? 0) + 1);
   const today = dayKey(new Date());
-  const heatmap = Array.from({ length: 126 }, (_, i) => {
-    const date = dayKey(new Date(Date.now() - (125 - i) * 86_400_000));
+  const heatmap = Array.from({ length: HEATMAP_DAYS }, (_, i) => {
+    const date = dayKey(new Date(Date.now() - (HEATMAP_DAYS - 1 - i) * 86_400_000));
     return { date, count: perDay.get(date) ?? 0 };
   });
   let streak = 0;

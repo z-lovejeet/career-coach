@@ -5,7 +5,8 @@ import { getSession } from "@/server/db/supabase";
 import { loadProgress } from "@/server/services/progress";
 import { career } from "@/server/onet/catalogue";
 import { Badge, buttonClass, Card, CardHeader, Progress } from "@/components/ui/primitives";
-import { Gauge, Heatmap, Meter } from "@/components/ui/charts";
+import { Gauge, Meter } from "@/components/ui/charts";
+import { Heatmap } from "@/components/ui/heatmap";
 import { CompanyPanel } from "@/components/dashboard/company-panel";
 import { isWork } from "@/lib/roadmap-ops";
 import type { CareerMatch, FamilyFit } from "@/lib/types";
@@ -194,7 +195,7 @@ export default async function DashboardPage() {
 
       {/* Row 4 — activity */}
       <Card className="p-6">
-        <CardHeader title="Activity" description="Last 18 weeks — roadmap steps, practice, interviews and mentor sessions" action={<span className="num text-xs text-muted">{progress.heatmap.reduce((s, d) => s + d.count, 0)} activities</span>} />
+        <CardHeader title="Activity" description="Last 12 months — roadmap steps, practice, interviews and mentor sessions" action={<span className="num text-xs text-muted">{pluralize(progress.heatmap.reduce((s, d) => s + d.count, 0), "activity", "activities")}</span>} />
         <Heatmap days={progress.heatmap} className="mt-5" />
         {profile?.analysis?.summary && (
           <div className="mt-6 grid gap-6 border-t border-line pt-5 md:grid-cols-[1fr_auto]">
