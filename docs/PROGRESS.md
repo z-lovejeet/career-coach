@@ -1,5 +1,7 @@
 # CareerCompass — Progress Log
 
+House style: professional tone throughout. No emoji in the interface, documentation, code output or AI responses (enforced in the Groq layer's system prompt).
+
 Newest first. Each entry: what changed, what's verified, what's next / blocked.
 
 ## 2026-11-16 (night) — deployed

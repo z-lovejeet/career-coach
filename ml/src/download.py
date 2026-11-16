@@ -31,9 +31,9 @@ def main() -> None:
     for name in FILES:
         target = RAW / f"{name}.csv"
         if target.exists() and target.stat().st_size > 0:
-            print(f"✓ {name}.csv (cached)")
+            print(f"ok   {name}.csv (cached)")
             continue
-        print(f"↓ {name}.csv")
+        print(f"get  {name}.csv")
         urlretrieve(f"{BASE}/{name}.csv", target)
     print(f"Done → {RAW}")
 

@@ -53,7 +53,7 @@ async function runTool(name: ToolName, query: string | undefined, ctx: { supabas
       const g = data.graph as RoadmapGraph;
       const work = g.nodes.filter((n) => n.kind === "course" || n.kind === "project");
       return `${data.title} (${g.totalWeeks} weeks, ${work.filter((n) => n.status === "done").length}/${work.length} done)\n` +
-        g.phases.map((p) => `${p.title}: ${work.filter((n) => n.phaseId === p.id).map((n) => `${n.title}${n.status === "done" ? " ✓" : n.status === "doing" ? " (in progress)" : ""}`).join("; ")}`).join("\n");
+        g.phases.map((p) => `${p.title}: ${work.filter((n) => n.phaseId === p.id).map((n) => `${n.title}${n.status === "done" ? " (done)" : n.status === "doing" ? " (in progress)" : ""}`).join("; ")}`).join("\n");
     }
   }
 }

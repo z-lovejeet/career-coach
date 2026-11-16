@@ -42,7 +42,8 @@ interface BaseOptions {
 }
 
 function buildMessages(o: BaseOptions): ChatMessage[] {
-  const messages: ChatMessage[] = [{ role: "system", content: o.system }];
+  // House style for every model response: professional, no emoji.
+  const messages: ChatMessage[] = [{ role: "system", content: `${o.system}\n\nStyle: write in a clear, professional tone. Never use emojis or decorative symbols.` }];
   if (o.messages) messages.push(...o.messages);
   if (o.prompt !== undefined) {
     messages.push(o.images?.length
