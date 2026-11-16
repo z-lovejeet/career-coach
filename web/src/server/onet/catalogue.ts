@@ -1,5 +1,6 @@
 import "server-only";
 import data from "./catalogue.json";
+import titles from "./titles.json";
 
 /** Compact O*NET 31.0 career facts (built by ml/src/features.py). */
 export interface Career {
@@ -16,6 +17,7 @@ export interface Career {
 
 export const catalogue = data as unknown as Record<string, Career>;
 const entries = Object.entries(catalogue);
+const altTitles = titles as unknown as Record<string, string[]>;
 
 export function career(code: string): Career | undefined {
   return catalogue[code];
@@ -29,21 +31,29 @@ export const JOB_ZONES: Record<number, string> = {
   5: "Extensive preparation (graduate degree)",
 };
 
-/** Simple relevance search over titles, descriptions and technologies. */
+/**
+ * Career search over official titles, O*NET alternate job titles (e.g. "Machine Learning Engineer"
+ * → Computer and Information Research Scientists), descriptions and technologies.
+ */
 export function searchCareers(query: string, limit = 8) {
-  const terms = query.toLowerCase().split(/[^a-z0-9+#.]+/).filter((t) => t.length > 1);
+  const q = query.toLowerCase().trim();
+  const terms = q.split(/[^a-z0-9+#.]+/).filter((t) => t.length > 1);
   if (!terms.length) return [];
   return entries
     .map(([code, c]) => {
       const title = c.title.toLowerCase();
-      const body = `${c.description} ${c.technologies.join(" ")}`.toLowerCase();
+      const alts = (altTitles[code] ?? []).map((t) => t.toLowerCase());
       let score = 0;
+      if (title === q) score += 100;
+      else if (alts.includes(q)) score += 80;
+      if (title.includes(q)) score += 40;
+      else if (alts.some((a) => a.includes(q))) score += 30;
       for (const t of terms) {
         if (title.includes(t)) score += 5;
-        if (body.includes(t)) score += 1;
+        if (alts.some((a) => a.includes(t))) score += 2;
+        if (c.description.toLowerCase().includes(t)) score += 1;
       }
-      if (title === query.toLowerCase()) score += 20;
-      return { code, title: c.title, family: c.family, score };
+      return { code, title: c.title, family: c.family, score, matchedTitle: alts.find((a) => a === q || a.includes(q)) };
     })
     .filter((r) => r.score > 0)
     .sort((a, b) => b.score - a.score)

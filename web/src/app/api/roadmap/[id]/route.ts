@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { graphSchema } from "@/server/services/roadmap-schema";
 import { recordActivity } from "@/server/services/activity";
-import { layoutPhases } from "@/server/agents/roadmap/pipeline";
+import { layoutPhases } from "@/lib/roadmap-ops";
 import { fail, handleError, ok, readJSON, requireUser } from "@/server/http";
 import type { RoadmapGraph } from "@/lib/types";
 

@@ -166,6 +166,18 @@ def main():
     # Deployed classifier = logistic regression from experiment A
     lr = fitted["Logistic Regression"]
 
+    # Temperature scaling (calibration): pick T minimising log-loss on held-out unseen occupations.
+    logits = lr.decision_function(S[te])
+    def nll(T):
+        z = logits / T
+        z = z - z.max(axis=1, keepdims=True)
+        logp = z - np.log(np.exp(z).sum(axis=1, keepdims=True))
+        return float(-logp[np.arange(len(te)), y[te]].mean())
+    temps = [0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0]
+    temperature = min(temps, key=nll)
+    report["calibration"] = {"temperature": temperature, "nll_before": round(nll(1.0), 4), "nll_after": round(nll(temperature), 4)}
+    print("calibration", report["calibration"])
+
     # C — robustness vs noise
     report["C_robustness"] = []
     for level in [0.02, 0.08, 0.15, 0.25, 0.35]:
@@ -191,7 +203,7 @@ def main():
     report["deployed"] = {"classifier": "Logistic Regression", "alpha": best_alpha}
 
     figures(report, lr, Xte, yte, families, fam_names)
-    export(cols, meta, impute, lr, families, fam_names, df, occ_z, occ_family_idx, z_mean, z_std, best_alpha, report)
+    export(cols, meta, impute, lr, families, fam_names, df, occ_z, occ_family_idx, z_mean, z_std, best_alpha, report, temperature)
     report["runtime_seconds"] = round(time.time() - t0, 1)
     (REPORTS / "metrics.json").write_text(json.dumps(report, indent=2))
     write_markdown(report)
@@ -239,7 +251,7 @@ def figures(report, lr, Xte, yte, families, fam_names):
     fig.tight_layout(); fig.savefig(REPORTS / "ranking.png", dpi=180); plt.close(fig)
 
 
-def export(cols, meta, impute, lr, families, fam_names, df, occ_z, occ_family_idx, z_mean, z_std, alpha, report):
+def export(cols, meta, impute, lr, families, fam_names, df, occ_z, occ_family_idx, z_mean, z_std, alpha, report, temperature):
     scaler, clf = lr.named_steps["standardscaler"], lr.named_steps["logisticregression"]
     r = lambda a, n=4: np.round(np.asarray(a, dtype=float), n).tolist()
     model = {
@@ -254,6 +266,7 @@ def export(cols, meta, impute, lr, families, fam_names, df, occ_z, occ_family_id
         "logreg": {"coef": r(clf.coef_), "intercept": r(clf.intercept_)},
         "zMean": r(z_mean), "zStd": r(z_std),
         "alpha": alpha,
+        "temperature": temperature,
         "occupations": {
             "codes": df.index.tolist(),
             "familyIndex": occ_family_idx.tolist(),
@@ -286,6 +299,8 @@ def write_markdown(report):
     lines += [f"| {r['noise']} | {r['accuracy']:.3f} | {r['top3_accuracy']:.3f} |" for r in report["C_robustness"]]
     lines += ["", "## D. Occupation ranking", "", "| Method | Top-1 | Top-5 | Top-10 |", "|---|---|---|---|"]
     lines += [f"| {k} | {v['top1']:.3f} | {v['top5']:.3f} | {v['top10']:.3f} |" for k, v in report["D_ranking"].items()]
+    c = report["calibration"]
+    lines += ["", "## Calibration", "", f"Temperature scaling T = {c['temperature']} (log-loss {c['nll_before']} → {c['nll_after']} on unseen occupations)."]
     lines += ["", f"Deployed: {report['deployed']['classifier']} + hybrid ranking α = {report['deployed']['alpha']}",
               "", "Figures: `model_comparison.png`, `confusion_matrix.png`, `robustness.png`, `ranking.png`"]
     (REPORTS / "README.md").write_text("\n".join(lines) + "\n")

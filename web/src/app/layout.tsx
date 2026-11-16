@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import Script from "next/script";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -25,10 +26,8 @@ const themeScript = `try{var t=localStorage.getItem('cc-theme');if(t==='dark'||(
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${geist.variable} ${mono.variable} ${newsreader.variable}`}>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
       <body className="min-h-dvh">
+        <Script id="theme" strategy="beforeInteractive">{themeScript}</Script>
         {children}
         <Toaster position="bottom-right" toastOptions={{ className: "!rounded-[10px] !border-line !bg-surface !text-ink !shadow-float" }} />
       </body>

@@ -152,6 +152,12 @@ def _catalogue(X: pd.DataFrame, data: pd.DataFrame, levels: pd.DataFrame, occ: p
         }
     (OUT / "catalogue.json").write_text(json.dumps(catalogue, separators=(",", ":")))
 
+    # Alternate job titles (e.g. "Machine Learning Engineer" → 15-1221.00) power career search.
+    titles = pd.read_csv(RAW / "job_titles.csv")
+    titles = titles[titles["O*NET-SOC Code"].isin(X.index)]
+    index = titles.groupby("O*NET-SOC Code")["Job Title"].apply(lambda s: sorted(set(s))[:80]).to_dict()
+    (OUT / "titles.json").write_text(json.dumps(index, separators=(",", ":")))
+
 
 if __name__ == "__main__":
     build()

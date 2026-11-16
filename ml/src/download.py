@@ -20,6 +20,7 @@ FILES = [
     "software_skills",       # technology / tools used (hot technologies)
     "related_occupations",   # career graph
     "task_statements",       # what the job involves
+    "job_titles",            # alternate titles for career search
 ]
 
 RAW = Path(__file__).resolve().parents[2] / "data" / "raw"

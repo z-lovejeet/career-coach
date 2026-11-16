@@ -3,10 +3,11 @@ import { z } from "zod";
 import { completeJSON, type CallMeta } from "@/server/ai/groq";
 import { TTL } from "@/server/ai/cache";
 import { analyseProfile, describeProfile, targetJobZone } from "@/server/agents/profile-analyst";
-import { matchCareers } from "@/server/ml/matcher";
+import { matchCareers, similarityTo } from "@/server/ml/matcher";
 import { career, careerBrief, searchCareers } from "@/server/onet/catalogue";
 import { analyseGaps, coverage, missingTechnologies } from "./gaps";
 import { courseSearchLinks, uid } from "@/lib/utils";
+import { layoutPhases } from "@/lib/roadmap-ops";
 import type { CareerMatch, Profile, RoadmapEdge, RoadmapGraph, RoadmapNode, RoadmapPhase, SkillGap, TraceStep } from "@/lib/types";
 
 /**
@@ -110,8 +111,15 @@ export async function runPipeline(input: PipelineInput, emit: (e: PipelineEvent)
   let code = input.targetCode && career(input.targetCode) ? input.targetCode : undefined;
   let reason = "you picked it";
   if (!code && input.targetQuery) {
-    code = searchCareers(input.targetQuery, 1)[0]?.code;
-    reason = `closest O*NET occupation to “${input.targetQuery}”`;
+    // Among the closest O*NET titles, prefer the one this student is most similar to.
+    const candidates = searchCareers(input.targetQuery, 5);
+    const best = candidates[0]?.score ?? 0;
+    const close = candidates.filter((c) => c.score >= best * 0.85);
+    const ranked = close.map((c) => ({ ...c, sim: similarityTo(vector!, c.code) ?? 0 })).sort((a, b) => b.sim - a.sim);
+    code = ranked[0]?.code;
+    reason = ranked.length > 1
+      ? `best fit for “${input.targetQuery}” among ${ranked.map((r) => r.title).join(", ")} (your similarity ${ranked[0].sim}%)`
+      : `closest O*NET occupation to “${input.targetQuery}”`;
   }
   if (!code) {
     const wanted = profile.goals?.targetRoles?.[0];
@@ -277,24 +285,15 @@ function buildGraph({ plan, phasesIn, summary, gaps, code, hoursPerWeek, weeksAv
   }
   nodes.push(careerNode);
 
-  const graph: RoadmapGraph = { summary, totalWeeks: 0, hoursPerWeek, phases, nodes, edges, gaps, checks: [] };
+  // Drop skills nothing builds (keeps the graph honest and readable).
+  const built = new Set(edges.filter((e) => e.to.startsWith("skill:")).map((e) => e.to));
+  const orphan = new Set(nodes.filter((n) => n.kind === "skill" && !built.has(n.id)).map((n) => n.id));
+  const keptNodes = nodes.filter((n) => !orphan.has(n.id));
+  const keptEdges = edges.filter((e) => !orphan.has(e.from) && !orphan.has(e.to));
+
+  const graph: RoadmapGraph = { summary, totalWeeks: 0, hoursPerWeek, phases, nodes: keptNodes, edges: keptEdges, gaps, checks: [] };
   layoutPhases(graph, weeksAvailable);
   return graph;
-}
-
-/** Recompute phase start weeks and durations from the work items in them (scaled to the timeline). */
-export function layoutPhases(graph: RoadmapGraph, weeksAvailable?: number) {
-  const work = (phaseId: string) => graph.nodes.filter((n) => n.phaseId === phaseId && (n.kind === "course" || n.kind === "project")).reduce((s, n) => s + n.weeks, 0);
-  const raw = graph.phases.map((p) => Math.max(1, work(p.id)));
-  const total = raw.reduce((a, b) => a + b, 0);
-  const scale = weeksAvailable && total > weeksAvailable ? weeksAvailable / total : 1;
-  let week = 1;
-  graph.phases.forEach((p, i) => {
-    p.startWeek = week;
-    p.weeks = Math.max(1, Math.round(raw[i] * scale));
-    week += p.weeks;
-  });
-  graph.totalWeeks = week - 1;
 }
 
 export function critique(graph: RoadmapGraph, gaps: SkillGap[], weeksAvailable: number) {

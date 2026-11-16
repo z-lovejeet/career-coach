@@ -150,7 +150,9 @@ export function completeText(o: BaseOptions) {
 
 /** JSON completion validated against a zod schema. Invalid output falls through to the next model. */
 export function completeJSON<T>(o: BaseOptions & { schema: ZodType<T> }) {
-  return run(o, (text) => {
+  // Groq's JSON mode requires the word "json" in the messages.
+  const options = { ...o, system: `${o.system}\n\nRespond with a single valid JSON object only.` };
+  return run(options, (text) => {
     const parsed = o.schema.safeParse(parseJSON(text));
     if (!parsed.success) throw new Error(`schema: ${parsed.error.issues.slice(0, 3).map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
     return parsed.data;

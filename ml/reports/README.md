@@ -41,6 +41,10 @@ O*NET 31.0 · 910 occupations · 75 features · 22 career families · 91,000 sim
 | hybrid α=0.7 | 0.721 | 0.842 | 0.885 |
 | hybrid α=0.55 | 0.684 | 0.780 | 0.822 |
 
+## Calibration
+
+Temperature scaling T = 1.0 (log-loss 0.8796 → 0.8796 on unseen occupations).
+
 Deployed: Logistic Regression + hybrid ranking α = 1.0
 
 Figures: `model_comparison.png`, `confusion_matrix.png`, `robustness.png`, `ranking.png`

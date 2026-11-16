@@ -38,6 +38,30 @@ export function toVector(sparse: Record<string, number>): number[] {
   });
 }
 
+const SKILL_IDX = FEATURE_IDS.map((id, i) => (/^(es|ts|kn):/.test(id) ? i : -1)).filter((i) => i >= 0);
+
+/**
+ * Distribution alignment. The Profile Analyst rates *proficiency* (mostly 0–3 for students), while
+ * occupation features are *importance* ratings with a different spread. We keep the student's relative
+ * profile (z-score across their own skill ratings) and re-express it on each feature's occupation scale.
+ * Interests and preparation level are already on the occupation scale and pass through unchanged.
+ */
+export function alignStudent(x: number[], provided: Set<number>): number[] {
+  const idx = SKILL_IDX.filter((i) => provided.has(i));
+  if (idx.length < 5) return x;
+  const vals = idx.map((i) => x[i]);
+  const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const std = Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length) || 1;
+  const out = [...x];
+  for (const i of idx) out[i] = Math.min(1, Math.max(0, M.zMean[i] + ((x[i] - mean) / std) * M.zStd[i]));
+  return out;
+}
+
+function studentInput(sparse: Record<string, number>) {
+  const provided = new Set(FEATURE_IDS.map((id, i) => (typeof sparse[id] === "number" ? i : -1)).filter((i) => i >= 0));
+  return alignStudent(toVector(sparse), provided);
+}
+
 function softmax(z: number[]): number[] {
   const max = Math.max(...z);
   const e = z.map((v) => Math.exp(v - max));
@@ -48,7 +72,9 @@ function softmax(z: number[]): number[] {
 export function familyProbabilities(x: number[]): FamilyFit[] {
   const scaled = x.map((v, i) => (v - M.scaler.mean[i]) / (M.scaler.scale[i] || 1));
   const logits = M.logreg.coef.map((row, k) => row.reduce((s, w, i) => s + w * scaled[i], M.logreg.intercept[k]));
-  return softmax(logits).map((p, k) => ({ code: M.families[k].code, name: M.families[k].name, probability: p }));
+  // Temperature scaling (fitted on held-out data) keeps the probabilities calibrated.
+  const T = (M as { temperature?: number }).temperature ?? 1;
+  return softmax(logits.map((l) => l / T)).map((p, k) => ({ code: M.families[k].code, name: M.families[k].name, probability: p }));
 }
 
 function zNormalise(x: number[]): number[] {
@@ -64,7 +90,7 @@ export interface MatchOptions {
 }
 
 export function matchCareers(sparse: Record<string, number>, options: MatchOptions = {}) {
-  const x = toVector(sparse);
+  const x = studentInput(sparse);
   const families = familyProbabilities(x);
   const z = zNormalise(x);
   const { codes, familyIndex, z: occ } = M.occupations;
@@ -104,7 +130,7 @@ export function matchCareers(sparse: Record<string, number>, options: MatchOptio
 export function similarityTo(sparse: Record<string, number>, code: string): number | null {
   const i = M.occupations.codes.indexOf(code);
   if (i < 0) return null;
-  const z = zNormalise(toVector(sparse));
+  const z = zNormalise(studentInput(sparse));
   const cos = M.occupations.z[i].reduce((s, w, j) => s + w * z[j], 0);
   return Math.round(Math.min(99, Math.max(1, (cos + 1) * 50)));
 }
