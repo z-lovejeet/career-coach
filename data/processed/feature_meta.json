@@ -1,0 +1,377 @@
+[
+  {
+    "id": "es:2.A.1.a",
+    "name": "Reading Comprehension",
+    "group": "Essential skill"
+  },
+  {
+    "id": "es:2.A.1.b",
+    "name": "Active Listening",
+    "group": "Essential skill"
+  },
+  {
+    "id": "es:2.A.1.c",
+    "name": "Writing",
+    "group": "Essential skill"
+  },
+  {
+    "id": "es:2.A.1.d",
+    "name": "Speaking",
+    "group": "Essential skill"
+  },
+  {
+    "id": "es:2.A.1.e",
+    "name": "Mathematics",
+    "group": "Essential skill"
+  },
+  {
+    "id": "es:2.A.1.f",
+    "name": "Science",
+    "group": "Essential skill"
+  },
+  {
+    "id": "es:2.A.2.a",
+    "name": "Critical Thinking",
+    "group": "Essential skill"
+  },
+  {
+    "id": "es:2.A.2.b",
+    "name": "Active Learning",
+    "group": "Essential skill"
+  },
+  {
+    "id": "es:2.A.2.c",
+    "name": "Learning Strategies",
+    "group": "Essential skill"
+  },
+  {
+    "id": "es:2.A.2.d",
+    "name": "Monitoring",
+    "group": "Essential skill"
+  },
+  {
+    "id": "ts:2.B.1.a",
+    "name": "Social Perceptiveness",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.1.b",
+    "name": "Coordination",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.1.c",
+    "name": "Persuasion",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.1.d",
+    "name": "Negotiation",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.1.e",
+    "name": "Instructing",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.1.f",
+    "name": "Service Orientation",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.2.i",
+    "name": "Complex Problem Solving",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.a",
+    "name": "Operations Analysis",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.b",
+    "name": "Technology Design",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.c",
+    "name": "Equipment Selection",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.d",
+    "name": "Installation",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.e",
+    "name": "Programming",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.g",
+    "name": "Operations Monitoring",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.h",
+    "name": "Operation and Control",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.j",
+    "name": "Equipment Maintenance",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.k",
+    "name": "Troubleshooting",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.l",
+    "name": "Repairing",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.3.m",
+    "name": "Quality Control Analysis",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.4.e",
+    "name": "Judgment and Decision Making",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.4.g",
+    "name": "Systems Analysis",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.4.h",
+    "name": "Systems Evaluation",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.5.a",
+    "name": "Time Management",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.5.b",
+    "name": "Management of Financial Resources",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.5.c",
+    "name": "Management of Material Resources",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "ts:2.B.5.d",
+    "name": "Management of Personnel Resources",
+    "group": "Transferable skill"
+  },
+  {
+    "id": "kn:2.C.1.a",
+    "name": "Administration and Management",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.1.b",
+    "name": "Administrative",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.1.c",
+    "name": "Economics and Accounting",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.1.d",
+    "name": "Sales and Marketing",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.1.e",
+    "name": "Customer and Personal Service",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.1.f",
+    "name": "Personnel and Human Resources",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.10",
+    "name": "Transportation",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.2.a",
+    "name": "Production and Processing",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.2.b",
+    "name": "Food Production",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.3.a",
+    "name": "Computers and Electronics",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.3.b",
+    "name": "Engineering and Technology",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.3.c",
+    "name": "Design",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.3.d",
+    "name": "Building and Construction",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.3.e",
+    "name": "Mechanical",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.4.a",
+    "name": "Mathematics",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.4.b",
+    "name": "Physics",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.4.c",
+    "name": "Chemistry",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.4.d",
+    "name": "Biology",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.4.e",
+    "name": "Psychology",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.4.f",
+    "name": "Sociology and Anthropology",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.4.g",
+    "name": "Geography",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.5.a",
+    "name": "Medicine and Dentistry",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.5.b",
+    "name": "Therapy and Counseling",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.6",
+    "name": "Education and Training",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.7.a",
+    "name": "English Language",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.7.b",
+    "name": "Foreign Language",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.7.c",
+    "name": "Fine Arts",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.7.d",
+    "name": "History and Archeology",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.7.e",
+    "name": "Philosophy and Theology",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.8.a",
+    "name": "Public Safety and Security",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.8.b",
+    "name": "Law and Government",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.9.a",
+    "name": "Telecommunications",
+    "group": "Knowledge"
+  },
+  {
+    "id": "kn:2.C.9.b",
+    "name": "Communications and Media",
+    "group": "Knowledge"
+  },
+  {
+    "id": "ri:Realistic",
+    "name": "Realistic",
+    "group": "Interest"
+  },
+  {
+    "id": "ri:Investigative",
+    "name": "Investigative",
+    "group": "Interest"
+  },
+  {
+    "id": "ri:Artistic",
+    "name": "Artistic",
+    "group": "Interest"
+  },
+  {
+    "id": "ri:Social",
+    "name": "Social",
+    "group": "Interest"
+  },
+  {
+    "id": "ri:Enterprising",
+    "name": "Enterprising",
+    "group": "Interest"
+  },
+  {
+    "id": "ri:Conventional",
+    "name": "Conventional",
+    "group": "Interest"
+  },
+  {
+    "id": "jz:zone",
+    "name": "Job zone (preparation level)",
+    "group": "Preparation"
+  }
+]
