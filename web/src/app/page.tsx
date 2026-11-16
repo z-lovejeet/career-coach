@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowRight, ArrowUpRight, BookOpenCheck, Briefcase, ChartNoAxesColumn, Check, Database, FileText, Fingerprint, GitBranch,
+  ArrowRight, BookOpenCheck, ChartNoAxesColumn, Check, Database, FileText, Fingerprint, GitBranch,
   LayoutGrid, Lock, MessageCircle, Mic, Route, ScanText, ShieldCheck, Sparkles, Target, Timer, X,
 } from "lucide-react";
 import { adminClient, createClient } from "@/server/db/supabase";
@@ -29,7 +29,7 @@ export default async function Landing() {
   if (user) redirect("/dashboard");
 
   const [{ data: samples }, { count: questionCount }] = await Promise.all([
-    supabase.from("roadmaps").select("id, title, target, graph, trace, sample_persona").eq("is_sample", true).eq("status", "active").order("created_at", { ascending: true }).limit(3),
+    supabase.from("roadmaps").select("graph, trace, sample_persona").eq("is_sample", true).eq("status", "active").order("created_at", { ascending: true }).limit(1),
     adminClient().from("practice_questions").select("id", { count: "exact", head: true }),  // aggregate count only
   ]);
   const hero = samples?.[0];
@@ -275,38 +275,6 @@ export default async function Landing() {
               })}
             </div>
           </section>
-
-          {/* ── Samples ─────────────────────────────────────────── */}
-          {!!samples?.length && (
-            <section className="border-y border-line bg-surface-2">
-              <div className="mx-auto max-w-6xl px-6 py-24">
-                <div className="flex flex-wrap items-end justify-between gap-6">
-                  <div>
-                    <p className="eyebrow">Real output, not mock-ups</p>
-                    <h2 className="display mt-3 max-w-2xl text-[38px] leading-[1.1] text-ink sm:text-[44px]">Three students. Three different routes.</h2>
-                    <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted">Each roadmap was generated end-to-end by the live agent from a short profile. Open one to explore the map, the timeline and every step of the agent&apos;s trace.</p>
-                  </div>
-                  <Link href="/samples" className={buttonClass("outline", "md")}>All samples <ArrowUpRight /></Link>
-                </div>
-                <div className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                  {samples.map((s) => {
-                    const g = s.graph as RoadmapGraph;
-                    return (
-                      <Link key={s.id} href={`/samples/${s.id}`} className="card group flex flex-col p-6 transition-all hover:-translate-y-1 hover:shadow-float">
-                        <p className="text-[13px] font-medium text-ink-2">{s.sample_persona?.name}</p>
-                        <p className="mt-1 text-[13px] leading-relaxed text-muted">{s.sample_persona?.background}</p>
-                        <div className="my-5 flex items-center gap-2 text-xs text-faint"><span className="h-px flex-1 bg-line" /> becomes <span className="h-px flex-1 bg-line" /></div>
-                        <p className="flex items-center gap-2 text-[11px] text-muted"><Briefcase className="size-3.5" /> {s.target.family}</p>
-                        <p className="display mt-1 text-[24px] leading-tight text-ink">{s.target.title}</p>
-                        <p className="mt-3 text-[13px] text-ink-2">{g.nodes.filter((n) => n.kind === "course").length} courses · {g.nodes.filter((n) => n.kind === "skill").length} skills · {g.nodes.filter((n) => n.kind === "project").length} projects · {g.totalWeeks} weeks</p>
-                        <span className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-accent">Open roadmap <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-          )}
 
           {/* ── Audience + privacy ──────────────────────────────── */}
           <section className="mx-auto max-w-6xl px-6 py-24">
