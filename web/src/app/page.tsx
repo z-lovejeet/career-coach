@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowRight, BookOpenCheck, ChartNoAxesColumn, Check, Database, FileText, Fingerprint, GitBranch,
-  LayoutGrid, Lock, MessageCircle, Mic, Route, ScanText, ShieldCheck, Sparkles, Target, Timer, X,
+  ArrowRight, BookOpenCheck, ChartNoAxesColumn, Database, FileText, Fingerprint, GitBranch,
+  LayoutGrid, Lock, MessageCircle, Mic, Route, ScanText, ShieldCheck, Sparkles, Target, Timer,
 } from "lucide-react";
 import { adminClient, createClient } from "@/server/db/supabase";
 import { catalogue } from "@/server/onet/catalogue";
@@ -80,7 +80,7 @@ export default async function Landing() {
                 </div>
                 <ul className="mt-9 grid max-w-lg grid-cols-1 gap-2.5 text-[14px] text-ink-2 sm:grid-cols-2">
                   {["Upload a CV or fill in a short profile", "Career matches from a trained model", "A seven-step planning agent", "Practice, mock interviews and a mentor"].map((t) => (
-                    <li key={t} className="flex items-center gap-2"><Check className="size-4 shrink-0 text-accent" /> {t}</li>
+                    <li key={t} className="flex items-center gap-2.5"><span className="size-1.5 shrink-0 rounded-full bg-accent" />{t}</li>
                   ))}
                 </ul>
               </div>
@@ -126,12 +126,16 @@ export default async function Landing() {
                   ["“Data science is booming.”", "Is it right for someone with your interests and background?", "A model trained on O*NET scores how closely you match 910 real occupations."],
                   ["“Just keep practising.”", "Practising what? And how do you know it's working?", "Topic-level accuracy, mock-interview scores and a readiness score that moves as you progress."],
                 ].map(([quote, question, answer]) => (
-                  <div key={quote} className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-[1fr_1.15fr]">
+                  <div key={quote} className="card grid grid-cols-1 gap-5 p-6 sm:grid-cols-[1fr_1.15fr]">
                     <div>
-                      <p className="flex items-start gap-2 text-[15px] font-medium text-ink"><X className="mt-0.5 size-4 shrink-0 text-danger" />{quote}</p>
-                      <p className="mt-1.5 pl-6 text-[13px] leading-relaxed text-muted">{question}</p>
+                      <p className="eyebrow mb-2">The usual advice</p>
+                      <p className="text-[16px] font-medium text-ink">{quote}</p>
+                      <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{question}</p>
                     </div>
-                    <p className="flex items-start gap-2 border-t border-line pt-4 text-[14px] leading-relaxed text-ink-2 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0"><Check className="mt-0.5 size-4 shrink-0 text-success" />{answer}</p>
+                    <div className="border-t border-line pt-5 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
+                      <p className="eyebrow mb-2 !text-accent">With CareerCompass</p>
+                      <p className="text-[14px] leading-relaxed text-ink-2">{answer}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -268,7 +272,7 @@ export default async function Landing() {
                     <h3 className="mt-6 text-[17px] font-semibold text-ink">{title as string}</h3>
                     <p className="mt-2 text-[14px] leading-relaxed text-muted">{body as string}</p>
                     <ul className="mt-5 space-y-1.5 border-t border-line pt-5">
-                      {(bullets as string[]).map((b) => <li key={b} className="flex items-start gap-2 text-[13px] text-ink-2"><Check className="mt-0.5 size-3.5 shrink-0 text-accent" />{b}</li>)}
+                      {(bullets as string[]).map((b) => <li key={b} className="flex items-start gap-2.5 text-[13px] text-ink-2"><span className="mt-[7px] size-1 shrink-0 rounded-full bg-accent" />{b}</li>)}
                     </ul>
                   </article>
                 );
