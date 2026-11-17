@@ -76,7 +76,11 @@ Return {"assessment":{"score":0,"note":""},"decision":"follow_up|next|close","me
   let decision = data.decision;
   if (decision === "follow_up" && !canFollow) decision = remaining > 0 ? "next" : "close";
   if (decision === "next" && remaining <= 0) decision = "close";
-  return { ...data, decision, model: meta.model, question: lastQuestion, answer: lastAnswer };
+  // If we forced the interview to close, the model's message may still contain a new question.
+  const message = decision === "close" && data.decision !== "close"
+    ? `Thank you, that's all the questions I have for today. I enjoyed the conversation. The panel will put your feedback together now.`
+    : data.message;
+  return { ...data, decision, message, model: meta.model, question: lastQuestion, answer: lastAnswer };
 }
 
 const reportSchema = z.object({

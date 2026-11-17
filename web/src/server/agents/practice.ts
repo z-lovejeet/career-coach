@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { completeJSON } from "@/server/ai/groq";
 import { adminClient } from "@/server/db/supabase";
+import { shuffleOptions } from "@/lib/shuffle";
 
 /**
  * Question Setter agent. Generates MCQs into a shared bank (service-role writes), so the bank grows
@@ -27,6 +28,7 @@ export async function generateQuestions(subject: string, subjectId: string, topi
     tier: "reasoning",
     system: `You write accurate multiple-choice questions for Indian engineering students (university exams, GATE-style and placement tests).
 Rules: exactly 4 options, one correct; plausible distractors based on common mistakes; no "all of the above"; vary the position of the correct answer;
+never refer to options by letter or position (the options are shuffled before display);
 difficulty "${difficulty}" (easy = recall/one step, medium = application, hard = multi-step reasoning). ${STYLE[subjectId] ?? "Test understanding, not trivia."}
 Return {"questions":[{"question":"","options":["","","",""],"answer":0,"explanation":"why the answer is right and the common trap"}]}`,
     prompt: `Subject: ${subject}\nTopic: ${topic}\nWrite ${count} distinct questions.`,
@@ -37,7 +39,7 @@ Return {"questions":[{"question":"","options":["","","",""],"answer":0,"explanat
 
   const rows = data.questions
     .filter((q) => new Set(q.options.map((o) => o.trim().toLowerCase())).size === 4)
-    .map((q) => ({ subject, topic, difficulty, question: q.question.trim(), options: q.options, answer: q.answer, explanation: q.explanation, source_model: meta.model }));
+    .map((q) => ({ subject, topic, difficulty, question: q.question.trim(), ...shuffleOptions(q.options, q.answer), explanation: q.explanation, source_model: meta.model }));
   // Insert individually so a duplicate (unique index on subject + question) only skips that row.
   const results = await Promise.all(rows.map((row) => adminClient().from("practice_questions").insert(row)));
   return { inserted: results.filter((r) => !r.error).length, model: meta.model };

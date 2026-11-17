@@ -71,8 +71,8 @@ export function ProfileView({ profile, matches, model }: { profile: Profile; mat
                 <>
                   <p className="display mt-4 text-[20px] leading-snug text-ink">{profile.analysis.summary}</p>
                   <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                    <div><p className="mb-2 text-xs font-medium text-muted">Strengths</p><div className="flex flex-wrap gap-1.5">{profile.analysis.strengths.map((s) => <Badge key={s} tone="success">{s}</Badge>)}</div></div>
-                    <div><p className="mb-2 text-xs font-medium text-muted">Growth areas</p><div className="flex flex-wrap gap-1.5">{profile.analysis.growthAreas.map((s) => <Badge key={s} tone="warm">{s}</Badge>)}</div></div>
+                    <div><p className="mb-2 text-xs font-medium text-muted">Strengths</p><div className="flex flex-wrap gap-1.5">{profile.analysis.strengths.map((s) => <Badge key={s} tone="success" className="whitespace-normal text-left">{s}</Badge>)}</div></div>
+                    <div><p className="mb-2 text-xs font-medium text-muted">Growth areas</p><div className="flex flex-wrap gap-1.5">{profile.analysis.growthAreas.map((s) => <Badge key={s} tone="warm" className="whitespace-normal text-left">{s}</Badge>)}</div></div>
                   </div>
                 </>
               ) : <p className="mt-3 text-sm text-muted">Run “Save &amp; re-analyse” to generate your assessment.</p>}

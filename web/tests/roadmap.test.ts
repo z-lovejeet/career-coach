@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { applyOps, diffGraphs, layoutPhases, roadmapProgress } from "../src/lib/roadmap-ops";
 import { hollandCode, scoreRiasec } from "../src/lib/riasec";
 import { courseSearchLinks } from "../src/lib/utils";
+import { shuffleOptions } from "../src/lib/shuffle";
 import type { RoadmapGraph } from "../src/lib/types";
 
 function graph(): RoadmapGraph {
@@ -83,4 +84,15 @@ test("course links are search URLs, never invented course pages", () => {
   const links = courseSearchLinks("Operating Systems");
   assert.deepEqual(links.map((l) => l.provider), ["NPTEL", "Coursera", "YouTube"]);
   assert.ok(links.every((l) => /search|results/.test(l.url) && l.url.includes("Operating%20Systems")));
+});
+
+test("practice options are shuffled without losing the correct answer", () => {
+  const counts = [0, 0, 0, 0];
+  for (let i = 0; i < 4000; i++) {
+    const { options, answer } = shuffleOptions(["right", "w1", "w2", "w3"], 0);
+    assert.equal(options[answer], "right");
+    assert.equal(new Set(options).size, 4);
+    counts[answer]++;
+  }
+  for (const c of counts) assert.ok(c > 850 && c < 1150, `position counts not uniform: ${counts}`);
 });
